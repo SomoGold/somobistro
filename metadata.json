@@ -1,0 +1,6 @@
+{
+  "name": "Mộc POS — Quản lý Bán hàng Cà phê & Nhà hàng",
+  "description": "Hệ thống máy POS bán hàng toàn diện cho quán cà phê và nhà hàng: chọn món nhanh, sơ đồ bàn, in hóa đơn nhiệt 80mm, quản lý thực đơn, báo cáo doanh thu ngày, tháng và tổng hợp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

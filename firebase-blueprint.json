@@ -1,0 +1,469 @@
+{
+  "entities": {
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Configuration and receipt metadata for a café or restaurant store owned by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the store owner."
+        },
+        "storeName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Display name of the café or restaurant."
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Physical store address printed on thermal receipts."
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Contact hotline printed on thermal receipts."
+        },
+        "wifiInfo": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Guest Wi-Fi credentials printed on receipts."
+        },
+        "receiptFooter": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Closing greeting on receipts."
+        },
+        "defaultVatRate": {
+          "type": "number",
+          "description": "Default VAT percentage (0 to 30)."
+        },
+        "bankName": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Bank name for QR/bank transfer payments."
+        },
+        "bankAccount": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Bank account number for transfer payments."
+        },
+        "bankOwner": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Bank account holder name."
+        },
+        "pinCode": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "4-digit security PIN code required after Google login."
+        },
+        "qrImageUrl": {
+          "type": "string",
+          "maxLength": 300000,
+          "description": "Owner-uploaded payment QR code image (compressed data URL)."
+        },
+        "defaultPrintSize": {
+          "type": "string",
+          "enum": ["a5", "80mm"],
+          "description": "Default invoice print paper size (A5 portrait or 80mm thermal roll)."
+        },
+        "seeded": {
+          "type": "boolean",
+          "description": "Whether initial sample menu, tables, and historical orders have been seeded."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-modified timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "storeName",
+        "address",
+        "phone",
+        "wifiInfo",
+        "receiptFooter",
+        "defaultVatRate",
+        "bankName",
+        "bankAccount",
+        "bankOwner",
+        "seeded",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "A beverage, food dish, pastry, or topping sold at the POS terminal.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sku": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Cà phê", "Trà & Matcha", "Giải khát", "Bia", "Món ăn", "Bánh ngọt"]
+        },
+        "price": {
+          "type": "number",
+          "description": "Selling price in VND."
+        },
+        "cost": {
+          "type": "number",
+          "description": "Estimated unit cost in VND for gross profit reporting."
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "sku",
+        "name",
+        "category",
+        "price",
+        "cost",
+        "unit",
+        "imageUrl",
+        "available",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DiningTable": {
+      "title": "DiningTable",
+      "description": "A physical dining table in the café or restaurant floor plan.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "zone": {
+          "type": "string",
+          "enum": ["Trong nhà", "Sân vườn", "Tầng 2"]
+        },
+        "seats": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["available", "occupied"]
+        },
+        "activeOrderId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "zone",
+        "seats",
+        "status",
+        "activeOrderId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A POS order or completed/cancelled receipt bill with bounded line items.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "orderNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 40
+        },
+        "orderType": {
+          "type": "string",
+          "enum": ["dine_in", "takeaway"]
+        },
+        "tableId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "tableName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "completed", "cancelled"]
+        },
+        "items": {
+          "type": "array",
+          "description": "Bounded list of up to 50 ordered items (each optionally including up to 15 toppings and per-item discount fields)."
+        },
+        "subtotal": { "type": "number" },
+        "costTotal": { "type": "number" },
+        "discountType": {
+          "type": "string",
+          "enum": ["percent", "fixed"]
+        },
+        "discountValue": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "vatRate": { "type": "number" },
+        "vatAmount": { "type": "number" },
+        "total": { "type": "number" },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["unpaid", "cash", "transfer", "card"]
+        },
+        "cashReceived": { "type": "number" },
+        "changeAmount": { "type": "number" },
+        "customerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "cancelReason": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "dateKey": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "monthKey": {
+          "type": "string",
+          "maxLength": 7,
+          "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "hourOfDay": { "type": "number" },
+        "displayTime": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "cashierName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "orderNumber",
+        "orderType",
+        "tableId",
+        "tableName",
+        "status",
+        "items",
+        "subtotal",
+        "costTotal",
+        "discountType",
+        "discountValue",
+        "discountAmount",
+        "vatRate",
+        "vatAmount",
+        "total",
+        "paymentMethod",
+        "cashReceived",
+        "changeAmount",
+        "customerName",
+        "note",
+        "cancelReason",
+        "dateKey",
+        "monthKey",
+        "hourOfDay",
+        "displayTime",
+        "cashierName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Topping": {
+      "title": "Topping",
+      "description": "An add-on topping that can be attached to drinks or dishes at the POS.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "price": {
+          "type": "number",
+          "description": "Additional unit price in VND."
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "price",
+        "available",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "A saved store customer profile with contact details and default discount preference.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "defaultDiscountType": {
+          "type": "string",
+          "enum": ["percent", "fixed"]
+        },
+        "defaultDiscountValue": {
+          "type": "number",
+          "description": "Default discount percentage (0..100) or fixed amount in VND."
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "phone",
+        "defaultDiscountType",
+        "defaultDiscountValue",
+        "note",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/storeSettings/{userId}": {
+      "schema": { "$ref": "#/entities/StoreSettings" },
+      "description": "Owner-isolated store profile, receipt config, and QR image."
+    },
+    "/menuItems/{itemId}": {
+      "schema": { "$ref": "#/entities/MenuItem" },
+      "description": "Owner-scoped catalog of drinks, food dishes, and pastries."
+    },
+    "/toppings/{toppingId}": {
+      "schema": { "$ref": "#/entities/Topping" },
+      "description": "Owner-scoped catalog of add-on toppings for POS order items."
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Owner-isolated saved customers with default discount settings."
+    },
+    "/diningTables/{tableId}": {
+      "schema": { "$ref": "#/entities/DiningTable" },
+      "description": "Owner-scoped floor tables with real-time occupancy state."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Owner-scoped POS orders, open table tabs, completed bills, and voided receipts."
+    }
+  }
+}

@@ -1,0 +1,425 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Hardened Global Primitives
+    // -------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(ownerId) {
+      return request.auth != null && request.auth.uid == ownerId;
+    }
+
+    // -------------------------------------------------------------------------
+    // Validation Blueprints (Anti-Update-Gap Helpers, Budget-Optimized < 650 exprs)
+    // -------------------------------------------------------------------------
+    function isValidStoreSettings(data, userId) {
+      return data.keys().hasOnly([
+          'ownerId', 'storeName', 'address', 'phone', 'wifiInfo',
+          'receiptFooter', 'defaultVatRate', 'bankName', 'bankAccount',
+          'bankOwner', 'pinCode', 'qrImageUrl', 'defaultPrintSize',
+          'seeded', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 100
+        && data.address is string && data.address.size() <= 200
+        && data.phone is string && data.phone.size() <= 30
+        && data.wifiInfo is string && data.wifiInfo.size() <= 100
+        && data.receiptFooter is string && data.receiptFooter.size() <= 200
+        && data.defaultVatRate is number && data.defaultVatRate >= 0 && data.defaultVatRate <= 30
+        && data.bankName is string && data.bankName.size() <= 80
+        && data.bankAccount is string && data.bankAccount.size() <= 50
+        && data.bankOwner is string && data.bankOwner.size() <= 100
+        && (!('pinCode' in data) || (data.pinCode is string && data.pinCode.size() <= 10))
+        && (!('qrImageUrl' in data) || (data.qrImageUrl is string && data.qrImageUrl.size() <= 300000))
+        && (!('defaultPrintSize' in data) || data.defaultPrintSize in ['a5', '80mm'])
+        && data.seeded is bool
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMenuItem(data) {
+      return data.keys().hasOnly([
+          'ownerId', 'sku', 'name', 'category', 'price', 'cost',
+          'unit', 'imageUrl', 'available', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 32
+        && data.sku.matches('^[a-zA-Z0-9_-]+$')
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 40
+        && data.price is number && data.price >= 0 && data.price <= 100000000
+        && data.cost is number && data.cost >= 0 && data.cost <= 100000000
+        && data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 24
+        && data.imageUrl is string && data.imageUrl.size() <= 500
+        && data.available is bool
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDiningTable(data) {
+      return data.keys().hasOnly([
+          'ownerId', 'name', 'zone', 'seats', 'status',
+          'activeOrderId', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 60
+        && data.zone is string && data.zone.size() >= 1 && data.zone.size() <= 40
+        && data.seats >= 1 && data.seats <= 30
+        && data.status in ['available', 'occupied']
+        && data.activeOrderId is string && data.activeOrderId.size() <= 128
+        && (
+          (data.status == 'available' && data.activeOrderId == '') ||
+          (data.status == 'occupied' && data.activeOrderId.size() >= 1 && data.activeOrderId.matches('^[a-zA-Z0-9_-]+$'))
+        )
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTopping(data) {
+      return data.keys().hasOnly(['ownerId', 'name', 'price', 'available', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && data.price >= 0 && data.price <= 100000000
+        && data.available is bool
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasOnly([
+          'ownerId', 'name', 'phone', 'defaultDiscountType',
+          'defaultDiscountValue', 'note', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.phone is string && data.phone.size() <= 30
+        && data.defaultDiscountType in ['percent', 'fixed']
+        && data.defaultDiscountValue >= 0
+        && data.defaultDiscountValue <= 100000000
+        && (data.defaultDiscountType != 'percent' || data.defaultDiscountValue <= 100)
+        && data.note is string && data.note.size() <= 300
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOrderItemTopping(t) {
+      return t is map
+        && t.keys().hasOnly(['id', 'name', 'price', 'qty'])
+        && t.id is string && t.id.size() >= 1 && t.id.size() <= 128
+        && t.name is string && t.name.size() >= 1 && t.name.size() <= 80
+        && t.price >= 0 && t.price <= 100000000
+        && (!('qty' in t) || (t.qty >= 1 && t.qty <= 999));
+    }
+
+    function isValidOrderItem(item) {
+      return item is map
+        && item.keys().hasOnly([
+          'itemId', 'name', 'category', 'price', 'cost', 'qty', 'note',
+          'toppings', 'discountType', 'discountValue', 'discountAmount'
+        ])
+        && item.itemId is string && item.itemId.size() >= 1 && item.itemId.size() <= 128
+        && item.name is string && item.name.size() >= 1 && item.name.size() <= 120
+        && item.category is string && item.category.size() <= 60
+        && item.price >= 0 && item.price <= 100000000
+        && item.cost >= 0 && item.cost <= 100000000
+        && item.qty >= 1 && item.qty <= 999
+        && item.note is string && item.note.size() <= 150
+        && (
+          !('toppings' in item)
+          || (
+            item.toppings is list
+            && item.toppings.size() <= 15
+            && (item.toppings.size() == 0 || isValidOrderItemTopping(item.toppings[0]))
+          )
+        )
+        && (!('discountType' in item) || item.discountType in ['percent', 'fixed'])
+        && (!('discountValue' in item) || (item.discountValue >= 0 && item.discountValue <= 1000000000))
+        && (!('discountAmount' in item) || (item.discountAmount >= 0 && item.discountAmount <= 1000000000));
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasOnly([
+          'ownerId', 'orderNumber', 'orderType', 'tableId', 'tableName',
+          'status', 'items', 'subtotal', 'costTotal', 'discountType',
+          'discountValue', 'discountAmount', 'vatRate', 'vatAmount', 'total',
+          'paymentMethod', 'cashReceived', 'changeAmount', 'customerId', 'customerName',
+          'note', 'cancelReason', 'dateKey', 'monthKey', 'hourOfDay',
+          'displayTime', 'cashierName', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.orderNumber is string && data.orderNumber.size() >= 3 && data.orderNumber.size() <= 40
+        && data.orderType in ['dine_in', 'takeaway']
+        && data.tableId is string && data.tableId.size() <= 128
+        && (data.tableId == '' || data.tableId.matches('^[a-zA-Z0-9_-]+$'))
+        && data.tableName is string && data.tableName.size() >= 1 && data.tableName.size() <= 60
+        && data.status in ['open', 'completed', 'cancelled']
+        && data.items is list && data.items.size() >= 1 && data.items.size() <= 50
+        && isValidOrderItem(data.items[0])
+        && data.subtotal >= 0 && data.subtotal <= 1000000000
+        && data.costTotal >= 0 && data.costTotal <= 1000000000
+        && data.discountType in ['percent', 'fixed']
+        && data.discountValue >= 0 && data.discountValue <= 1000000000
+        && data.discountAmount >= 0 && data.discountAmount <= 1000000000
+        && data.vatRate >= 0 && data.vatRate <= 30
+        && data.vatAmount >= 0 && data.vatAmount <= 1000000000
+        && data.total >= 0 && data.total <= 1000000000
+        && data.paymentMethod in ['unpaid', 'cash', 'transfer', 'card']
+        && data.cashReceived >= 0 && data.cashReceived <= 1000000000
+        && data.changeAmount >= 0 && data.changeAmount <= 1000000000
+        && (!('customerId' in data) || (data.customerId is string && data.customerId.size() <= 128))
+        && data.customerName is string && data.customerName.size() <= 100
+        && data.note is string && data.note.size() <= 300
+        && data.cancelReason is string && data.cancelReason.size() <= 200
+        && data.dateKey is string && data.dateKey.size() == 10 && data.dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.monthKey is string && data.monthKey.size() == 7 && data.monthKey.matches('^[0-9]{4}-[0-9]{2}$')
+        && data.hourOfDay >= 0 && data.hourOfDay <= 23
+        && data.displayTime is string && data.displayTime.size() <= 40
+        && data.cashierName is string && data.cashierName.size() <= 100
+        && (!('createdAt' in data) || data.createdAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOrderTransition(inc, ext) {
+      let changed = inc.diff(ext).affectedKeys();
+      return ext.status != 'cancelled'
+        && inc.ownerId == ext.ownerId
+        && inc.orderNumber == ext.orderNumber
+        && (!('createdAt' in ext) || inc.createdAt == ext.createdAt)
+        && (
+          // Action: SettleOpenOrder (transition open -> completed)
+          (
+            inc.status == 'completed'
+            && ext.status == 'open'
+            && inc.paymentMethod in ['cash', 'transfer', 'card']
+            && changed.hasOnly([
+              'items', 'subtotal', 'costTotal', 'discountType', 'discountValue',
+              'discountAmount', 'vatRate', 'vatAmount', 'total', 'status',
+              'paymentMethod', 'cashReceived', 'changeAmount', 'customerId', 'customerName',
+              'note', 'dateKey', 'monthKey', 'hourOfDay', 'displayTime',
+              'cashierName', 'updatedAt'
+            ])
+          ) ||
+          // Action: UpdateOpenOrder (while still open)
+          (
+            inc.status == 'open'
+            && ext.status == 'open'
+            && changed.hasOnly([
+              'items', 'subtotal', 'costTotal', 'discountType', 'discountValue',
+              'discountAmount', 'vatRate', 'vatAmount', 'total', 'customerId', 'customerName',
+              'note', 'tableId', 'tableName', 'orderType', 'updatedAt'
+            ])
+          ) ||
+          // Action: VoidOrder (transition open or completed -> cancelled)
+          (
+            inc.status == 'cancelled'
+            && ext.status in ['open', 'completed']
+            && inc.cancelReason.size() >= 1
+            && changed.hasOnly(['status', 'cancelReason', 'updatedAt'])
+          )
+        );
+    }
+
+    function isValidDiningTableTransition(inc, ext) {
+      let changed = inc.diff(ext).affectedKeys();
+      return inc.ownerId == ext.ownerId
+        && (!('createdAt' in ext) || inc.createdAt == ext.createdAt)
+        && (
+          // Action: ReleaseTable
+          (
+            inc.status == 'available'
+            && inc.activeOrderId == ''
+            && changed.hasOnly(['status', 'activeOrderId', 'updatedAt'])
+          ) ||
+          // Action: OccupyTable
+          (
+            inc.status == 'occupied'
+            && inc.activeOrderId.size() >= 1
+            && changed.hasOnly(['status', 'activeOrderId', 'updatedAt'])
+          ) ||
+          // Action: EditTableDetails
+          changed.hasOnly(['name', 'zone', 'seats', 'updatedAt'])
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection 1: /storeSettings/{userId} (PII Isolated to Owner)
+    // -------------------------------------------------------------------------
+    match /storeSettings/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidStoreSettings(incoming(), userId)
+        && 'createdAt' in incoming();
+
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidStoreSettings(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt)
+        && (
+          // Action: UpdateStoreProfile
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'storeName', 'address', 'phone', 'wifiInfo', 'receiptFooter',
+            'defaultVatRate', 'bankName', 'bankAccount', 'bankOwner',
+            'pinCode', 'qrImageUrl', 'defaultPrintSize', 'updatedAt'
+          ]) ||
+          // Action: MarkSeeded
+          incoming().diff(existing()).affectedKeys().hasOnly(['seeded', 'updatedAt'])
+        );
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection 2: /menuItems/{itemId}
+    // -------------------------------------------------------------------------
+    match /menuItems/{itemId} {
+      allow get: if isValidId(itemId) && isOwner(existing().ownerId);
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(itemId)
+        && isValidMenuItem(incoming())
+        && 'createdAt' in incoming();
+
+      allow update: if isOwner(existing().ownerId)
+        && isValidId(itemId)
+        && isValidMenuItem(incoming())
+        && incoming().ownerId == existing().ownerId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt)
+        && (
+          // Action: ToggleAvailability
+          incoming().diff(existing()).affectedKeys().hasOnly(['available', 'updatedAt']) ||
+          // Action: EditMenuItem
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'sku', 'name', 'category', 'price', 'cost', 'unit', 'imageUrl', 'available', 'updatedAt'
+          ])
+        );
+
+      allow delete: if isOwner(existing().ownerId) && isValidId(itemId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection 2b: /toppings/{toppingId}
+    // -------------------------------------------------------------------------
+    match /toppings/{toppingId} {
+      allow get: if isValidId(toppingId) && isOwner(existing().ownerId);
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(toppingId)
+        && isValidTopping(incoming())
+        && 'createdAt' in incoming();
+
+      allow update: if isOwner(existing().ownerId)
+        && isValidId(toppingId)
+        && isValidTopping(incoming())
+        && incoming().ownerId == existing().ownerId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt)
+        && (
+          // Action: ToggleAvailability
+          incoming().diff(existing()).affectedKeys().hasOnly(['available', 'updatedAt']) ||
+          // Action: EditTopping
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'price', 'available', 'updatedAt'])
+        );
+
+      allow delete: if isOwner(existing().ownerId) && isValidId(toppingId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection 2c: /customers/{customerId} (PII Isolated to Owner)
+    // -------------------------------------------------------------------------
+    match /customers/{customerId} {
+      allow get: if isValidId(customerId) && isOwner(existing().ownerId);
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(customerId)
+        && isValidCustomer(incoming())
+        && 'createdAt' in incoming();
+
+      allow update: if isOwner(existing().ownerId)
+        && isValidId(customerId)
+        && isValidCustomer(incoming())
+        && incoming().ownerId == existing().ownerId
+        && (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt)
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'phone', 'defaultDiscountType', 'defaultDiscountValue', 'note', 'updatedAt'
+        ]);
+
+      allow delete: if isOwner(existing().ownerId) && isValidId(customerId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection 3: /diningTables/{tableId}
+    // -------------------------------------------------------------------------
+    match /diningTables/{tableId} {
+      allow get: if isValidId(tableId) && isOwner(existing().ownerId);
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(tableId)
+        && isValidDiningTable(incoming())
+        && incoming().status == 'available'
+        && 'createdAt' in incoming();
+
+      allow update: if isOwner(existing().ownerId)
+        && isValidId(tableId)
+        && isValidDiningTable(incoming())
+        && isValidDiningTableTransition(incoming(), existing());
+
+      allow delete: if isOwner(existing().ownerId)
+        && isValidId(tableId)
+        && existing().status == 'available';
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection 4: /orders/{orderId} (Terminal State Locked)
+    // -------------------------------------------------------------------------
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && isOwner(existing().ownerId);
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().status in ['open', 'completed']
+        && 'createdAt' in incoming();
+
+      allow update: if isOwner(existing().ownerId)
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && isValidOrderTransition(incoming(), existing());
+
+      allow delete: if isOwner(existing().ownerId) && isValidId(orderId);
+    }
+  }
+}
