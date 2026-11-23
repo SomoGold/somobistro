@@ -102,6 +102,7 @@ export function buildA5InvoiceHtml(
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} - ${escapeHtml(order.orderNumber)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -395,10 +396,10 @@ export function build80mmReceiptHtml(
   const bankDetailsHtml =
     settings?.bankName || settings?.bankAccount || settings?.bankOwner
       ? `
-        <div style="margin-top: 6px; padding: 5px; border: 1px dashed #000000; border-radius: 4px; font-size: 10.5px; line-height: 1.4;">
-          <div style="font-weight: 700; margin-bottom: 2px;">Thông tin chuyển khoản:</div>
+        <div class="bank-box">
+          <div class="bank-title">Thông tin chuyển khoản:</div>
           ${settings?.bankName ? `<div>Ngân hàng: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
-          ${settings?.bankAccount ? `<div>STK: <strong style="font-variant-numeric: tabular-nums;">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
+          ${settings?.bankAccount ? `<div>STK: <strong class="tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
           ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
         </div>
       `
@@ -419,102 +420,212 @@ export function build80mmReceiptHtml(
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} 80mm - ${escapeHtml(order.orderNumber)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    @page {
-      size: 80mm auto;
-      margin: 2mm 3mm;
+    :root {
+      /* On screen preview: 1% of 80mm (~302px) */
+      --u: 3.02px;
     }
-    * { box-sizing: border-box; }
-    body {
+    @page {
       margin: 0;
-      padding: 0;
-      width: 74mm;
-      margin-left: auto;
-      margin-right: auto;
-      font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #000000;
-      background: #ffffff;
-      font-size: 11px;
-      line-height: 1.4;
-      font-variant-numeric: tabular-nums;
+    }
+    * {
+      box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .center { text-align: center; }
-    .brand { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
-    .muted { font-size: 10px; color: #222222; }
-    .title {
-      font-size: 13px;
-      font-weight: 800;
-      margin-top: 6px;
-      padding-top: 6px;
-      border-top: 1px dashed #000000;
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, Helvetica, "Roboto", "Segoe UI", sans-serif;
+      font-variant-numeric: tabular-nums;
+      -webkit-text-size-adjust: 100%;
     }
-    .divider { border-top: 1px dashed #000000; margin: 7px 0; }
+    body {
+      width: 80mm;
+      margin: 0 auto;
+      padding: calc(var(--u) * 2.5) calc(var(--u) * 4);
+      font-size: calc(var(--u) * 4.5);
+      line-height: 1.38;
+      font-weight: 500;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    @media print {
+      :root {
+        /* Dynamically fills 100% of whatever page width Android Print / iMinPrinterPlugin or K80 driver uses (80mm, 72mm, A4-scaled-to-80mm...) */
+        --u: 1vw;
+      }
+      html, body {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+      }
+    }
+    .tabular { font-variant-numeric: tabular-nums; }
+    .center { text-align: center; }
+    .brand {
+      font-size: calc(var(--u) * 6.8);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: #000000;
+    }
+    .muted {
+      font-size: calc(var(--u) * 4.1);
+      font-weight: 600;
+      color: #000000;
+      margin-top: calc(var(--u) * 0.6);
+    }
+    .title {
+      font-size: calc(var(--u) * 5.6);
+      font-weight: 800;
+      margin-top: calc(var(--u) * 2.2);
+      padding-top: calc(var(--u) * 2.2);
+      border-top: calc(var(--u) * 0.45) dashed #000000;
+      color: #000000;
+    }
+    .divider {
+      border-top: calc(var(--u) * 0.45) dashed #000000;
+      margin: calc(var(--u) * 2.4) 0;
+    }
     .meta-row {
       display: flex;
       justify-content: space-between;
-      gap: 6px;
-      font-size: 10.5px;
-      padding: 1px 0;
+      align-items: baseline;
+      gap: calc(var(--u) * 2);
+      font-size: calc(var(--u) * 4.3);
+      font-weight: 500;
+      padding: calc(var(--u) * 0.5) 0;
+      color: #000000;
+    }
+    .meta-row > span:first-child {
+      flex-shrink: 0;
+    }
+    .meta-row > span:last-child,
+    .meta-row > strong {
+      text-align: right;
+      font-weight: 700;
     }
     .item-block {
-      padding: 4px 0;
-      border-bottom: 1px dotted #94a3b8;
+      padding: calc(var(--u) * 1.8) 0;
+      border-bottom: calc(var(--u) * 0.35) dotted #000000;
     }
-    .item-name { font-weight: 700; font-size: 11.5px; }
-    .sub-line { font-size: 10px; color: #334155; padding-left: 8px; }
-    .disc-line { font-size: 10px; color: #92400e; padding-left: 8px; font-weight: 600; }
+    .item-block:last-child {
+      border-bottom: none;
+    }
+    .item-name {
+      font-weight: 800;
+      font-size: calc(var(--u) * 4.9);
+      line-height: 1.3;
+      color: #000000;
+    }
+    .sub-line {
+      font-size: calc(var(--u) * 4.1);
+      font-weight: 600;
+      color: #000000;
+      padding-left: calc(var(--u) * 2.8);
+      margin-top: calc(var(--u) * 0.5);
+    }
+    .disc-line {
+      font-size: calc(var(--u) * 4.1);
+      font-weight: 700;
+      color: #000000;
+      padding-left: calc(var(--u) * 2.8);
+      margin-top: calc(var(--u) * 0.5);
+    }
     .item-calc {
       display: flex;
       justify-content: space-between;
-      padding-left: 8px;
-      margin-top: 1px;
-      font-size: 11px;
+      align-items: baseline;
+      gap: calc(var(--u) * 2);
+      padding-left: calc(var(--u) * 2.8);
+      margin-top: calc(var(--u) * 0.8);
+      font-size: calc(var(--u) * 4.5);
+      font-weight: 600;
+      color: #000000;
     }
-    .font-bold { font-weight: 700; }
+    .font-bold { font-weight: 800; }
     .tot-row {
       display: flex;
       justify-content: space-between;
-      padding: 2px 0;
-      font-size: 11px;
+      align-items: baseline;
+      gap: calc(var(--u) * 2);
+      padding: calc(var(--u) * 0.7) 0;
+      font-size: calc(var(--u) * 4.6);
+      font-weight: 600;
+      color: #000000;
     }
     .tot-grand {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding: 5px 0 3px;
-      margin-top: 4px;
-      border-top: 1px solid #000000;
-      font-size: 14px;
+      gap: calc(var(--u) * 2);
+      padding: calc(var(--u) * 2) 0 calc(var(--u) * 1.2);
+      margin-top: calc(var(--u) * 1.5);
+      border-top: calc(var(--u) * 0.6) solid #000000;
+      font-size: calc(var(--u) * 6.0);
       font-weight: 800;
+      color: #000000;
     }
     .qr-section {
       text-align: center;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px dashed #000000;
+      margin-top: calc(var(--u) * 2.8);
+      padding-top: calc(var(--u) * 2.8);
+      border-top: calc(var(--u) * 0.45) dashed #000000;
     }
-    .qr-heading { font-size: 10.5px; font-weight: 700; margin-bottom: 4px; }
+    .qr-heading {
+      font-size: calc(var(--u) * 4.5);
+      font-weight: 800;
+      margin-bottom: calc(var(--u) * 1.6);
+      color: #000000;
+    }
     .qr-img-80 {
-      width: 150px;
-      height: 150px;
+      width: calc(var(--u) * 46);
+      height: calc(var(--u) * 46);
       object-fit: contain;
       display: block;
       margin: 0 auto;
     }
-    .qr-amount { font-size: 12px; font-weight: 800; margin-top: 3px; }
+    .qr-amount {
+      font-size: calc(var(--u) * 5.2);
+      font-weight: 800;
+      margin-top: calc(var(--u) * 1.4);
+      color: #000000;
+    }
+    .bank-box {
+      margin-top: calc(var(--u) * 2.4);
+      padding: calc(var(--u) * 2.2);
+      border: calc(var(--u) * 0.45) dashed #000000;
+      border-radius: calc(var(--u) * 1.2);
+      font-size: calc(var(--u) * 4.2);
+      line-height: 1.42;
+      font-weight: 500;
+      color: #000000;
+    }
+    .bank-title {
+      font-weight: 800;
+      margin-bottom: calc(var(--u) * 0.8);
+    }
+    .note-line {
+      margin-top: calc(var(--u) * 2);
+      font-size: calc(var(--u) * 4.2);
+      font-weight: 600;
+      color: #000000;
+    }
     .footer {
       text-align: center;
-      margin-top: 8px;
-      padding-top: 6px;
-      border-top: 1px dashed #000000;
-      font-size: 10.5px;
+      margin-top: calc(var(--u) * 3);
+      padding-top: calc(var(--u) * 2.4);
+      padding-bottom: calc(var(--u) * 4);
+      border-top: calc(var(--u) * 0.45) dashed #000000;
+      font-size: calc(var(--u) * 4.2);
+      font-weight: 600;
       font-style: italic;
+      color: #000000;
     }
   </style>
 </head>
@@ -537,7 +648,7 @@ export function build80mmReceiptHtml(
 
   <div class="divider"></div>
 
-  ${itemsHtml}
+  <div>${itemsHtml}</div>
 
   <div class="divider"></div>
 
@@ -562,8 +673,8 @@ export function build80mmReceiptHtml(
       : ''
   }
 
-  ${order.note ? `<div class="muted" style="margin-top:6px"><strong>Ghi chú:</strong> ${escapeHtml(order.note)}</div>` : ''}
-  ${wifiInfo ? `<div class="muted" style="margin-top:3px">Wi-Fi: ${wifiInfo}</div>` : ''}
+  ${order.note ? `<div class="note-line"><strong>Ghi chú:</strong> ${escapeHtml(order.note)}</div>` : ''}
+  ${wifiInfo ? `<div class="note-line">Wi-Fi: ${wifiInfo}</div>` : ''}
 
   ${qrBlockHtml}
 
@@ -573,29 +684,38 @@ export function build80mmReceiptHtml(
 }
 
 /**
- * Triggers the native browser Print dialog via a dedicated hidden iframe containing
- * clean standalone HTML/CSS (works reliably across desktop browsers & modals without
- * layout clipping). Returns true if invoked cleanly, or false if the host sandbox suppressed it.
+ * Triggers the native browser/Android Print dialog via a dedicated off-screen iframe
+ * sized cleanly (never 0x0, avoiding Android WebView / iMinPrinterPlugin scale bugs)
+ * and preserved until printing finishes.
  */
-export function triggerHtmlPrint(html: string): Promise<{ printed: boolean }> {
+export function triggerHtmlPrint(
+  html: string,
+  paperSize: 'a5' | '80mm' = 'a5',
+): Promise<{ printed: boolean }> {
   return new Promise((resolve) => {
+    // Clean up any leftover previous print frame
+    document.querySelectorAll('iframe[data-pos-print-frame="true"]').forEach((el) => el.remove());
+
     const iframe = document.createElement('iframe');
+    iframe.setAttribute('data-pos-print-frame', 'true');
     iframe.setAttribute('aria-hidden', 'true');
     iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
+    iframe.style.left = '-10000px';
+    iframe.style.top = '0';
+    iframe.style.width = paperSize === '80mm' ? '302px' : '560px';
+    iframe.style.height = '900px';
     iframe.style.border = '0';
     iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
     document.body.appendChild(iframe);
 
+    let cleaned = false;
     const cleanup = () => {
-      window.setTimeout(() => {
-        if (iframe.parentNode) {
-          iframe.parentNode.removeChild(iframe);
-        }
-      }, 1000);
+      if (cleaned) return;
+      cleaned = true;
+      if (iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
     };
 
     const runPrint = () => {
@@ -606,13 +726,19 @@ export function triggerHtmlPrint(html: string): Promise<{ printed: boolean }> {
           resolve({ printed: false });
           return;
         }
+        // Keep iframe alive until afterprint (critical for async Android Print / iMinPrinterPlugin)
+        win.addEventListener('afterprint', () => {
+          window.setTimeout(cleanup, 1500);
+        });
+        // Fallback cleanup after 2 minutes if afterprint doesn't fire
+        window.setTimeout(cleanup, 120_000);
+
         win.focus();
         const started = Date.now();
         win.print();
         const elapsed = Date.now() - started;
-        cleanup();
-        // If print() returned synchronously in < 25ms inside a sandboxed iframe, the
-        // browser may have suppressed the native print popup due to iframe sandbox policy.
+        // On Android Chrome, win.print() may return asynchronously in < 25ms when opening the native print spooler,
+        // so treat top-level browsing contexts as printed.
         resolve({ printed: elapsed >= 25 || window.top === window.self });
       } catch {
         cleanup();
@@ -636,8 +762,29 @@ export function triggerHtmlPrint(html: string): Promise<{ printed: boolean }> {
     doc.write(html);
     doc.close();
 
-    // Wait briefly for inline image/layout paint before invoking print
-    window.setTimeout(runPrint, 220);
+    // Wait for any inline QR image to finish decoding before printing
+    const images = Array.from(doc.images);
+    if (images.length === 0 || images.every((img) => img.complete)) {
+      window.setTimeout(runPrint, 200);
+    } else {
+      let triggered = false;
+      const triggerOnce = () => {
+        if (triggered) return;
+        triggered = true;
+        window.setTimeout(runPrint, 150);
+      };
+      let remaining = images.filter((img) => !img.complete).length;
+      images.forEach((img) => {
+        if (img.complete) return;
+        const done = () => {
+          remaining -= 1;
+          if (remaining <= 0) triggerOnce();
+        };
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+      window.setTimeout(triggerOnce, 900);
+    }
   });
 }
 

@@ -52,7 +52,7 @@ export function ReceiptModal({
     setPrinting(true);
     setSandboxHint(false);
     const html = buildCurrentHtml();
-    const { printed } = await triggerHtmlPrint(html);
+    const { printed } = await triggerHtmlPrint(html, paperSize);
     setPrinting(false);
     if (!printed) {
       setSandboxHint(true);
@@ -337,78 +337,78 @@ export function ReceiptModal({
             </div>
           ) : (
             /* -------------------- 80MM THERMAL ROLL PREVIEW -------------------- */
-            <div className="print-receipt-root w-[312px] bg-white border border-slate-300 px-4 py-5 text-slate-950 text-[12px] leading-snug shadow-sm self-start">
+            <div className="print-receipt-root print-receipt-80mm w-[312px] bg-white border border-slate-300 px-3.5 py-4 text-black text-[13.5px] leading-snug shadow-sm self-start">
               <div className="text-center space-y-0.5">
-                <div className="text-base font-extrabold tracking-tight">{storeName}</div>
-                {address && <div className="text-[11px] text-slate-600">{address}</div>}
-                {phone && <div className="text-[11px] text-slate-600 tabular-nums">ĐT: {phone}</div>}
-                <div className="pt-2 mt-2 border-t border-dashed border-slate-400 text-sm font-extrabold">
+                <div className="text-xl font-extrabold tracking-tight text-black">{storeName}</div>
+                {address && <div className="text-[12px] font-semibold text-black">{address}</div>}
+                {phone && <div className="text-[12px] font-semibold text-black tabular-nums">ĐT: {phone}</div>}
+                <div className="pt-2 mt-2 border-t border-dashed border-black text-base font-extrabold text-black">
                   {isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}
                 </div>
               </div>
 
-              <div className="my-2.5 py-2 border-y border-dashed border-slate-400 space-y-1 text-[11px]">
+              <div className="my-2.5 py-2 border-y border-dashed border-black space-y-1 text-[12.5px] font-medium text-black">
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Số HĐ:</span>
+                  <span>Số HĐ:</span>
                   <span className="font-bold tabular-nums">{order.orderNumber}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Thời gian:</span>
-                  <span className="tabular-nums">{order.displayTime}</span>
+                  <span>Thời gian:</span>
+                  <span className="font-bold tabular-nums">{order.displayTime}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Bàn / Khu:</span>
+                  <span>Bàn / Khu:</span>
                   <span className="font-bold">{order.tableName}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Khách hàng:</span>
-                  <span>{order.customerName || 'Khách lẻ'}</span>
+                  <span>Khách hàng:</span>
+                  <span className="font-bold">{order.customerName || 'Khách lẻ'}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Thu ngân:</span>
-                  <span>{order.cashierName || 'Thu ngân'}</span>
+                  <span>Thu ngân:</span>
+                  <span className="font-bold">{order.cashierName || 'Thu ngân'}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Thanh toán:</span>
-                  <span>
+                  <span>Thanh toán:</span>
+                  <span className="font-bold">
                     {isProvisional ? 'Chưa thanh toán' : getPaymentMethodLabel(order.paymentMethod)}
                   </span>
                 </div>
               </div>
 
-              <div className="divide-y divide-dotted divide-slate-300">
+              <div className="divide-y divide-dotted divide-black">
                 {order.items.map((item, idx) => {
                   const unitPrice = getItemUnitPrice(item);
                   const itemDiscount = getItemDiscountAmount(item);
                   const netTotal = getItemNetTotal(item);
                   return (
                     <div key={`${item.itemId}_${idx}`} className="py-1.5">
-                      <div className="font-bold text-slate-900">
+                      <div className="font-extrabold text-[14.5px] text-black">
                         {idx + 1}. {item.name}
                       </div>
                       {item.toppings && item.toppings.length > 0 && (
-                        <div className="space-y-0.5 pl-2 mt-0.5">
-                          {item.toppings.map((t, idx) => (
-                            <div key={idx} className="text-[10.5px] text-slate-600 tabular-nums">
+                        <div className="space-y-0.5 pl-2.5 mt-0.5">
+                          {item.toppings.map((t, tIdx) => (
+                            <div key={tIdx} className="text-[12px] font-semibold text-black tabular-nums">
                               + {t.name} x{item.qty} = {formatVND(t.price * item.qty)}
                             </div>
                           ))}
                         </div>
                       )}
                       {item.note && (
-                        <div className="text-[10.5px] text-slate-500 pl-2 italic">
+                        <div className="text-[12px] font-semibold text-black pl-2.5 italic">
                           Ghi chú: {item.note}
                         </div>
                       )}
-                      <div className="flex justify-between pl-2 mt-0.5 tabular-nums text-[11.5px]">
+                      <div className="flex justify-between pl-2.5 mt-0.5 tabular-nums text-[13.5px] font-semibold text-black">
                         <span>
                           {item.qty} × {formatVND(unitPrice)}
                         </span>
-                        <span className="font-bold">{formatVND(netTotal)}</span>
+                        <span className="font-extrabold">{formatVND(netTotal)}</span>
                       </div>
                       {itemDiscount > 0 && (
-                        <div className="text-[10.5px] text-amber-800 pl-2 tabular-nums font-medium">
-                          Giảm món:{' '}
+                        <div className="text-[12px] text-black pl-2.5 tabular-nums font-bold">
+                          Chiết khấu món:{' '}
                           {item.discountType === 'percent' && (item.discountValue ?? 0) > 0
                             ? `-${item.discountValue}% (-${formatVND(itemDiscount)})`
                             : `-${formatVND(itemDiscount)}`}
@@ -419,13 +419,13 @@ export function ReceiptModal({
                 })}
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-dashed border-slate-400 space-y-1 text-[11.5px]">
+              <div className="mt-2.5 pt-2 border-t border-dashed border-black space-y-1 text-[13.5px] font-semibold text-black">
                 <div className="flex justify-between">
                   <span>Tạm tính ({totalQty} món):</span>
-                  <span className="font-bold tabular-nums">{formatVND(order.subtotal)}</span>
+                  <span className="font-extrabold tabular-nums">{formatVND(order.subtotal)}</span>
                 </div>
                 {order.discountAmount > 0 && (
-                  <div className="flex justify-between text-amber-800">
+                  <div className="flex justify-between">
                     <span>
                       Giảm giá
                       {order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:
@@ -439,17 +439,17 @@ export function ReceiptModal({
                     <span className="tabular-nums">{formatVND(order.vatAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-slate-900 text-sm font-extrabold">
+                <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t-2 border-black text-[17px] font-extrabold text-black">
                   <span>TỔNG CỘNG:</span>
                   <span className="tabular-nums">{formatVND(order.total)}</span>
                 </div>
                 {!isProvisional && order.paymentMethod === 'cash' && (
                   <>
-                    <div className="flex justify-between text-[11px] text-slate-700 pt-1">
+                    <div className="flex justify-between text-[13px] pt-1">
                       <span>Khách đưa:</span>
                       <span className="tabular-nums">{formatVND(order.cashReceived)}</span>
                     </div>
-                    <div className="flex justify-between text-[11px] text-slate-900 font-semibold">
+                    <div className="flex justify-between text-[13px] font-extrabold">
                       <span>Tiền thối lại:</span>
                       <span className="tabular-nums">{formatVND(order.changeAmount)}</span>
                     </div>
@@ -458,33 +458,50 @@ export function ReceiptModal({
               </div>
 
               {order.note && (
-                <div className="mt-2 text-[11px] text-slate-700">
+                <div className="mt-2 text-[12.5px] font-semibold text-black">
                   <strong>Ghi chú:</strong> {order.note}
                 </div>
               )}
-              {wifiInfo && <div className="mt-1 text-[11px] text-slate-700">Wi-Fi: {wifiInfo}</div>}
+              {wifiInfo && (
+                <div className="mt-1 text-[12.5px] font-semibold text-black">Wi-Fi: {wifiInfo}</div>
+              )}
 
               {qrDataUrl && (
-                <div className="mt-3 pt-3 border-t border-dashed border-slate-400 text-center space-y-1.5">
-                  <div className="text-[11px] font-bold">QUÉT MÃ QR THANH TOÁN</div>
+                <div className="mt-3 pt-3 border-t border-dashed border-black text-center space-y-1.5">
+                  <div className="text-[13px] font-extrabold text-black">QUÉT MÃ QR THANH TOÁN</div>
                   <img
                     src={qrDataUrl}
                     alt="Mã QR thanh toán"
-                    className="w-[150px] h-[150px] object-contain mx-auto border border-slate-200 rounded p-1"
+                    className="w-[140px] h-[140px] object-contain mx-auto"
                   />
-                  <div className="text-xs font-extrabold tabular-nums">{formatVND(order.total)}</div>
-                  {(settings?.bankName || settings?.bankAccount || settings?.bankOwner) && (
-                    <div className="mt-2 text-[10.5px] text-left border border-dashed border-slate-400 rounded p-2 bg-slate-50 space-y-0.5">
-                      <div className="font-bold">Thông tin chuyển khoản:</div>
-                      {settings?.bankName && <div>Ngân hàng: <strong>{settings.bankName}</strong></div>}
-                      {settings?.bankAccount && <div>STK: <strong className="tabular-nums">{settings.bankAccount}</strong></div>}
-                      {settings?.bankOwner && <div>Chủ TK: <strong>{settings.bankOwner}</strong></div>}
+                  <div className="text-[15px] font-extrabold tabular-nums text-black">
+                    {formatVND(order.total)}
+                  </div>
+                </div>
+              )}
+
+              {(settings?.bankName || settings?.bankAccount || settings?.bankOwner) && (
+                <div className="mt-2.5 text-[12.5px] text-left border border-dashed border-black rounded p-2 space-y-0.5 text-black">
+                  <div className="font-extrabold">Thông tin chuyển khoản:</div>
+                  {settings?.bankName && (
+                    <div>
+                      Ngân hàng: <strong>{settings.bankName}</strong>
+                    </div>
+                  )}
+                  {settings?.bankAccount && (
+                    <div>
+                      STK: <strong className="tabular-nums">{settings.bankAccount}</strong>
+                    </div>
+                  )}
+                  {settings?.bankOwner && (
+                    <div>
+                      Chủ TK: <strong>{settings.bankOwner}</strong>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="mt-3 pt-2.5 border-t border-dashed border-slate-400 text-center text-[11px] italic text-slate-700">
+              <div className="mt-3 pt-2.5 border-t border-dashed border-black text-center text-[12.5px] font-semibold italic text-black">
                 {footerText}
               </div>
             </div>

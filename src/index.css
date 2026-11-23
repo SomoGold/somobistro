@@ -67,9 +67,16 @@
     margin: 0 auto !important;
     padding: 4mm 6mm !important;
     background: #ffffff !important;
-    color: #0f172a !important;
+    color: #000000 !important;
     box-shadow: none !important;
     border: none !important;
+  }
+
+  .print-receipt-80mm {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 2vw 3.5vw !important;
+    font-size: 4.5vw !important;
   }
 
   .print-report-root {
