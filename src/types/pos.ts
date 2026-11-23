@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type MenuCategory =
+  | 'Combo'
   | 'Cà phê'
   | 'Trà & Matcha'
   | 'Giải khát'
@@ -9,6 +10,7 @@ export type MenuCategory =
   | 'Bánh ngọt';
 
 export const MENU_CATEGORIES: MenuCategory[] = [
+  'Combo',
   'Cà phê',
   'Trà & Matcha',
   'Giải khát',
@@ -51,6 +53,11 @@ export interface StoreSettings {
   updatedAt?: Timestamp | null;
 }
 
+export interface ComboTopping {
+  id: string;
+  name: string;
+}
+
 export interface MenuItem {
   id: string;
   ownerId: string;
@@ -62,6 +69,9 @@ export interface MenuItem {
   unit: string;
   imageUrl: string;
   available: boolean;
+  isCombo?: boolean;
+  comboToppings?: ComboTopping[];
+  comboMaxToppings?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -175,6 +185,7 @@ export const LIMITS = {
   CANCEL_REASON_MAX: 200,
   MAX_ORDER_ITEMS: 50,
   MAX_ITEM_TOPPINGS: 15,
+  MAX_COMBO_TOPPINGS: 15,
   MAX_PRICE: 100000000,
   SKU_PATTERN: /^[a-zA-Z0-9_-]+$/,
 } as const;

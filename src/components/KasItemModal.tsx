@@ -14,6 +14,7 @@ import {
 } from '../lib/format';
 import {
   clampNumber,
+  ComboTopping,
   DiscountType,
   LIMITS,
   OrderItem,
@@ -25,6 +26,9 @@ import {
 interface KasItemModalProps {
   ownerId: string;
   item: OrderItem;
+  isCombo?: boolean;
+  comboToppings?: ComboTopping[];
+  comboMaxToppings?: number;
   toppings: Topping[];
   onSave: (updated: OrderItem) => void;
   onDelete: () => void;
@@ -46,6 +50,9 @@ const QUICK_NOTES = [
 export function KasItemModal({
   ownerId,
   item,
+  isCombo = false,
+  comboToppings = [],
+  comboMaxToppings = 0,
   toppings,
   onSave,
   onDelete,
@@ -61,9 +68,15 @@ export function KasItemModal({
     note: item.note ?? '',
   }));
 
+  const hasComboPool = isCombo && comboToppings.length > 0;
+  const hasComboLimit = hasComboPool && comboMaxToppings > 0;
+  const comboPoolIds = new Set(comboToppings.map((ct) => ct.id));
+
   const [showDiscountEditor, setShowDiscountEditor] = useState(
     (item.discountValue ?? 0) > 0 || (item.discountAmount ?? 0) > 0,
   );
+  const [comboTab, setComboTab] = useState<'combo' | 'extra'>(hasComboPool ? 'combo' : 'extra');
+  const [comboFreeMode, setComboFreeMode] = useState(isCombo && !hasComboLimit);
   const [quickToppingName, setQuickToppingName] = useState('');
   const [quickToppingPrice, setQuickToppingPrice] = useState('');
   const [creatingTopping, setCreatingTopping] = useState(false);
@@ -71,6 +84,10 @@ export function KasItemModal({
   const availableToppings = toppings
     .filter((t) => t.available)
     .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+
+  const selectedComboCount = (draft.toppings ?? []).filter(
+    (t) => t.price <= 0 && comboPoolIds.has(t.id),
+  ).length;
 
   const unitPrice = getItemUnitPrice(draft);
   const lineGross = getItemGrossTotal(draft);
@@ -88,7 +105,7 @@ export function KasItemModal({
     });
   };
 
-  const toggleTopping = (tp: OrderItemTopping) => {
+  const toggleTopping = (tp: OrderItemTopping, isFromComboPool = false) => {
     setDraft((prev) => {
       const curr = prev.toppings ?? [];
       const exists = curr.some((t) => t.id === tp.id);
@@ -96,6 +113,18 @@ export function KasItemModal({
       if (exists) {
         nextToppings = curr.filter((t) => t.id !== tp.id);
       } else {
+        if (isFromComboPool && hasComboLimit) {
+          const currComboCount = curr.filter(
+            (t) => t.price <= 0 && comboPoolIds.has(t.id),
+          ).length;
+          if (currComboCount >= comboMaxToppings) {
+            onNotify(
+              `Combo này chỉ được chọn tối đa ${comboMaxToppings} món kèm trong danh sách đã cài.`,
+              'error',
+            );
+            return prev;
+          }
+        }
         if (curr.length >= LIMITS.MAX_ITEM_TOPPINGS) {
           onNotify(`Tối đa ${LIMITS.MAX_ITEM_TOPPINGS} topping cho mỗi món.`, 'error');
           return prev;
@@ -164,7 +193,11 @@ export function KasItemModal({
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      toggleTopping({ id: newId, name: cleanName, price });
+      toggleTopping({
+        id: newId,
+        name: cleanName,
+        price: isCombo && !hasComboLimit && comboFreeMode ? 0 : price,
+      });
       setQuickToppingName('');
       setQuickToppingPrice('');
       onNotify(`Đã tạo và thêm topping "${cleanName}".`);
@@ -177,6 +210,22 @@ export function KasItemModal({
   };
 
   const handleConfirm = () => {
+    if (hasComboLimit) {
+      if (selectedComboCount === 0) {
+        onNotify(
+          `Vui lòng chọn món kèm trong Combo (tối đa ${comboMaxToppings} món).`,
+          'error',
+        );
+        return;
+      }
+      if (selectedComboCount > comboMaxToppings) {
+        onNotify(
+          `Combo này chỉ được chọn tối đa ${comboMaxToppings} món kèm.`,
+          'error',
+        );
+        return;
+      }
+    }
     onSave({
       ...draft,
       discountAmount: getItemDiscountAmount(draft),
@@ -274,8 +323,12 @@ export function KasItemModal({
                         </span>
                         <div className="leading-tight">
                           <div className="text-sm font-semibold text-slate-900">{tp.name}</div>
-                          <div className="text-xs text-cyan-700 font-semibold tabular-nums">
-                            +{formatVND(tp.price)}
+                          <div
+                            className={`text-xs font-semibold tabular-nums ${
+                              tp.price === 0 ? 'text-orange-600' : 'text-cyan-700'
+                            }`}
+                          >
+                            {tp.price === 0 ? 'Kèm combo (0 ₫)' : `+${formatVND(tp.price)}`}
                           </div>
                         </div>
                         <button
@@ -291,7 +344,9 @@ export function KasItemModal({
                   </div>
                 ) : (
                   <div className="text-sm text-slate-400 py-2">
-                    Chưa chọn topping thêm. Nhấn vào các topping bên dưới để thêm vào món này.
+                    {hasComboLimit
+                      ? `Hãy chọn tối đa ${comboMaxToppings} món kèm miễn phí trong danh sách Combo bên dưới.`
+                      : 'Chưa chọn topping thêm. Nhấn vào các topping bên dưới để thêm vào món này.'}
                   </div>
                 )}
 
@@ -429,84 +484,216 @@ export function KasItemModal({
 
           {/* Bottom Split: Toppings Picker (Left) + Notes & Quick Chips (Right) */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-            {/* Bottom-Left: Topping Selector & Quick Create */}
+            {/* Bottom-Left: Combo Pool Picker & Extra Paid Toppings */}
             <div className="md:col-span-7 flex flex-col space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="px-4 py-1.5 rounded-md bg-cyan-600 text-white text-xs font-bold">
-                  Topping thêm ({availableToppings.length})
-                </span>
-                <span className="text-xs text-slate-500">Nhấn để chọn / bỏ chọn</span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {hasComboPool ? (
+                  <div className="inline-flex rounded-md bg-white border border-slate-300 p-0.5 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setComboTab('combo')}
+                      className={`px-3 py-1 rounded transition-colors ${
+                        comboTab === 'combo'
+                          ? 'bg-orange-500 text-white'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {hasComboLimit
+                        ? `Món kèm Combo (${selectedComboCount}/${comboMaxToppings})`
+                        : `Thành phần Combo (${comboToppings.length})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComboTab('extra')}
+                      className={`px-3 py-1 rounded transition-colors ${
+                        comboTab === 'extra'
+                          ? 'bg-cyan-600 text-white'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Topping gọi thêm ({availableToppings.length})
+                    </button>
+                  </div>
+                ) : (
+                  <span className="px-4 py-1.5 rounded-md bg-cyan-600 text-white text-xs font-bold">
+                    {isCombo ? 'Topping / Thành phần' : 'Topping thêm'} ({availableToppings.length})
+                  </span>
+                )}
+
+                {hasComboLimit && comboTab === 'combo' ? (
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded tabular-nums ${
+                      selectedComboCount >= comboMaxToppings
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : selectedComboCount > 0
+                          ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    }`}
+                  >
+                    {selectedComboCount >= comboMaxToppings
+                      ? `Đã đủ ${selectedComboCount}/${comboMaxToppings} món`
+                      : `Chọn tối đa ${comboMaxToppings} món (0 ₫)`}
+                  </span>
+                ) : isCombo && !hasComboLimit && comboTab === 'extra' ? (
+                  <div className="inline-flex rounded-md bg-white border border-slate-300 p-0.5 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setComboFreeMode(true)}
+                      className={`px-2 py-0.5 rounded transition-colors ${
+                        comboFreeMode
+                          ? 'bg-orange-500 text-white'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Kèm combo (0 ₫)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComboFreeMode(false)}
+                      className={`px-2 py-0.5 rounded transition-colors ${
+                        !comboFreeMode
+                          ? 'bg-cyan-600 text-white'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Tính giá thêm
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-500">
+                    {hasComboLimit && comboTab === 'extra'
+                      ? 'Gọi thêm ngoài Combo (tính tiền)'
+                      : 'Nhấn để chọn / bỏ chọn'}
+                  </span>
+                )}
               </div>
 
               <div className="bg-white border border-slate-300 rounded-lg p-3 space-y-3 flex-1">
-                {availableToppings.length === 0 ? (
-                  <div className="text-xs text-slate-500 py-4 text-center">
-                    Chưa có topping nào. Tạo nhanh topping ngay bên dưới.
-                  </div>
+                {hasComboPool && comboTab === 'combo' ? (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[195px] overflow-y-auto pos-scroll pr-0.5">
+                      {comboToppings.map((ct) => {
+                        const isSelected = (draft.toppings ?? []).some(
+                          (t) => t.id === ct.id && t.price <= 0,
+                        );
+                        const isLockedByLimit =
+                          hasComboLimit && !isSelected && selectedComboCount >= comboMaxToppings;
+                        return (
+                          <button
+                            key={ct.id}
+                            type="button"
+                            onClick={() =>
+                              toggleTopping({ id: ct.id, name: ct.name, price: 0 }, true)
+                            }
+                            className={`relative text-left p-2.5 rounded-md border transition-all flex flex-col justify-between min-h-[62px] ${
+                              isSelected
+                                ? 'bg-orange-50 border-orange-500 ring-1 ring-orange-500/30'
+                                : isLockedByLimit
+                                  ? 'bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed'
+                                  : 'bg-slate-50/70 border-slate-200 hover:border-orange-400 hover:bg-white'
+                            }`}
+                          >
+                            <div className="text-xs font-bold text-slate-900 leading-snug pr-4 line-clamp-2">
+                              {ct.name}
+                            </div>
+                            <div className="text-xs font-semibold tabular-nums text-orange-600 text-right mt-1">
+                              0 ₫ (Combo)
+                            </div>
+                            {isSelected && (
+                              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded bg-orange-500 text-white flex items-center justify-center">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {hasComboLimit && selectedComboCount >= comboMaxToppings && (
+                      <div className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2.5 py-1.5">
+                        Đã chọn đủ {comboMaxToppings}/{comboMaxToppings} món kèm trong Combo. Bỏ chọn 1 món nếu muốn đổi, hoặc chuyển tab <strong>Topping gọi thêm</strong> để mua thêm.
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[155px] overflow-y-auto pos-scroll pr-0.5">
-                    {availableToppings.map((tp) => {
-                      const isSelected = (draft.toppings ?? []).some((t) => t.id === tp.id);
-                      return (
-                        <button
-                          key={tp.id}
-                          type="button"
-                          onClick={() =>
-                            toggleTopping({ id: tp.id, name: tp.name, price: tp.price })
-                          }
-                          className={`relative text-left p-2.5 rounded-md border transition-all flex flex-col justify-between min-h-[62px] ${
-                            isSelected
-                              ? 'bg-cyan-50 border-cyan-600 ring-1 ring-cyan-600/30'
-                              : 'bg-slate-50/70 border-slate-200 hover:border-cyan-500 hover:bg-white'
-                          }`}
-                        >
-                          <div className="text-xs font-bold text-slate-900 leading-snug pr-4 line-clamp-2">
-                            {tp.name}
-                          </div>
-                          <div className="text-xs font-semibold tabular-nums text-cyan-700 text-right mt-1">
-                            {formatDotNumber(tp.price)}
-                          </div>
-                          {isSelected && (
-                            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded bg-cyan-600 text-white flex items-center justify-center">
-                              <Check className="w-3 h-3 stroke-[3]" />
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                  <>
+                    {availableToppings.length === 0 ? (
+                      <div className="text-xs text-slate-500 py-4 text-center">
+                        Chưa có topping nào. Tạo nhanh topping ngay bên dưới.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[155px] overflow-y-auto pos-scroll pr-0.5">
+                        {availableToppings.map((tp) => {
+                          const effectivePrice =
+                            isCombo && !hasComboLimit && comboFreeMode ? 0 : tp.price;
+                          const paidId =
+                            hasComboLimit && comboPoolIds.has(tp.id) ? `extra_${tp.id}` : tp.id;
+                          const isSelected = (draft.toppings ?? []).some((t) => t.id === paidId);
+                          return (
+                            <button
+                              key={tp.id}
+                              type="button"
+                              onClick={() =>
+                                toggleTopping({ id: paidId, name: tp.name, price: effectivePrice })
+                              }
+                              className={`relative text-left p-2.5 rounded-md border transition-all flex flex-col justify-between min-h-[62px] ${
+                                isSelected
+                                  ? 'bg-cyan-50 border-cyan-600 ring-1 ring-cyan-600/30'
+                                  : 'bg-slate-50/70 border-slate-200 hover:border-cyan-500 hover:bg-white'
+                              }`}
+                            >
+                              <div className="text-xs font-bold text-slate-900 leading-snug pr-4 line-clamp-2">
+                                {tp.name}
+                              </div>
+                              <div
+                                className={`text-xs font-semibold tabular-nums text-right mt-1 ${
+                                  effectivePrice === 0 ? 'text-orange-600' : 'text-cyan-700'
+                                }`}
+                              >
+                                {effectivePrice === 0 ? '0 ₫ (Combo)' : formatDotNumber(tp.price)}
+                              </div>
+                              {isSelected && (
+                                <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded bg-cyan-600 text-white flex items-center justify-center">
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
-                {/* Quick Create Topping Bar */}
-                <form
-                  onSubmit={handleQuickCreateTopping}
-                  className="pt-2.5 border-t border-slate-200 flex items-center gap-2"
-                >
-                  <input
-                    type="text"
-                    value={quickToppingName}
-                    onChange={(e) =>
-                      setQuickToppingName(e.target.value.slice(0, LIMITS.TOPPING_NAME_MAX))
-                    }
-                    placeholder="Tạo nhanh topping mới..."
-                    className="flex-1 min-w-0 h-8 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:bg-white focus:border-cyan-600"
-                  />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={quickToppingPrice}
-                    onChange={(e) => setQuickToppingPrice(formatDotNumber(e.target.value))}
-                    placeholder="Giá (10.000)"
-                    className="w-24 h-8 px-2 text-xs font-semibold tabular-nums text-right bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:bg-white focus:border-cyan-600"
-                  />
-                  <button
-                    type="submit"
-                    disabled={creatingTopping}
-                    className="h-8 px-3 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-md whitespace-nowrap"
-                  >
-                    + Tạo
-                  </button>
-                </form>
+                    {/* Quick Create Topping Bar */}
+                    <form
+                      onSubmit={handleQuickCreateTopping}
+                      className="pt-2.5 border-t border-slate-200 flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        value={quickToppingName}
+                        onChange={(e) =>
+                          setQuickToppingName(e.target.value.slice(0, LIMITS.TOPPING_NAME_MAX))
+                        }
+                        placeholder="Tạo nhanh topping mới..."
+                        className="flex-1 min-w-0 h-8 px-2.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:bg-white focus:border-cyan-600"
+                      />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={quickToppingPrice}
+                        onChange={(e) => setQuickToppingPrice(formatDotNumber(e.target.value))}
+                        placeholder="Giá (10.000)"
+                        className="w-24 h-8 px-2 text-xs font-semibold tabular-nums text-right bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:bg-white focus:border-cyan-600"
+                      />
+                      <button
+                        type="submit"
+                        disabled={creatingTopping}
+                        className="h-8 px-3 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-md whitespace-nowrap"
+                      >
+                        + Tạo
+                      </button>
+                    </form>
+                  </>
+                )}
               </div>
             </div>
 

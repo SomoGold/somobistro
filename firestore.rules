@@ -63,10 +63,18 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function isValidComboTopping(t) {
+      return t is map
+        && t.keys().hasOnly(['id', 'name'])
+        && t.id is string && t.id.size() >= 1 && t.id.size() <= 128
+        && t.name is string && t.name.size() >= 1 && t.name.size() <= 80;
+    }
+
     function isValidMenuItem(data) {
       return data.keys().hasOnly([
           'ownerId', 'sku', 'name', 'category', 'price', 'cost',
-          'unit', 'imageUrl', 'available', 'createdAt', 'updatedAt'
+          'unit', 'imageUrl', 'available', 'isCombo', 'comboToppings',
+          'comboMaxToppings', 'createdAt', 'updatedAt'
         ])
         && data.ownerId == request.auth.uid
         && data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 32
@@ -78,6 +86,16 @@ service cloud.firestore {
         && data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 24
         && data.imageUrl is string && data.imageUrl.size() <= 500
         && data.available is bool
+        && (!('isCombo' in data) || data.isCombo is bool)
+        && (
+          !('comboToppings' in data)
+          || (
+            data.comboToppings is list
+            && data.comboToppings.size() <= 15
+            && (data.comboToppings.size() == 0 || isValidComboTopping(data.comboToppings[0]))
+          )
+        )
+        && (!('comboMaxToppings' in data) || (data.comboMaxToppings is number && data.comboMaxToppings >= 0 && data.comboMaxToppings <= 15))
         && (!('createdAt' in data) || data.createdAt is timestamp)
         && data.updatedAt is timestamp;
     }
@@ -320,7 +338,8 @@ service cloud.firestore {
           incoming().diff(existing()).affectedKeys().hasOnly(['available', 'updatedAt']) ||
           // Action: EditMenuItem
           incoming().diff(existing()).affectedKeys().hasOnly([
-            'sku', 'name', 'category', 'price', 'cost', 'unit', 'imageUrl', 'available', 'updatedAt'
+            'sku', 'name', 'category', 'price', 'cost', 'unit', 'imageUrl',
+            'available', 'isCombo', 'comboToppings', 'comboMaxToppings', 'updatedAt'
           ])
         );
 

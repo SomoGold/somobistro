@@ -611,7 +611,8 @@ export default function App() {
   return (
     <>
       <OfflineIndicator />
-      {isPosScreen ? (
+      <div className={receiptState ? 'no-print' : undefined}>
+        {isPosScreen ? (
         /* ================= FULL-SCREEN KAS POS TERMINAL ================= */
         <PosTerminal
           ownerId={user.uid}
@@ -836,9 +837,10 @@ export default function App() {
             )}
           </main>
         </div>
-      )}
+        )}
+      </div>
 
-      {/* A5 Invoice Print Modal */}
+      {/* Receipt Print Modal (A5 / 80mm) */}
       {receiptState && (
         <ReceiptModal
           order={receiptState.order}

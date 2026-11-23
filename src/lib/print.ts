@@ -3,7 +3,6 @@ import {
   formatVND,
   getItemDiscountAmount,
   getItemNetTotal,
-  getItemUnitPrice,
   getPaymentMethodLabel,
 } from './format';
 
@@ -33,21 +32,13 @@ export function buildA5InvoiceHtml(
   const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
 
   const rowsHtml = order.items
-    .map((item, idx) => {
-      const unitPrice = getItemUnitPrice(item);
+    .map((item) => {
+      const baseTotal = item.price * item.qty;
+      const toppings = item.toppings ?? [];
+      const hasToppings = toppings.length > 0;
       const itemDiscount = getItemDiscountAmount(item);
       const netTotal = getItemNetTotal(item);
-      const toppingsHtml =
-        item.toppings && item.toppings.length > 0
-          ? item.toppings
-              .map(
-                (t) =>
-                  `<div class="item-topping">+ ${escapeHtml(t.name)} x${item.qty} = ${escapeHtml(
-                    formatVND(t.price * item.qty),
-                  )}</div>`,
-              )
-              .join('')
-          : '';
+      const hasSubRows = hasToppings;
       const discountLabel =
         itemDiscount > 0
           ? item.discountType === 'percent' && (item.discountValue ?? 0) > 0
@@ -55,20 +46,51 @@ export function buildA5InvoiceHtml(
             : `-${escapeHtml(formatVND(itemDiscount))}`
           : '—';
 
-      return `
-      <tr>
-        <td class="col-center">${idx + 1}</td>
+      const mainRowHtml = `
+      <tr class="${hasSubRows ? 'row-no-border' : ''}">
         <td>
           <div class="item-name">${escapeHtml(item.name)}</div>
-          ${toppingsHtml}
           ${item.note ? `<div class="item-note">Ghi chú: ${escapeHtml(item.note)}</div>` : ''}
         </td>
         <td class="col-center">${item.qty}</td>
-        <td class="col-right">${escapeHtml(formatVND(unitPrice))}</td>
-        <td class="col-right item-disc">${discountLabel}</td>
-        <td class="col-right font-semibold">${escapeHtml(formatVND(netTotal))}</td>
+        <td class="col-right">${escapeHtml(formatVND(item.price))}</td>
+        <td class="col-right item-disc">${!hasToppings ? discountLabel : '—'}</td>
+        <td class="col-right font-semibold">${escapeHtml(formatVND(hasToppings ? baseTotal : netTotal))}</td>
       </tr>
     `;
+
+      const toppingRowsHtml = toppings
+        .map((t, tIdx) => {
+          const isLastSub = tIdx === toppings.length - 1 && itemDiscount <= 0;
+          const isFree = t.price <= 0;
+          return `
+      <tr class="sub-row ${isLastSub ? '' : 'row-no-border'}">
+        <td><div class="item-topping">+ ${escapeHtml(t.name)}</div></td>
+        <td class="col-center">${item.qty}</td>
+        <td class="col-right">${isFree ? '—' : `+${escapeHtml(formatVND(t.price))}`}</td>
+        <td class="col-right">—</td>
+        <td class="col-right">${isFree ? '—' : `+${escapeHtml(formatVND(t.price * item.qty))}`}</td>
+      </tr>
+    `;
+        })
+        .join('');
+
+      const discountSubRowHtml =
+        hasToppings && itemDiscount > 0
+          ? `
+      <tr class="sub-row">
+        <td colspan="3"><div class="item-disc-row">Chiết khấu món${
+          item.discountType === 'percent' && (item.discountValue ?? 0) > 0
+            ? ` (-${item.discountValue}%)`
+            : ''
+        }</div></td>
+        <td class="col-right item-disc">-${escapeHtml(formatVND(itemDiscount))}</td>
+        <td class="col-right item-disc font-semibold">-${escapeHtml(formatVND(itemDiscount))}</td>
+      </tr>
+    `
+          : '';
+
+      return `${mainRowHtml}${toppingRowsHtml}${discountSubRowHtml}`;
     })
     .join('');
 
@@ -123,8 +145,8 @@ export function buildA5InvoiceHtml(
       font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: #0f172a;
       background: #ffffff;
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 10.8px;
+      line-height: 1.48;
       font-variant-numeric: tabular-nums;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -133,41 +155,42 @@ export function buildA5InvoiceHtml(
       width: 100%;
       max-width: 148mm;
       margin: 0 auto;
+      padding: 0 5%;
     }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
-      padding-bottom: 10px;
+      padding-bottom: 9px;
       border-bottom: 1.5px solid #cbd5e1;
     }
     .brand {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: #0f172a;
       margin-bottom: 2px;
     }
-    .muted { color: #475569; font-size: 11px; }
+    .muted { color: #475569; font-size: 10px; }
     .invoice-title {
-      font-size: 15px;
+      font-size: 13.5px;
       font-weight: 700;
       color: #0e7490;
       text-align: right;
     }
     .invoice-meta {
       text-align: right;
-      font-size: 11px;
+      font-size: 10px;
       color: #334155;
       margin-top: 2px;
     }
     .meta-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px 20px;
-      padding: 10px 0;
+      gap: 5px 18px;
+      padding: 8px 0;
       border-bottom: 1px solid #e2e8f0;
-      font-size: 11.5px;
+      font-size: 10.5px;
     }
     .meta-row {
       display: flex;
@@ -177,37 +200,51 @@ export function buildA5InvoiceHtml(
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 11.5px;
+      margin-top: 10px;
+      font-size: 10.4px;
     }
     thead th {
       background: #f8fafc;
       border-top: 1px solid #cbd5e1;
       border-bottom: 1px solid #cbd5e1;
-      padding: 7px 6px;
+      padding: 6px 5px;
       text-align: left;
       font-weight: 600;
       color: #334155;
     }
     tbody td {
-      padding: 7px 6px;
+      padding: 6px 5px;
       border-bottom: 1px solid #e2e8f0;
       vertical-align: top;
+    }
+    tbody tr.row-no-border td {
+      border-bottom: none;
+      padding-bottom: 2px;
+    }
+    tbody tr.sub-row td {
+      padding-top: 2px;
+      padding-bottom: 5px;
+      font-size: 9.6px;
+      color: #334155;
+    }
+    tbody tr.sub-row.row-no-border td {
+      padding-bottom: 2px;
     }
     .col-center { text-align: center; }
     .col-right { text-align: right; white-space: nowrap; }
     .font-semibold { font-weight: 600; }
     .item-name { font-weight: 500; color: #0f172a; }
-    .item-topping { font-size: 10.5px; color: #0e7490; margin-top: 2px; }
-    .item-note { font-size: 10.5px; color: #64748b; margin-top: 2px; }
-    .item-disc { color: #b45309; font-size: 11px; }
-    .item-disc-sub { font-size: 10px; color: #92400e; }
+    .item-topping { font-size: 9.6px; color: #0e7490; padding-left: 10px; }
+    .item-disc-row { font-size: 9.6px; color: #b45309; padding-left: 10px; font-weight: 500; }
+    .item-note { font-size: 9.5px; color: #64748b; margin-top: 2px; }
+    .item-disc { color: #b45309; font-size: 10px; }
+    .item-disc-sub { font-size: 9px; color: #92400e; }
     .bottom-grid {
       display: grid;
       grid-template-columns: 1.05fr 1fr;
-      gap: 16px;
-      margin-top: 14px;
-      padding-top: 12px;
+      gap: 14px;
+      margin-top: 12px;
+      padding-top: 10px;
       border-top: 1.5px solid #cbd5e1;
       align-items: start;
     }
@@ -215,14 +252,14 @@ export function buildA5InvoiceHtml(
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px;
+      padding: 7px;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
       background: #f8fafc;
     }
     .qr-img {
-      width: 104px;
-      height: 104px;
+      width: 96px;
+      height: 96px;
       object-fit: contain;
       border-radius: 6px;
       background: #ffffff;
@@ -230,33 +267,33 @@ export function buildA5InvoiceHtml(
       padding: 4px;
       flex-shrink: 0;
     }
-    .qr-details { font-size: 11px; color: #334155; line-height: 1.5; }
+    .qr-details { font-size: 10px; color: #334155; line-height: 1.48; }
     .qr-title { font-weight: 700; color: #0e7490; margin-bottom: 2px; }
-    .totals { font-size: 11.5px; }
+    .totals { font-size: 10.4px; }
     .tot-row {
       display: flex;
       justify-content: space-between;
-      padding: 2.5px 0;
+      padding: 2px 0;
       color: #334155;
     }
     .tot-grand {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-top: 6px;
-      padding-top: 6px;
+      margin-top: 5px;
+      padding-top: 5px;
       border-top: 1px solid #cbd5e1;
-      font-size: 14px;
+      font-size: 12.6px;
       font-weight: 700;
       color: #0e7490;
     }
-    .extra-info { margin-top: 8px; font-size: 11px; color: #475569; }
+    .extra-info { margin-top: 7px; font-size: 10px; color: #475569; }
     .footer {
-      margin-top: 18px;
-      padding-top: 10px;
+      margin-top: 16px;
+      padding-top: 9px;
       border-top: 1px dashed #cbd5e1;
       text-align: center;
-      font-size: 11px;
+      font-size: 10px;
       color: #475569;
     }
     .footer-italic { font-style: italic; color: #1e293b; margin-bottom: 2px; }
@@ -285,12 +322,11 @@ export function buildA5InvoiceHtml(
     <table>
       <thead>
         <tr>
-          <th style="width:30px" class="col-center">STT</th>
           <th>Tên món</th>
-          <th style="width:34px" class="col-center">SL</th>
-          <th style="width:74px" class="col-right">Đơn giá</th>
-          <th style="width:74px" class="col-right">Chiết khấu</th>
-          <th style="width:84px" class="col-right">Thành tiền</th>
+          <th style="width:32px" class="col-center">SL</th>
+          <th style="width:72px" class="col-right">Đơn giá</th>
+          <th style="width:70px" class="col-right">Chiết khấu</th>
+          <th style="width:80px" class="col-right">Thành tiền</th>
         </tr>
       </thead>
       <tbody>
@@ -308,7 +344,7 @@ export function buildA5InvoiceHtml(
         <div class="tot-row"><span>Tạm tính (${totalQty} món):</span><span class="font-semibold">${escapeHtml(formatVND(order.subtotal))}</span></div>
         ${
           order.discountAmount > 0
-            ? `<div class="tot-row"><span>Giảm giá${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
+            ? `<div class="tot-row"><span>Chiết khấu${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
             : ''
         }
         ${
@@ -345,43 +381,45 @@ export function build80mmReceiptHtml(
   const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
 
   const itemsHtml = order.items
-    .map((item, idx) => {
-      const unitPrice = getItemUnitPrice(item);
+    .map((item) => {
+      const baseTotal = item.price * item.qty;
       const itemDiscount = getItemDiscountAmount(item);
-      const netTotal = getItemNetTotal(item);
       const toppingsHtml =
         item.toppings && item.toppings.length > 0
           ? item.toppings
-              .map(
-                (t) =>
-                  `<div class="r80-sub">+ ${escapeHtml(t.name)} x${item.qty} = ${escapeHtml(
-                    formatVND(t.price * item.qty),
-                  )}</div>`,
+              .map((t) =>
+                t.price <= 0
+                  ? `<div class="r80-sub">+ ${escapeHtml(t.name)}</div>`
+                  : `<div class="r80-sub-row"><span>+ ${escapeHtml(t.name)}${
+                      item.qty > 1 ? ` (${item.qty} × ${escapeHtml(formatVND(t.price))})` : ''
+                    }</span><span class="r80-nowrap">+${escapeHtml(
+                      formatVND(t.price * item.qty),
+                    )}</span></div>`,
               )
               .join('')
+          : '';
+      const discHtml =
+        itemDiscount > 0
+          ? `<div class="r80-disc-row"><span>Chiết khấu món${
+              item.discountType === 'percent' && (item.discountValue ?? 0) > 0
+                ? ` (-${item.discountValue}%)`
+                : ''
+            }</span><span class="r80-nowrap">-${escapeHtml(formatVND(itemDiscount))}</span></div>`
           : '';
       const noteHtml = item.note
         ? `<div class="r80-sub">Ghi chú: ${escapeHtml(item.note)}</div>`
         : '';
-      const discHtml =
-        itemDiscount > 0
-          ? `<div class="r80-disc">Chiết khấu món: ${
-              item.discountType === 'percent' && (item.discountValue ?? 0) > 0
-                ? `-${item.discountValue}% (-${escapeHtml(formatVND(itemDiscount))})`
-                : `-${escapeHtml(formatVND(itemDiscount))}`
-            }</div>`
-          : '';
 
       return `
       <div class="r80-item">
-        <div class="r80-item-name">${idx + 1}. ${escapeHtml(item.name)}</div>
-        ${toppingsHtml}
-        ${noteHtml}
+        <div class="r80-item-name">${escapeHtml(item.name)}</div>
         <div class="r80-calc">
-          <span>${item.qty} × ${escapeHtml(formatVND(unitPrice))}</span>
-          <span class="r80-bold">${escapeHtml(formatVND(netTotal))}</span>
+          <span>${item.qty} × ${escapeHtml(formatVND(item.price))}</span>
+          <span class="r80-bold r80-nowrap">${escapeHtml(formatVND(baseTotal))}</span>
         </div>
+        ${toppingsHtml}
         ${discHtml}
+        ${noteHtml}
       </div>
     `;
     })
@@ -453,13 +491,13 @@ export function build80mmReceiptHtml(
       print-color-adjust: exact !important;
     }
     .r80-sheet {
-      /* Locked to calibrated "Nhỏ" (0.85) thermal scale for iMinPrinterPlugin */
-      --s: 0.85;
+      /* Calibrated "Nhỏ" (-10% => 0.765) thermal scale for iMinPrinterPlugin */
+      --s: 0.765;
       --u: calc(1vw * var(--s));
       box-sizing: border-box;
       width: 100%;
       margin: 0;
-      padding: 2vw 4.5vw 3.5vw;
+      padding: 2vw 10vw 3.5vw;
       background: #ffffff !important;
       background-color: #ffffff !important;
       color: #000000 !important;
@@ -486,7 +524,7 @@ export function build80mmReceiptHtml(
       .r80-sheet {
         --u: calc(3.02px * var(--s));
         width: 80mm;
-        padding: 6px 14px 12px;
+        padding: 6px 30px 12px;
         margin: 0 auto;
       }
     }
@@ -509,6 +547,7 @@ export function build80mmReceiptHtml(
       font-size: calc(var(--u) * 3.65);
       font-weight: 700;
       margin-top: calc(var(--u) * 1.4);
+      margin-bottom: calc(var(--u) * 1.1);
       padding-top: calc(var(--u) * 1.3);
       border-top: 1px dashed #000000;
       color: #000000;
@@ -553,8 +592,23 @@ export function build80mmReceiptHtml(
       padding-left: calc(var(--u) * 2.0);
       margin-top: calc(var(--u) * 0.3);
     }
-    .r80-disc {
-      font-size: calc(var(--u) * 2.85);
+    .r80-sub-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: calc(var(--u) * 1.6);
+      font-size: calc(var(--u) * 2.95);
+      font-weight: 500;
+      color: #000000;
+      padding-left: calc(var(--u) * 2.0);
+      margin-top: calc(var(--u) * 0.3);
+    }
+    .r80-disc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: calc(var(--u) * 1.6);
+      font-size: calc(var(--u) * 2.9);
       font-weight: 600;
       color: #000000;
       padding-left: calc(var(--u) * 2.0);
@@ -566,11 +620,12 @@ export function build80mmReceiptHtml(
       align-items: baseline;
       gap: calc(var(--u) * 1.8);
       padding-left: calc(var(--u) * 2.0);
-      margin-top: calc(var(--u) * 0.4);
+      margin-top: calc(var(--u) * 0.35);
       font-size: calc(var(--u) * 3.15);
       font-weight: 500;
       color: #000000;
     }
+    .r80-nowrap { white-space: nowrap; flex-shrink: 0; }
     .r80-bold { font-weight: 700; }
     .r80-tot {
       display: flex;
@@ -618,8 +673,8 @@ export function build80mmReceiptHtml(
       flex: 0 0 auto;
     }
     .r80-qr-img {
-      width: calc(var(--u) * 28);
-      height: calc(var(--u) * 28);
+      width: calc(var(--u) * 30);
+      height: calc(var(--u) * 30);
       object-fit: contain;
       display: block;
       padding: 0.6vw;
@@ -697,8 +752,6 @@ export function build80mmReceiptHtml(
       <div class="r80-title">${title}</div>
     </div>
 
-    <div class="r80-divider"></div>
-
     <div class="r80-meta"><span>Số HĐ:</span><strong>${escapeHtml(order.orderNumber)}</strong></div>
     <div class="r80-meta"><span>Thời gian:</span><span>${escapeHtml(order.displayTime)}</span></div>
     <div class="r80-meta"><span>Khách hàng:</span><span>${escapeHtml(order.customerName || 'Khách lẻ')}</span></div>
@@ -713,7 +766,7 @@ export function build80mmReceiptHtml(
     <div class="r80-tot"><span>Tạm tính (${totalQty} món):</span><span class="r80-bold">${escapeHtml(formatVND(order.subtotal))}</span></div>
     ${
       order.discountAmount > 0
-        ? `<div class="r80-tot"><span>Giảm giá${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
+        ? `<div class="r80-tot"><span>Chiết khấu${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
         : ''
     }
     ${
@@ -746,9 +799,15 @@ export function triggerHtmlPrint(
   paperSize: 'a5' | '80mm' | 'a4' = 'a5',
 ): Promise<{ printed: boolean }> {
   return new Promise((resolve) => {
+    // Blur any active element so mobile virtual keyboards / focus rings never interfere with print
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     // Remove any previous injected print artifacts
     document.getElementById('pos-print-root')?.remove();
     document.getElementById('pos-dynamic-print-style')?.remove();
+    document.documentElement.classList.remove('pos-printing-html');
     document.body.classList.remove('pos-printing');
 
     const parsed = new DOMParser().parseFromString(html, 'text/html');
@@ -783,6 +842,7 @@ body.pos-printing > #pos-print-root { display: block !important; background: #ff
 ${flatPrintCss}
 @media print {
   html, body { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; color-scheme: light !important; }
+  .no-print, .pos-print-toolbar { display: none !important; }
   body.pos-printing > *:not(#pos-print-root) { display: none !important; }
   body.pos-printing > #pos-print-root { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; }
 ${flatPrintCss}
@@ -805,11 +865,30 @@ ${flatPrintCss}
 
     const printRoot = document.createElement('div');
     printRoot.id = 'pos-print-root';
+
+    // Screen-only toolbar (strictly display:none!important in @media print) so if an Android
+    // overlay Print Spooler keeps visibilityState==='visible', user can still return with 1 tap
+    // and #pos-print-root is NEVER prematurely destroyed while picking Normal576pdf / 80mm.
+    const toolbar = document.createElement('div');
+    toolbar.className = 'no-print pos-print-toolbar';
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'pos-print-back';
+    backBtn.textContent = '← Quay lại quầy POS';
+    const printAgainBtn = document.createElement('button');
+    printAgainBtn.type = 'button';
+    printAgainBtn.className = 'pos-print-again';
+    printAgainBtn.textContent = 'In lại';
+    toolbar.appendChild(backBtn);
+    toolbar.appendChild(printAgainBtn);
+    printRoot.appendChild(toolbar);
+
     Array.from(parsed.body.childNodes).forEach((node) => {
       printRoot.appendChild(document.importNode(node, true));
     });
     // Prepend so #pos-print-root is the very first element in <body> (y = 0, Page 1)
     document.body.prepend(printRoot);
+    document.documentElement.classList.add('pos-printing-html');
     document.body.classList.add('pos-printing');
 
     // Reset scroll position to top so Page 1 always starts at y = 0
@@ -818,19 +897,18 @@ ${flatPrintCss}
     window.scrollTo(0, 0);
 
     let cleaned = false;
-    let afterPrintFired = false;
     let wasHiddenForPrint = false;
+    let printWasSynchronous = false;
     let cleanupTimer: number | null = null;
-    let fallbackRestoreTimer: number | null = null;
 
     const cleanup = () => {
       if (cleaned) return;
       cleaned = true;
       if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
-      if (fallbackRestoreTimer !== null) window.clearTimeout(fallbackRestoreTimer);
       window.removeEventListener('afterprint', onAfterPrint);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('focus', onWindowFocus);
+      document.documentElement.classList.remove('pos-printing-html');
       document.body.classList.remove('pos-printing');
       printRoot.remove();
       styleEl.remove();
@@ -844,6 +922,12 @@ ${flatPrintCss}
       window.scrollTo(prevScrollX, prevScrollY);
     };
 
+    backBtn.addEventListener('click', cleanup);
+    printAgainBtn.addEventListener('click', () => {
+      window.scrollTo(0, 0);
+      window.print();
+    });
+
     const scheduleVisibleCleanup = (delayMs: number) => {
       if (cleaned) return;
       if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
@@ -854,9 +938,13 @@ ${flatPrintCss}
       }, delayMs);
     };
 
-    // On Android Chrome + iMinPrinterPlugin, opening Print Spooler moves Chrome to background
-    // (visibilityState === 'hidden'). Keep #pos-print-root as the sole element while Print Spooler
-    // is active, then restore #root cleanly as soon as the user returns to Chrome.
+    // On Android Chrome + iMinPrinterPlugin, window.print() is asynchronous (~1-10ms) and
+    // afterprint can fire BEFORE Print Spooler finishes rendering or switching paper sizes.
+    // Therefore:
+    //  - Desktop (synchronous blocking window.print(), elapsed >= 350ms): clean up on afterprint.
+    //  - Android (async window.print()): ONLY auto-clean once the tab actually transitioned to
+    //    hidden (Print Spooler opened) and returned to visible (Print Spooler closed).
+    //    Until then, keep #pos-print-root rock-solid so #root can NEVER appear on Page 1.
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         wasHiddenForPrint = true;
@@ -864,29 +952,28 @@ ${flatPrintCss}
           window.clearTimeout(cleanupTimer);
           cleanupTimer = null;
         }
-      } else if (wasHiddenForPrint || afterPrintFired) {
+      } else if (wasHiddenForPrint) {
         scheduleVisibleCleanup(180);
       }
     };
 
     const onWindowFocus = () => {
-      if (wasHiddenForPrint || afterPrintFired) {
+      if (wasHiddenForPrint) {
         scheduleVisibleCleanup(180);
       }
     };
 
     const onAfterPrint = () => {
-      afterPrintFired = true;
-      if (document.visibilityState === 'visible') {
-        scheduleVisibleCleanup(350);
+      if (printWasSynchronous && document.visibilityState === 'visible') {
+        scheduleVisibleCleanup(150);
+      } else if (wasHiddenForPrint && document.visibilityState === 'visible') {
+        scheduleVisibleCleanup(180);
       }
     };
 
     window.addEventListener('afterprint', onAfterPrint);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('focus', onWindowFocus);
-    // Safety cleanup after 3 minutes in case an embedded browser never fires lifecycle events
-    window.setTimeout(cleanup, 180_000);
 
     const runPrint = () => {
       // Wait 2 animation frames so hiding #root and painting #pos-print-root is fully committed
@@ -896,19 +983,11 @@ ${flatPrintCss}
             const started = Date.now();
             window.print();
             const elapsed = Date.now() - started;
-            const likelyPrinted = elapsed >= 25 || window.top === window.self;
-            if (!likelyPrinted) {
-              cleanup();
-              resolve({ printed: false });
-              return;
+            printWasSynchronous = elapsed >= 350;
+            if (printWasSynchronous) {
+              // Desktop dialog closed synchronously
+              scheduleVisibleCleanup(150);
             }
-            // If a non-standard browser returned without firing afterprint or hiding the tab
-            // after 4 seconds, restore the POS UI cleanly so the user is never stuck.
-            fallbackRestoreTimer = window.setTimeout(() => {
-              if (!wasHiddenForPrint && !afterPrintFired && document.visibilityState === 'visible') {
-                cleanup();
-              }
-            }, 4000);
             resolve({ printed: true });
           } catch {
             cleanup();

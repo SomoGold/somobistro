@@ -125,7 +125,7 @@
         },
         "category": {
           "type": "string",
-          "enum": ["Cà phê", "Trà & Matcha", "Giải khát", "Bia", "Món ăn", "Bánh ngọt"]
+          "enum": ["Combo", "Cà phê", "Trà & Matcha", "Giải khát", "Bia", "Món ăn", "Bánh ngọt"]
         },
         "price": {
           "type": "number",
@@ -146,6 +146,18 @@
         },
         "available": {
           "type": "boolean"
+        },
+        "isCombo": {
+          "type": "boolean",
+          "description": "Whether this menu item is a Combo bundle with included free toppings."
+        },
+        "comboToppings": {
+          "type": "array",
+          "description": "Bounded list of up to 15 included toppings/components (id, name; 0 VND) for this Combo."
+        },
+        "comboMaxToppings": {
+          "type": "number",
+          "description": "Maximum number of free toppings selectable from comboToppings (0 = auto-include all; 1..15 = pick up to N)."
         },
         "createdAt": {
           "type": "string",

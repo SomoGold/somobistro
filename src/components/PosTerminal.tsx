@@ -20,8 +20,9 @@ import {
   CreditCard,
   UserCheck,
   LayoutGrid,
+  Power,
 } from 'lucide-react';
-import { doc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db, OperationType, reportFirestoreError } from '../lib/firebase';
 import {
   calculateOrderTotals,
@@ -124,6 +125,8 @@ export function PosTerminal({
   const [tableSearch, setTableSearch] = useState('');
   const [menuSearch, setMenuSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<'Tất cả' | MenuCategory>('Tất cả');
+  const [toggleStockMode, setToggleStockMode] = useState(false);
+  const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
 
   // Active ticket state
   const [cartItems, setCartItems] = useState<OrderItem[]>([]);
@@ -293,9 +296,16 @@ export function PosTerminal({
     [menuItems],
   );
 
+  const outOfStockCount = useMemo(
+    () => menuItems.filter((m) => !m.available).length,
+    [menuItems],
+  );
+
+  const displayedBaseMenuItems = toggleStockMode ? menuItems : availableMenuItems;
+
   const filteredMenuItems = useMemo(() => {
     const kw = menuSearch.trim().toLowerCase();
-    return availableMenuItems.filter((item) => {
+    return displayedBaseMenuItems.filter((item) => {
       if (activeCategory !== 'Tất cả' && item.category !== activeCategory) return false;
       if (
         kw &&
@@ -307,18 +317,67 @@ export function PosTerminal({
       }
       return true;
     });
-  }, [availableMenuItems, activeCategory, menuSearch]);
+  }, [displayedBaseMenuItems, activeCategory, menuSearch]);
 
   const categoryCounts = useMemo(() => {
-    const map: Record<string, number> = { 'Tất cả': availableMenuItems.length };
+    const map: Record<string, number> = { 'Tất cả': displayedBaseMenuItems.length };
     MENU_CATEGORIES.forEach((c) => {
       map[c] = 0;
     });
-    availableMenuItems.forEach((m) => {
+    displayedBaseMenuItems.forEach((m) => {
       map[m.category] = (map[m.category] || 0) + 1;
     });
     return map;
-  }, [availableMenuItems]);
+  }, [displayedBaseMenuItems]);
+
+  const handleToggleMenuItemAvailable = useCallback(
+    async (menuItem: MenuItem) => {
+      if (togglingItemId === menuItem.id) return;
+      setTogglingItemId(menuItem.id);
+      const nextAvailable = !menuItem.available;
+      try {
+        await updateDoc(doc(db, 'menuItems', menuItem.id), {
+          available: nextAvailable,
+          updatedAt: serverTimestamp(),
+        });
+        onNotify(
+          nextAvailable
+            ? `Đã bật món "${menuItem.name}" để bán lại.`
+            : `Đã tắt món "${menuItem.name}" (tạm hết).`,
+        );
+      } catch (error) {
+        reportFirestoreError(error, OperationType.UPDATE, `menuItems/${menuItem.id}`);
+        onNotify('Không thể cập nhật trạng thái món. Vui lòng thử lại.', 'error');
+      } finally {
+        setTogglingItemId(null);
+      }
+    },
+    [togglingItemId, onNotify],
+  );
+
+  const handleEnableAllMenuItems = useCallback(async () => {
+    const disabledItems = menuItems.filter((m) => !m.available);
+    if (disabledItems.length === 0 || togglingItemId === '__all__') return;
+    setTogglingItemId('__all__');
+    try {
+      for (let i = 0; i < disabledItems.length; i += 450) {
+        const batch = writeBatch(db);
+        disabledItems.slice(i, i + 450).forEach((item) => {
+          batch.update(doc(db, 'menuItems', item.id), {
+            available: true,
+            updatedAt: serverTimestamp(),
+          });
+        });
+        await batch.commit();
+      }
+      onNotify(`Đã bật bán lại toàn bộ ${disabledItems.length} món.`);
+    } catch (error) {
+      reportFirestoreError(error, OperationType.UPDATE, 'menuItems/batch-enable');
+      onNotify('Không thể bật lại tất cả món. Vui lòng thử lại.', 'error');
+    } finally {
+      setTogglingItemId(null);
+    }
+  }, [menuItems, togglingItemId, onNotify]);
 
   const cartQtyByItemId = useMemo(() => {
     const map = new Map<string, number>();
@@ -329,8 +388,21 @@ export function PosTerminal({
   }, [cartItems]);
 
   // ---------------- CART & ITEM POPUP ACTIONS ----------------
-  // Clicking any menu item immediately opens KasItemModal
+  // Clicking any menu item immediately opens KasItemModal (pre-loading free toppings only for fixed Combos)
   const handleSelectMenuItem = useCallback((menuItem: MenuItem) => {
+    const isPickableCombo =
+      Boolean(menuItem.isCombo) && (menuItem.comboMaxToppings ?? 0) > 0;
+    const comboToppings =
+      menuItem.isCombo &&
+      !isPickableCombo &&
+      menuItem.comboToppings &&
+      menuItem.comboToppings.length > 0
+        ? menuItem.comboToppings.slice(0, LIMITS.MAX_ITEM_TOPPINGS).map((ct) => ({
+            id: ct.id,
+            name: ct.name,
+            price: 0,
+          }))
+        : [];
     const freshItem: OrderItem = {
       itemId: menuItem.id,
       name: menuItem.name,
@@ -339,7 +411,7 @@ export function PosTerminal({
       cost: menuItem.cost,
       qty: 1,
       note: '',
-      toppings: [],
+      toppings: comboToppings,
       discountType: 'percent',
       discountValue: 0,
       discountAmount: 0,
@@ -367,21 +439,26 @@ export function PosTerminal({
         setCartItems((prev) => prev.map((it, idx) => (idx === targetIdx ? updated : it)));
       } else {
         setCartItems((prev) => {
-          const isPlain =
-            !updated.note.trim() &&
-            (!updated.toppings || updated.toppings.length === 0) &&
-            !(updated.discountValue && updated.discountValue > 0);
-          if (isPlain) {
-            const plainIdx = prev.findIndex(
+          const getToppingSig = (it: OrderItem) =>
+            (it.toppings ?? [])
+              .map((t) => `${t.id}:${t.price}`)
+              .sort()
+              .join('|');
+
+          const isMergeable =
+            !updated.note.trim() && !(updated.discountValue && updated.discountValue > 0);
+          if (isMergeable) {
+            const updatedSig = getToppingSig(updated);
+            const matchIdx = prev.findIndex(
               (i) =>
                 i.itemId === updated.itemId &&
                 !i.note.trim() &&
-                (!i.toppings || i.toppings.length === 0) &&
-                !(i.discountValue && i.discountValue > 0),
+                !(i.discountValue && i.discountValue > 0) &&
+                getToppingSig(i) === updatedSig,
             );
-            if (plainIdx >= 0) {
+            if (matchIdx >= 0) {
               return prev.map((item, idx) =>
-                idx === plainIdx
+                idx === matchIdx
                   ? { ...item, qty: Math.min(999, item.qty + updated.qty) }
                   : item,
               );
@@ -1251,7 +1328,26 @@ export function PosTerminal({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {cartItems.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setToggleStockMode((prev) => !prev)}
+                    className={`h-10 px-3 rounded-md text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap border ${
+                      toggleStockMode
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-300 shadow-xs'
+                        : 'bg-[#132f7a] hover:bg-[#1c40a3] text-white border-blue-700'
+                    }`}
+                    title="Tắt món tạm hết hoặc bật lại món trên POS"
+                  >
+                    <Power className="w-4 h-4 shrink-0" />
+                    <span>{toggleStockMode ? 'Xong tắt/bật' : 'Tắt / Bật món'}</span>
+                    {!toggleStockMode && outOfStockCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-extrabold tabular-nums">
+                        {outOfStockCount} tắt
+                      </span>
+                    )}
+                  </button>
+
+                  {cartItems.length > 0 && !toggleStockMode && (
                     <button
                       type="button"
                       onClick={() => {
@@ -1277,9 +1373,47 @@ export function PosTerminal({
                 </div>
               </div>
 
+              {toggleStockMode && (
+                <div className="bg-amber-50 border-b border-amber-200 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                  <div className="flex items-center gap-2 text-xs font-medium text-amber-950">
+                    <Power className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Chế độ <strong>Tắt / Bật món</strong>: Chạm trực tiếp vào món bên dưới để tắt
+                      (tạm hết) hoặc bật bán lại.
+                      {outOfStockCount > 0 && (
+                        <strong className="ml-1.5 text-amber-800">
+                          ({outOfStockCount} món đang tắt)
+                        </strong>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {outOfStockCount > 0 && (
+                      <button
+                        type="button"
+                        disabled={togglingItemId === '__all__'}
+                        onClick={handleEnableAllMenuItems}
+                        className="px-3 py-1 rounded-md bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 disabled:opacity-50 text-xs font-bold whitespace-nowrap"
+                      >
+                        {togglingItemId === '__all__'
+                          ? 'Đang bật...'
+                          : `Bật tất cả (${outOfStockCount})`}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setToggleStockMode(false)}
+                      className="px-3 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold whitespace-nowrap"
+                    >
+                      Hoàn tất
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Center Product Grid + Right Vertical Sky-Cyan Category Rail */}
               <div className="flex-1 flex min-h-0 overflow-hidden">
-                {/* Product Cards Grid: Clicking any item opens KasItemModal directly */}
+                {/* Product Cards Grid: Clicking any item opens KasItemModal directly (or toggles availability in toggleStockMode) */}
                 <div className="flex-1 overflow-y-auto pos-scroll p-3 bg-slate-50">
                   {filteredMenuItems.length === 0 ? (
                     <div className="py-20 text-center space-y-2 text-slate-400">
@@ -1301,46 +1435,114 @@ export function PosTerminal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2.5">
                       {filteredMenuItems.map((item) => {
                         const qtyInCart = cartQtyByItemId.get(item.id) || 0;
+                        const isOff = !item.available;
+                        const isToggling = togglingItemId === item.id;
                         return (
                           <button
                             key={item.id}
                             type="button"
-                            onClick={() => handleSelectMenuItem(item)}
-                            className={`bg-white border-2 rounded-md p-2.5 flex items-stretch justify-between gap-2.5 text-left transition-all min-h-[100px] group ${
-                              qtyInCart > 0
-                                ? 'border-cyan-600 bg-cyan-50/20 shadow-xs'
-                                : 'border-slate-300 hover:border-cyan-500'
+                            disabled={isToggling}
+                            onClick={() =>
+                              toggleStockMode
+                                ? handleToggleMenuItemAvailable(item)
+                                : handleSelectMenuItem(item)
+                            }
+                            className={`border-2 rounded-md p-2.5 flex items-stretch justify-between gap-2.5 text-left transition-all min-h-[100px] group disabled:opacity-60 ${
+                              toggleStockMode
+                                ? isOff
+                                  ? 'bg-slate-100 border-dashed border-amber-400 opacity-80 hover:border-cyan-600'
+                                  : 'bg-white border-cyan-500/80 hover:border-amber-500'
+                                : qtyInCart > 0
+                                  ? 'bg-cyan-50/20 border-cyan-600 shadow-xs'
+                                  : 'bg-white border-slate-300 hover:border-cyan-500'
                             }`}
                           >
                             <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5 pr-1">
                               <div>
-                                <div className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-[#0a2268]">
-                                  {item.name}
+                                <div className="flex items-start gap-1.5">
+                                  <div
+                                    className={`text-sm font-bold leading-snug line-clamp-2 ${
+                                      isOff
+                                        ? 'text-slate-500 line-through'
+                                        : 'text-slate-900 group-hover:text-[#0a2268]'
+                                    }`}
+                                  >
+                                    {item.name}
+                                  </div>
+                                  {item.isCombo && (
+                                    <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase bg-orange-100 text-orange-700 border border-orange-200 rounded shrink-0 mt-0.5">
+                                      {(item.comboMaxToppings ?? 0) > 0
+                                        ? `Chọn ${item.comboMaxToppings}`
+                                        : 'Combo'}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[11px] text-slate-400 mt-0.5 truncate">
                                   {item.category} · {item.unit}
                                 </div>
+                                {item.isCombo && item.comboToppings && item.comboToppings.length > 0 && (
+                                  <div className="text-[11px] text-cyan-700 mt-0.5 line-clamp-1">
+                                    {(item.comboMaxToppings ?? 0) > 0
+                                      ? `Tối đa ${item.comboMaxToppings}: `
+                                      : ''}
+                                    {item.comboToppings.map((ct) => ct.name).join(' · ')}
+                                  </div>
+                                )}
                               </div>
 
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-base font-extrabold tabular-nums text-slate-900">
-                                  {formatDotNumber(item.price)} ₫
-                                </span>
-                                {qtyInCart > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded bg-cyan-600 text-white text-[11px] font-bold tabular-nums">
-                                    ×{qtyInCart}
+                              <div className="flex items-center justify-between gap-2 mt-2">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`text-base font-extrabold tabular-nums ${
+                                      isOff ? 'text-slate-400' : 'text-slate-900'
+                                    }`}
+                                  >
+                                    {formatDotNumber(item.price)} ₫
+                                  </span>
+                                  {!toggleStockMode && qtyInCart > 0 && (
+                                    <span className="px-1.5 py-0.5 rounded bg-cyan-600 text-white text-[11px] font-bold tabular-nums">
+                                      ×{qtyInCart}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {toggleStockMode && (
+                                  <span className="inline-flex items-center gap-1.5 shrink-0">
+                                    <span
+                                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                        item.available ? 'bg-cyan-600' : 'bg-slate-300'
+                                      }`}
+                                    >
+                                      <span
+                                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform ${
+                                          item.available ? 'translate-x-4.5' : 'translate-x-1'
+                                        }`}
+                                      />
+                                    </span>
+                                    <span
+                                      className={`text-[11px] font-bold ${
+                                        item.available ? 'text-cyan-700' : 'text-amber-700'
+                                      }`}
+                                    >
+                                      {item.available ? 'Bật' : 'Đã tắt'}
+                                    </span>
                                   </span>
                                 )}
                               </div>
                             </div>
 
-                            <div className="w-24 h-20 shrink-0 rounded overflow-hidden border border-slate-200 self-center">
+                            <div className="relative w-24 h-20 shrink-0 rounded overflow-hidden border border-slate-200 self-center">
                               <MenuThumbnail
                                 src={item.imageUrl}
                                 alt={item.name}
                                 category={item.category}
-                                className="w-24 h-20"
+                                className={`w-24 h-20 ${isOff ? 'grayscale opacity-50' : ''}`}
                               />
+                              {isOff && (
+                                <span className="absolute inset-x-1 bottom-1 py-0.5 text-center rounded bg-amber-600/95 text-white text-[10px] font-extrabold uppercase tracking-wide">
+                                  Đã tắt
+                                </span>
+                              )}
                             </div>
                           </button>
                         );
@@ -1616,14 +1818,16 @@ export function PosTerminal({
                     )}
 
                     {item.toppings && item.toppings.length > 0 && (
-                      <div className="mt-1 pl-4 border-l-2 border-cyan-200 space-y-1">
+                      <div className="mt-1 pl-4 border-l-2 border-cyan-200 space-y-0.5">
                         {item.toppings.map((tp) => (
                           <div key={tp.id} className="text-[11px] leading-tight">
                             <div className="font-semibold text-slate-800">+ {tp.name}</div>
-                            <div className="text-slate-500 tabular-nums">
-                              {item.qty} × {formatDotNumber(tp.price)} ={' '}
-                              {formatDotNumber(tp.price * item.qty)}
-                            </div>
+                            {tp.price > 0 && (
+                              <div className="text-slate-500 tabular-nums">
+                                {item.qty} × {formatDotNumber(tp.price)} ={' '}
+                                {formatDotNumber(tp.price * item.qty)}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1732,17 +1936,25 @@ export function PosTerminal({
       </footer>
 
       {/* ================= ITEM MODIFIER POPUP ================= */}
-      {modalItemState && (
-        <KasItemModal
-          ownerId={ownerId}
-          item={modalItemState.item}
-          toppings={toppings}
-          onSave={handleConfirmModalItem}
-          onDelete={handleDeleteModalItem}
-          onClose={() => setModalItemState(null)}
-          onNotify={onNotify}
-        />
-      )}
+      {modalItemState && (() => {
+        const matchedMenuItem = menuItems.find((m) => m.id === modalItemState.item.itemId);
+        return (
+          <KasItemModal
+            ownerId={ownerId}
+            item={modalItemState.item}
+            isCombo={Boolean(
+              matchedMenuItem?.isCombo || modalItemState.item.category === 'Combo',
+            )}
+            comboToppings={matchedMenuItem?.comboToppings ?? []}
+            comboMaxToppings={matchedMenuItem?.comboMaxToppings ?? 0}
+            toppings={toppings}
+            onSave={handleConfirmModalItem}
+            onDelete={handleDeleteModalItem}
+            onClose={() => setModalItemState(null)}
+            onNotify={onNotify}
+          />
+        );
+      })()}
 
       {/* ================= ADD TABLE MODAL ================= */}
       {showAddTable && (

@@ -317,7 +317,9 @@ export function OrdersHistoryView({
                         {item.toppings && item.toppings.length > 0 && (
                           <div className="text-[11px] text-cyan-700 mt-0.5">
                             {item.toppings
-                              .map((t) => `+ ${t.name} (${formatVND(t.price)})`)
+                              .map((t) =>
+                                t.price <= 0 ? `+ ${t.name}` : `+ ${t.name} (${formatVND(t.price)})`,
+                              )
                               .join(', ')}
                           </div>
                         )}
@@ -349,7 +351,7 @@ export function OrdersHistoryView({
                 </div>
                 {selectedOrder.discountAmount > 0 && (
                   <div className="flex justify-between text-amber-700">
-                    <span>Giảm giá</span>
+                    <span>Chiết khấu</span>
                     <span className="tabular-nums">-{formatVND(selectedOrder.discountAmount)}</span>
                   </div>
                 )}

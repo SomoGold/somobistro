@@ -48,6 +48,7 @@
 
 /* While actively printing via triggerHtmlPrint: isolate ONLY #pos-print-root on BOTH screen and print.
    This guarantees Android Chrome / iMinPrinterPlugin can NEVER capture #root on Page 1. */
+html.pos-printing-html,
 body.pos-printing {
   margin: 0 !important;
   padding: 0 !important;
@@ -57,6 +58,7 @@ body.pos-printing {
   color-scheme: light !important;
   overflow: visible !important;
   height: auto !important;
+  min-height: 0 !important;
 }
 
 body.pos-printing > *:not(#pos-print-root) {
@@ -74,6 +76,40 @@ body.pos-printing > #pos-print-root {
   background: #ffffff !important;
   background-color: #ffffff !important;
   color: #000000 !important;
+}
+
+.pos-print-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #091d4f;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.pos-print-toolbar button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+.pos-print-toolbar .pos-print-back {
+  background: #ffffff;
+  color: #091d4f;
+}
+
+.pos-print-toolbar .pos-print-again {
+  background: #0891b2;
+  color: #ffffff;
 }
 
 /* Print Stylesheet: Static flow + pure opaque white surface for Android iMinPrinterPlugin */
@@ -99,6 +135,11 @@ body.pos-printing > #pos-print-root {
     print-color-adjust: exact !important;
   }
 
+  .no-print,
+  .pos-print-toolbar {
+    display: none !important;
+  }
+
   /* When printing via triggerHtmlPrint: hide the entire app UI and render only #pos-print-root */
   body.pos-printing > *:not(#pos-print-root) {
     display: none !important;
@@ -120,15 +161,7 @@ body.pos-printing > #pos-print-root {
     border: none !important;
   }
 
-  body.pos-printing .no-print {
-    display: none !important;
-  }
-
   /* Fallback when user triggers browser Ctrl+P directly without clicking the Print button */
-  body:not(.pos-printing) .no-print {
-    display: none !important;
-  }
-
   body:not(.pos-printing) .print-receipt-root {
     position: static !important;
     width: 100% !important;

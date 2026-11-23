@@ -88,9 +88,17 @@ export function KasPaymentPanel({
   onQuickAddCustomer,
 }: KasPaymentPanelProps) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [customDiscountOpen, setCustomDiscountOpen] = useState(false);
+
+  const hasCustomDiscount =
+    discountValue > 0 &&
+    !(discountType === 'percent' && (discountValue === 10 || discountValue === 20));
+  const isCustomDiscountActive = customDiscountOpen || hasCustomDiscount;
 
   const uploadedQrUrl = settings?.qrImageUrl || '';
-  const quickCashAmounts = [50000, 100000, 200000, 500000].filter((amt) => amt >= total).slice(0, 4);
+  const quickCashAmounts = [20000, 50000, 100000, 200000, 500000]
+    .filter((amt) => amt > total)
+    .slice(0, 4);
   const insufficientCash = paymentMethod === 'cash' && parsedCashReceived < total;
 
   const selectedCustomer = useMemo(
@@ -127,45 +135,116 @@ export function KasPaymentPanel({
               </div>
             </div>
 
-            <div className="grid grid-cols-12 items-center gap-2">
-              <label className="col-span-4 text-sm font-bold text-[#0b2b6b] underline decoration-[#0b2b6b]/40 underline-offset-2 text-right pr-2">
-                Chiết khấu [-]
-              </label>
-              <div className="col-span-4 flex items-center h-10 border border-slate-300 rounded-md overflow-hidden bg-white focus-within:border-cyan-600">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={
-                    discountValue > 0
-                      ? discountType === 'fixed'
-                        ? formatDotNumber(discountValue)
-                        : String(discountValue)
-                      : ''
-                  }
-                  onChange={(e) => {
-                    const parsed = parseDotNumber(e.target.value);
-                    const maxVal = discountType === 'percent' ? 100 : subtotal;
-                    onChangeDiscountValue(Math.min(maxVal, Math.max(0, parsed)));
-                  }}
-                  placeholder="0"
-                  aria-label="Chiết khấu đơn"
-                  className="w-full min-w-0 px-2.5 text-sm font-bold tabular-nums text-right text-slate-900 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChangeDiscountType(discountType === 'percent' ? 'fixed' : 'percent');
-                    onChangeDiscountValue(0);
-                  }}
-                  className="h-full px-2.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border-l border-slate-300 shrink-0"
-                  title="Đổi % hoặc VNĐ"
-                >
-                  {discountType === 'percent' ? '%' : '₫'}
-                </button>
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-12 items-center gap-2">
+                <label className="col-span-4 text-sm font-bold text-[#0b2b6b] underline decoration-[#0b2b6b]/40 underline-offset-2 text-right pr-2">
+                  Chiết khấu [-]
+                </label>
+                <div className="col-span-4 grid grid-cols-3 gap-1 p-1 h-10 bg-slate-100 border border-slate-200 rounded-md">
+                  {[10, 20].map((pct) => {
+                    const active =
+                      !customDiscountOpen &&
+                      discountType === 'percent' &&
+                      discountValue === pct;
+                    return (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => {
+                          setCustomDiscountOpen(false);
+                          onChangeDiscountType('percent');
+                          onChangeDiscountValue(active ? 0 : pct);
+                        }}
+                        className={`text-xs font-bold tabular-nums rounded transition-colors ${
+                          active
+                            ? 'bg-[#0a2268] text-white'
+                            : 'text-slate-600 hover:bg-white'
+                        }`}
+                      >
+                        {pct}%
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isCustomDiscountActive) {
+                        setCustomDiscountOpen(false);
+                        onChangeDiscountValue(0);
+                      } else {
+                        setCustomDiscountOpen(true);
+                      }
+                    }}
+                    className={`text-xs font-bold rounded transition-colors ${
+                      isCustomDiscountActive
+                        ? 'bg-[#0a2268] text-white'
+                        : 'text-slate-600 hover:bg-white'
+                    }`}
+                  >
+                    Nhập
+                  </button>
+                </div>
+                <div className="col-span-4 h-10 px-3 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-end text-sm font-bold tabular-nums text-amber-700">
+                  {discountAmount > 0 ? `-${formatDotNumber(discountAmount)}` : '0'}
+                </div>
               </div>
-              <div className="col-span-4 h-10 px-3 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-end text-sm font-bold tabular-nums text-amber-700">
-                {discountAmount > 0 ? `-${formatDotNumber(discountAmount)}` : '0'}
-              </div>
+
+              {isCustomDiscountActive && (
+                <div className="grid grid-cols-12 items-center gap-2">
+                  <div className="col-span-4" />
+                  <div className="col-span-8 flex items-center gap-1.5">
+                    <div className="flex-1 flex items-center h-9 border border-cyan-500 rounded-md overflow-hidden bg-white shadow-xs">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoFocus
+                        value={
+                          discountValue > 0
+                            ? discountType === 'fixed'
+                              ? formatDotNumber(discountValue)
+                              : String(discountValue)
+                            : ''
+                        }
+                        onChange={(e) => {
+                          const parsed = parseDotNumber(e.target.value);
+                          const maxVal = discountType === 'percent' ? 100 : subtotal;
+                          onChangeDiscountValue(Math.min(maxVal, Math.max(0, parsed)));
+                        }}
+                        placeholder={
+                          discountType === 'percent'
+                            ? 'Nhập % chiết khấu...'
+                            : 'Nhập số tiền chiết khấu...'
+                        }
+                        aria-label="Chiết khấu đơn"
+                        className="w-full min-w-0 px-2.5 text-sm font-bold tabular-nums text-right text-slate-900 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onChangeDiscountType(discountType === 'percent' ? 'fixed' : 'percent');
+                          onChangeDiscountValue(0);
+                        }}
+                        className="h-full px-3 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border-l border-slate-300 shrink-0"
+                        title="Đổi % hoặc VNĐ"
+                      >
+                        {discountType === 'percent' ? '%' : '₫'}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomDiscountOpen(false);
+                        onChangeDiscountValue(0);
+                      }}
+                      className="h-9 w-9 rounded-md border border-slate-300 bg-white hover:bg-red-50 hover:border-red-300 text-slate-500 hover:text-red-600 flex items-center justify-center shrink-0 transition-colors"
+                      title="Xóa chiết khấu"
+                      aria-label="Xóa chiết khấu"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-12 items-center gap-2">
@@ -218,22 +297,15 @@ export function KasPaymentPanel({
               <label className="col-span-4 text-sm font-bold text-red-600 text-right pr-2">
                 Khách trả
               </label>
-              <div className="col-span-8 relative">
+              <div className="col-span-8">
                 {paymentMethod === 'cash' ? (
-                  <>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={cashReceivedInput}
-                      onChange={(e) => onChangeCashReceived(formatDotNumber(e.target.value))}
-                      placeholder={formatDotNumber(total) || '0'}
-                      autoFocus
-                      className="w-full h-10 pl-3 pr-8 text-lg font-bold tabular-nums text-right text-red-600 bg-white border-2 border-red-300 rounded-md focus:outline-none focus:border-cyan-600"
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                      ₫
-                    </span>
-                  </>
+                  <div
+                    aria-label="Khách trả"
+                    className="w-full h-10 px-3 rounded-md bg-white border-2 border-red-300 flex items-center justify-end gap-1 text-lg font-bold tabular-nums text-red-600 select-none"
+                  >
+                    <span>{formatDotNumber(parsedCashReceived) || '0'}</span>
+                    <span className="text-xs font-bold text-slate-400">₫</span>
+                  </div>
                 ) : (
                   <div className="h-10 px-3 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-end text-lg font-bold tabular-nums text-red-600">
                     {formatDotNumber(total) || '0'} ₫
@@ -267,9 +339,9 @@ export function KasPaymentPanel({
             <span className="text-xs font-bold text-slate-500 mr-1">Gợi ý tiền mặt:</span>
             <button
               type="button"
-              onClick={() => onChangeCashReceived(formatDotNumber(total))}
+              onClick={() => onChangeCashReceived('')}
               className={`h-9 px-3.5 text-xs font-bold rounded-md border transition-colors ${
-                parsedCashReceived === total && cashReceivedInput !== ''
+                parsedCashReceived === total
                   ? 'bg-cyan-600 text-white border-cyan-700'
                   : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
               }`}
@@ -278,7 +350,7 @@ export function KasPaymentPanel({
             </button>
             {quickCashAmounts.map((amt) => {
               const formatted = formatDotNumber(amt);
-              const isActive = cashReceivedInput === formatted;
+              const isActive = parsedCashReceived === amt;
               return (
                 <button
                   key={amt}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Coffee, CupSoda, UtensilsCrossed, Croissant, Beer, GlassWater } from 'lucide-react';
+import { Coffee, CupSoda, UtensilsCrossed, Croissant, Beer, GlassWater, Layers } from 'lucide-react';
 import { MenuCategory } from '../types/pos';
 import { resolveAssetUrl } from '../lib/format';
 
@@ -20,6 +20,8 @@ export function MenuThumbnail({
 
   const renderIcon = () => {
     switch (category) {
+      case 'Combo':
+        return <Layers className="w-6 h-6 text-orange-600" strokeWidth={1.75} />;
       case 'Cà phê':
         return <Coffee className="w-6 h-6 text-slate-500" strokeWidth={1.75} />;
       case 'Trà & Matcha':
