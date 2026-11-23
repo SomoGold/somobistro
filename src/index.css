@@ -41,9 +41,39 @@
   background-color: #94a3b8;
 }
 
-/* Dedicated print container injected only during print — hidden on screen */
+/* Dedicated print container injected only during print — hidden when inactive */
 #pos-print-root {
   display: none;
+}
+
+/* While actively printing via triggerHtmlPrint: isolate ONLY #pos-print-root on BOTH screen and print.
+   This guarantees Android Chrome / iMinPrinterPlugin can NEVER capture #root on Page 1. */
+body.pos-printing {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  color-scheme: light !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+body.pos-printing > *:not(#pos-print-root) {
+  display: none !important;
+}
+
+body.pos-printing > #pos-print-root {
+  display: block !important;
+  position: static !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
 }
 
 /* Print Stylesheet: Static flow + pure opaque white surface for Android iMinPrinterPlugin */
@@ -55,7 +85,7 @@
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     height: auto !important;
     overflow: visible !important;
     background: #ffffff !important;
@@ -78,7 +108,7 @@
     display: block !important;
     position: static !important;
     width: 100% !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -88,6 +118,10 @@
     color: #000000 !important;
     box-shadow: none !important;
     border: none !important;
+  }
+
+  body.pos-printing .no-print {
+    display: none !important;
   }
 
   /* Fallback when user triggers browser Ctrl+P directly without clicking the Print button */

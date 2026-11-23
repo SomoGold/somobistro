@@ -20,10 +20,7 @@ import {
   CreditCard,
   UserCheck,
   LayoutGrid,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
-import { useFullscreen } from '../lib/useFullscreen';
 import { doc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { db, OperationType, reportFirestoreError } from '../lib/firebase';
 import {
@@ -65,7 +62,6 @@ import { MenuThumbnail } from './MenuThumbnail';
 import { KasItemModal } from './KasItemModal';
 import { KasAddTableModal, KasCancelBillModal, KasTransferMergeModal } from './KasTableModals';
 import { KasPaymentPanel } from './KasPaymentPanel';
-import { PWAInstallButton } from './PWAInstallButton';
 
 type KasViewMode = 'floor' | 'menu' | 'payment';
 type ZoneFilter = 'Tất cả' | TableZone | 'Mang về';
@@ -123,7 +119,6 @@ export function PosTerminal({
   onSignOut,
   onNotify,
 }: PosTerminalProps) {
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
   const [viewMode, setViewMode] = useState<KasViewMode>('floor');
   const [zoneFilter, setZoneFilter] = useState<ZoneFilter>('Tất cả');
   const [tableSearch, setTableSearch] = useState('');
@@ -1019,25 +1014,6 @@ export function PosTerminal({
                     )}
                   </div>
 
-                  <PWAInstallButton variant="topbar" />
-
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="h-9 px-2.5 rounded-md bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-700 text-cyan-200 inline-flex items-center gap-1.5 text-xs font-bold shrink-0 transition-colors whitespace-nowrap"
-                    title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-                    aria-label={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-                  >
-                    {isFullscreen ? (
-                      <Minimize2 className="w-4 h-4 shrink-0" />
-                    ) : (
-                      <Maximize2 className="w-4 h-4 shrink-0" />
-                    )}
-                    <span className="hidden xl:inline">
-                      {isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}
-                    </span>
-                  </button>
-
                   <button
                     type="button"
                     onClick={() => setShowFunctionsDrawer(true)}
@@ -1288,25 +1264,6 @@ export function PosTerminal({
                       Thanh toán ngay
                     </button>
                   )}
-
-                  <PWAInstallButton variant="topbar" />
-
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="h-10 px-3 rounded-md bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-700 text-cyan-200 inline-flex items-center gap-1.5 text-xs font-bold shrink-0 transition-colors whitespace-nowrap"
-                    title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-                    aria-label={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-                  >
-                    {isFullscreen ? (
-                      <Minimize2 className="w-4 h-4 shrink-0" />
-                    ) : (
-                      <Maximize2 className="w-4 h-4 shrink-0" />
-                    )}
-                    <span className="hidden xl:inline">
-                      {isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}
-                    </span>
-                  </button>
 
                   <button
                     type="button"
@@ -1861,27 +1818,6 @@ export function PosTerminal({
                   <Home className="w-4 h-4 text-cyan-700" />
                   Khu vực bàn & Bán hàng POS
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    void toggleFullscreen();
-                    setShowFunctionsDrawer(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="w-4 h-4 text-[#0a2268]" />
-                  ) : (
-                    <Maximize2 className="w-4 h-4 text-[#0a2268]" />
-                  )}
-                  {isFullscreen ? 'Thoát toàn màn hình' : 'Bật toàn màn hình'}
-                </button>
-
-                <PWAInstallButton
-                  variant="drawer"
-                  onAfterClick={() => setShowFunctionsDrawer(false)}
-                />
 
                 <button
                   type="button"

@@ -72,9 +72,12 @@ export function buildA5InvoiceHtml(
     })
     .join('');
 
-  const bankDetailsHtml =
-    settings?.bankName || settings?.bankAccount || settings?.bankOwner
-      ? `
+  const hasBankDetails = Boolean(
+    settings?.bankName || settings?.bankAccount || settings?.bankOwner,
+  );
+
+  const bankDetailsHtml = hasBankDetails
+    ? `
         <div style="margin-top: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; font-size: 11px; line-height: 1.4;">
           <div style="font-weight: 700; color: #0e7490; margin-bottom: 2px;">Thông tin chuyển khoản:</div>
           ${settings?.bankName ? `<div>Ngân hàng: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
@@ -82,19 +85,20 @@ export function buildA5InvoiceHtml(
           ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
         </div>
       `
-      : '';
+    : '';
 
   const qrBlockHtml = qrDataUrl
     ? `
       <div class="qr-box">
         <img src="${qrDataUrl}" alt="Mã QR chuyển khoản" class="qr-img" />
         <div class="qr-details">
-          <div class="qr-title">Quét mã QR thanh toán</div>
-          <div>${storeName}</div>
-          <div class="font-semibold">Tổng tiền: ${escapeHtml(formatVND(order.total))}</div>
+          <div class="qr-title">Thông tin chuyển khoản</div>
+          ${settings?.bankName ? `<div>NH: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
+          ${settings?.bankAccount ? `<div>STK: <strong style="font-variant-numeric: tabular-nums;">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
+          ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
+          <div class="font-semibold">Số tiền: ${escapeHtml(formatVND(order.total))}</div>
         </div>
       </div>
-      ${bankDetailsHtml}
     `
     : bankDetailsHtml;
 
@@ -329,12 +333,7 @@ export function build80mmReceiptHtml(
   settings: StoreSettings | null,
   isProvisional: boolean,
   qrDataUrl: string,
-  fontScale: number = 1,
 ): string {
-  const safeScale =
-    Number.isFinite(fontScale) && fontScale >= 0.7 && fontScale <= 1.4
-      ? Number(fontScale.toFixed(2))
-      : 1;
   const storeName = escapeHtml(settings?.storeName || 'Somo Bistro');
   const address = escapeHtml(settings?.address || '');
   const phone = escapeHtml(settings?.phone || '');
@@ -388,28 +387,47 @@ export function build80mmReceiptHtml(
     })
     .join('');
 
-  const bankDetailsHtml =
-    settings?.bankName || settings?.bankAccount || settings?.bankOwner
+  const hasBankInfo = Boolean(
+    settings?.bankName || settings?.bankAccount || settings?.bankOwner,
+  );
+
+  const qrBlockHtml =
+    qrDataUrl && hasBankInfo
       ? `
-        <div class="r80-bank">
-          <div class="r80-bank-title">Thông tin chuyển khoản:</div>
-          ${settings?.bankName ? `<div>Ngân hàng: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
-          ${settings?.bankAccount ? `<div>STK: <strong class="r80-tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
-          ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
+        <div class="r80-pay-section">
+          <div class="r80-qr-heading">QUÉT MÃ QR CHUYỂN KHOẢN</div>
+          <div class="r80-pay-row">
+            <div class="r80-pay-qr">
+              <img src="${qrDataUrl}" alt="Mã QR thanh toán" class="r80-qr-img" />
+            </div>
+            <div class="r80-pay-info">
+              <div class="r80-bank-title">Thông tin chuyển khoản:</div>
+              ${settings?.bankName ? `<div>NH: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
+              ${settings?.bankAccount ? `<div>STK: <strong class="r80-tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
+              ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
+              <div class="r80-pay-amount">Số tiền: <strong>${escapeHtml(formatVND(order.total))}</strong></div>
+            </div>
+          </div>
         </div>
       `
-      : '';
-
-  const qrBlockHtml = qrDataUrl
-    ? `
-      <div class="r80-qr-section">
-        <div class="r80-qr-heading">QUÉT MÃ QR THANH TOÁN</div>
-        <img src="${qrDataUrl}" alt="Mã QR thanh toán" class="r80-qr-img" />
-        <div class="r80-qr-amount">${escapeHtml(formatVND(order.total))}</div>
-      </div>
-      ${bankDetailsHtml}
-    `
-    : bankDetailsHtml;
+      : qrDataUrl
+        ? `
+          <div class="r80-pay-section r80-center">
+            <div class="r80-qr-heading">QUÉT MÃ QR THANH TOÁN</div>
+            <img src="${qrDataUrl}" alt="Mã QR thanh toán" class="r80-qr-img r80-qr-center" />
+            <div class="r80-qr-amount">${escapeHtml(formatVND(order.total))}</div>
+          </div>
+        `
+        : hasBankInfo
+          ? `
+            <div class="r80-bank">
+              <div class="r80-bank-title">Thông tin chuyển khoản:</div>
+              ${settings?.bankName ? `<div>Ngân hàng: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
+              ${settings?.bankAccount ? `<div>STK: <strong class="r80-tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
+              ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
+            </div>
+          `
+          : '';
 
   return `<!doctype html>
 <html lang="vi">
@@ -435,7 +453,8 @@ export function build80mmReceiptHtml(
       print-color-adjust: exact !important;
     }
     .r80-sheet {
-      --s: ${safeScale};
+      /* Locked to calibrated "Nhỏ" (0.85) thermal scale for iMinPrinterPlugin */
+      --s: 0.85;
       --u: calc(1vw * var(--s));
       box-sizing: border-box;
       width: 100%;
@@ -575,8 +594,7 @@ export function build80mmReceiptHtml(
       font-weight: 800;
       color: #000000;
     }
-    .r80-qr-section {
-      text-align: center;
+    .r80-pay-section {
       margin-top: calc(var(--u) * 1.6);
       padding-top: calc(var(--u) * 1.4);
       border-top: 1px dashed #000000;
@@ -585,21 +603,46 @@ export function build80mmReceiptHtml(
       page-break-inside: avoid;
     }
     .r80-qr-heading {
-      font-size: calc(var(--u) * 3.05);
+      text-align: center;
+      font-size: calc(var(--u) * 3.0);
       font-weight: 700;
-      margin-bottom: calc(var(--u) * 1.0);
+      margin-bottom: calc(var(--u) * 1.1);
       color: #000000;
+    }
+    .r80-pay-row {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--u) * 2.4);
+    }
+    .r80-pay-qr {
+      flex: 0 0 auto;
     }
     .r80-qr-img {
       width: calc(var(--u) * 28);
       height: calc(var(--u) * 28);
       object-fit: contain;
       display: block;
-      margin: 0 auto;
-      padding: 1vw;
+      padding: 0.6vw;
       background: #ffffff !important;
       background-color: #ffffff !important;
       border: none !important;
+    }
+    .r80-qr-center {
+      margin: 0 auto;
+    }
+    .r80-pay-info {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: left;
+      font-size: calc(var(--u) * 2.8);
+      line-height: 1.42;
+      font-weight: 500;
+      color: #000000;
+    }
+    .r80-pay-amount {
+      margin-top: calc(var(--u) * 0.45);
+      font-size: calc(var(--u) * 3.05);
+      color: #000000;
     }
     .r80-qr-amount {
       font-size: calc(var(--u) * 3.5);
@@ -622,7 +665,7 @@ export function build80mmReceiptHtml(
     }
     .r80-bank-title {
       font-weight: 700;
-      margin-bottom: calc(var(--u) * 0.4);
+      margin-bottom: calc(var(--u) * 0.35);
     }
     .r80-note {
       margin-top: calc(var(--u) * 1.1);
@@ -693,11 +736,10 @@ export function build80mmReceiptHtml(
 
 /**
  * Prints standalone HTML cleanly via a top-level #pos-print-root container + window.print().
- * Why top-level instead of iframe.contentWindow.print()?
- * Android Chrome / WebView (used by iMinPrinterPlugin) ignores iframe print isolation
- * and prints the parent document instead. Printing directly from #pos-print-root with
- * #root hidden during @media print guarantees identical crisp output on Android POS
- * terminals (iMin, Sunmi), iOS, and desktop browsers with zero page overlap or dark frames.
+ * To guarantee Android Chrome / iMinPrinterPlugin NEVER captures the POS screen (#root) on Page 1
+ * and pushes the receipt onto Page 2, we directly hide every sibling of #pos-print-root in <body>
+ * via inline display:none!important, prepend #pos-print-root as the sole rendered DOM element,
+ * wait 2 animation frames for layout/paint to flush, and restore everything once printing ends.
  */
 export function triggerHtmlPrint(
   html: string,
@@ -714,8 +756,7 @@ export function triggerHtmlPrint(
     // Strip any script tags for safety before mounting into the print portal
     parsed.querySelectorAll('script').forEach((s) => s.remove());
 
-    // Extract styles from the standalone HTML and wrap non-@page rules inside @media print
-    // so they never affect the live POS interface on screen.
+    // Extract styles from the standalone HTML so they apply cleanly during printing
     const rawCss = Array.from(parsed.querySelectorAll('style'))
       .map((el) => el.textContent || '')
       .join('\n');
@@ -732,85 +773,161 @@ export function triggerHtmlPrint(
           ? '@page { size: A4 portrait; margin: 10mm; background: #ffffff; }'
           : '@page { size: A5 portrait; margin: 8mm; background: #ffffff; }';
 
+    // Apply both in @media print AND scoped under body.pos-printing so the sole visible DOM
+    // matches the printed receipt immediately before window.print() snapshots the page.
     const styleEl = document.createElement('style');
     styleEl.id = 'pos-dynamic-print-style';
-    styleEl.textContent = `${pageRule}\n@media print {\n${flatPrintCss}\n}`;
+    styleEl.textContent = `${pageRule}
+body.pos-printing > *:not(#pos-print-root) { display: none !important; }
+body.pos-printing > #pos-print-root { display: block !important; background: #ffffff !important; }
+${flatPrintCss}
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; color-scheme: light !important; }
+  body.pos-printing > *:not(#pos-print-root) { display: none !important; }
+  body.pos-printing > #pos-print-root { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; }
+${flatPrintCss}
+}`;
     document.head.appendChild(styleEl);
+
+    // Explicitly hide all existing direct element children of <body> (including #root)
+    // via inline style so NO cached CSS or Android WebView quirk can ever render #root on Page 1.
+    const hiddenSiblings: { el: HTMLElement; prevDisplay: string; prevPriority: string }[] = [];
+    Array.from(document.body.children).forEach((child) => {
+      if (child instanceof HTMLElement && child.id !== 'pos-print-root') {
+        hiddenSiblings.push({
+          el: child,
+          prevDisplay: child.style.getPropertyValue('display'),
+          prevPriority: child.style.getPropertyPriority('display'),
+        });
+        child.style.setProperty('display', 'none', 'important');
+      }
+    });
 
     const printRoot = document.createElement('div');
     printRoot.id = 'pos-print-root';
     Array.from(parsed.body.childNodes).forEach((node) => {
       printRoot.appendChild(document.importNode(node, true));
     });
-    document.body.appendChild(printRoot);
+    // Prepend so #pos-print-root is the very first element in <body> (y = 0, Page 1)
+    document.body.prepend(printRoot);
     document.body.classList.add('pos-printing');
+
+    // Reset scroll position to top so Page 1 always starts at y = 0
+    const prevScrollX = window.scrollX;
+    const prevScrollY = window.scrollY;
+    window.scrollTo(0, 0);
 
     let cleaned = false;
     let afterPrintFired = false;
+    let wasHiddenForPrint = false;
     let cleanupTimer: number | null = null;
+    let fallbackRestoreTimer: number | null = null;
 
     const cleanup = () => {
       if (cleaned) return;
       cleaned = true;
       if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
+      if (fallbackRestoreTimer !== null) window.clearTimeout(fallbackRestoreTimer);
       window.removeEventListener('afterprint', onAfterPrint);
-      document.removeEventListener('visibilitychange', onVisibilityOrFocus);
-      window.removeEventListener('focus', onVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onWindowFocus);
       document.body.classList.remove('pos-printing');
       printRoot.remove();
       styleEl.remove();
+      hiddenSiblings.forEach(({ el, prevDisplay, prevPriority }) => {
+        if (prevDisplay) {
+          el.style.setProperty('display', prevDisplay, prevPriority);
+        } else {
+          el.style.removeProperty('display');
+        }
+      });
+      window.scrollTo(prevScrollX, prevScrollY);
     };
 
-    const scheduleVisibleCleanup = () => {
+    const scheduleVisibleCleanup = (delayMs: number) => {
       if (cleaned) return;
       if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
-      cleanupTimer = window.setTimeout(cleanup, 600);
+      cleanupTimer = window.setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          cleanup();
+        }
+      }, delayMs);
     };
 
-    // On Android Chrome + iMinPrinterPlugin, afterprint may fire while the Android Print
-    // Spooler activity is still open (tab hidden). Keeping #pos-print-root alive until the
-    // tab becomes visible again prevents switching paper sizes from falling back to the dark modal.
-    const onVisibilityOrFocus = () => {
-      if (afterPrintFired && document.visibilityState === 'visible') {
-        scheduleVisibleCleanup();
+    // On Android Chrome + iMinPrinterPlugin, opening Print Spooler moves Chrome to background
+    // (visibilityState === 'hidden'). Keep #pos-print-root as the sole element while Print Spooler
+    // is active, then restore #root cleanly as soon as the user returns to Chrome.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        wasHiddenForPrint = true;
+        if (cleanupTimer !== null) {
+          window.clearTimeout(cleanupTimer);
+          cleanupTimer = null;
+        }
+      } else if (wasHiddenForPrint || afterPrintFired) {
+        scheduleVisibleCleanup(180);
+      }
+    };
+
+    const onWindowFocus = () => {
+      if (wasHiddenForPrint || afterPrintFired) {
+        scheduleVisibleCleanup(180);
       }
     };
 
     const onAfterPrint = () => {
       afterPrintFired = true;
       if (document.visibilityState === 'visible') {
-        scheduleVisibleCleanup();
+        scheduleVisibleCleanup(350);
       }
     };
 
     window.addEventListener('afterprint', onAfterPrint);
-    document.addEventListener('visibilitychange', onVisibilityOrFocus);
-    window.addEventListener('focus', onVisibilityOrFocus);
-    // Safety cleanup after 3 minutes in case afterprint does not fire on an embedded browser
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onWindowFocus);
+    // Safety cleanup after 3 minutes in case an embedded browser never fires lifecycle events
     window.setTimeout(cleanup, 180_000);
 
     const runPrint = () => {
-      try {
-        const started = Date.now();
-        window.print();
-        const elapsed = Date.now() - started;
-        resolve({ printed: elapsed >= 25 || window.top === window.self });
-      } catch {
-        cleanup();
-        resolve({ printed: false });
-      }
+      // Wait 2 animation frames so hiding #root and painting #pos-print-root is fully committed
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          try {
+            const started = Date.now();
+            window.print();
+            const elapsed = Date.now() - started;
+            const likelyPrinted = elapsed >= 25 || window.top === window.self;
+            if (!likelyPrinted) {
+              cleanup();
+              resolve({ printed: false });
+              return;
+            }
+            // If a non-standard browser returned without firing afterprint or hiding the tab
+            // after 4 seconds, restore the POS UI cleanly so the user is never stuck.
+            fallbackRestoreTimer = window.setTimeout(() => {
+              if (!wasHiddenForPrint && !afterPrintFired && document.visibilityState === 'visible') {
+                cleanup();
+              }
+            }, 4000);
+            resolve({ printed: true });
+          } catch {
+            cleanup();
+            resolve({ printed: false });
+          }
+        });
+      });
     };
 
     // Wait for any QR image inside #pos-print-root to finish loading before printing
     const images = Array.from(printRoot.querySelectorAll('img'));
     if (images.length === 0 || images.every((img) => img.complete)) {
-      window.setTimeout(runPrint, 120);
+      window.setTimeout(runPrint, 80);
     } else {
       let triggered = false;
       const triggerOnce = () => {
         if (triggered) return;
         triggered = true;
-        window.setTimeout(runPrint, 100);
+        window.setTimeout(runPrint, 80);
       };
       let remaining = images.filter((img) => !img.complete).length;
       images.forEach((img) => {

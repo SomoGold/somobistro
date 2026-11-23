@@ -22,25 +22,6 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
-type Receipt80ScaleKey = 'small' | 'medium' | 'large';
-
-const SCALE_STORAGE_KEY = 'somo_pos_80mm_scale';
-const SCALE_OPTIONS: { key: Receipt80ScaleKey; label: string; factor: number }[] = [
-  { key: 'small', label: 'Nhỏ', factor: 0.85 },
-  { key: 'medium', label: 'Vừa', factor: 1 },
-  { key: 'large', label: 'Lớn', factor: 1.15 },
-];
-
-function loadSaved80Scale(): Receipt80ScaleKey {
-  try {
-    const raw = window.localStorage.getItem(SCALE_STORAGE_KEY);
-    if (raw === 'small' || raw === 'medium' || raw === 'large') return raw;
-  } catch {
-    // Ignore storage read errors in restricted frames
-  }
-  return 'medium';
-}
-
 export function ReceiptModal({
   order,
   settings,
@@ -50,21 +31,8 @@ export function ReceiptModal({
   const [paperSize, setPaperSize] = useState<ReceiptPaperSize>(
     settings?.defaultPrintSize === '80mm' ? '80mm' : 'a5',
   );
-  const [scaleKey, setScaleKey] = useState<Receipt80ScaleKey>(loadSaved80Scale);
   const [printing, setPrinting] = useState(false);
   const [sandboxHint, setSandboxHint] = useState(false);
-
-  const scaleFactor =
-    SCALE_OPTIONS.find((opt) => opt.key === scaleKey)?.factor ?? 1;
-
-  const handleSelectScale = (next: Receipt80ScaleKey) => {
-    setScaleKey(next);
-    try {
-      window.localStorage.setItem(SCALE_STORAGE_KEY, next);
-    } catch {
-      // Ignore storage write errors
-    }
-  };
 
   const storeName = settings?.storeName || 'Somo Bistro';
   const address = settings?.address || '42 Nguyễn Đình Chiểu, Quận 1, TP. Hồ Chí Minh';
@@ -73,11 +41,14 @@ export function ReceiptModal({
   const footerText =
     settings?.receiptFooter || 'Cảm ơn quý khách đã ghé thăm Somo Bistro! Hẹn gặp lại.';
   const qrDataUrl = settings?.qrImageUrl || '';
+  const hasBankInfo = Boolean(
+    settings?.bankName || settings?.bankAccount || settings?.bankOwner,
+  );
   const totalQty = order.items.reduce((s, i) => s + i.qty, 0);
 
   const buildCurrentHtml = () =>
     paperSize === '80mm'
-      ? build80mmReceiptHtml(order, settings, isProvisional, qrDataUrl, scaleFactor)
+      ? build80mmReceiptHtml(order, settings, isProvisional, qrDataUrl)
       : buildA5InvoiceHtml(order, settings, isProvisional, qrDataUrl);
 
   const handlePrint = async () => {
@@ -140,26 +111,6 @@ export function ReceiptModal({
                 Khổ 80mm (K80)
               </button>
             </div>
-
-            {paperSize === '80mm' && (
-              <div className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1 border border-slate-200">
-                <span className="px-1.5 text-[11px] font-semibold text-slate-500">Cỡ chữ:</span>
-                {SCALE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => handleSelectScale(opt.key)}
-                    className={`px-2 py-1 text-[11px] font-bold rounded-md transition-colors whitespace-nowrap ${
-                      scaleKey === opt.key
-                        ? 'bg-cyan-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
 
             <button
               type="button"
@@ -291,31 +242,44 @@ export function ReceiptModal({
                 {/* Summary & Uploaded QR Section */}
                 <div className="mt-5 pt-4 border-t border-slate-300 grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
                   <div className="sm:col-span-6 space-y-2 text-xs">
-                    {qrDataUrl && (
-                      <div className="space-y-2">
-                        <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 flex items-center gap-3">
-                          <img
-                            src={qrDataUrl}
-                            alt="Mã QR thanh toán chuyển khoản"
-                            className="w-24 h-24 object-contain rounded border border-slate-200 bg-white p-1 shrink-0"
-                          />
-                          <div className="space-y-1 min-w-0">
-                            <div className="font-bold text-cyan-700">Quét mã QR thanh toán</div>
-                            <div className="text-slate-600 truncate">{storeName}</div>
-                            <div className="font-bold tabular-nums text-slate-900">
-                              {formatVND(order.total)}
+                    {qrDataUrl ? (
+                      <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 flex items-center gap-3">
+                        <img
+                          src={qrDataUrl}
+                          alt="Mã QR thanh toán chuyển khoản"
+                          className="w-24 h-24 object-contain rounded border border-slate-200 bg-white p-1 shrink-0"
+                        />
+                        <div className="space-y-0.5 min-w-0 text-xs">
+                          <div className="font-bold text-cyan-800">Thông tin chuyển khoản</div>
+                          {settings?.bankName && (
+                            <div className="text-slate-700">
+                              NH: <strong>{settings.bankName}</strong>
                             </div>
+                          )}
+                          {settings?.bankAccount && (
+                            <div className="text-slate-700">
+                              STK: <strong className="tabular-nums">{settings.bankAccount}</strong>
+                            </div>
+                          )}
+                          {settings?.bankOwner && (
+                            <div className="text-slate-700">
+                              Chủ TK: <strong>{settings.bankOwner}</strong>
+                            </div>
+                          )}
+                          <div className="font-bold tabular-nums text-slate-900 pt-0.5">
+                            Số tiền: {formatVND(order.total)}
                           </div>
                         </div>
-                        {(settings?.bankName || settings?.bankAccount || settings?.bankOwner) && (
-                          <div className="text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 space-y-0.5">
-                            <div className="font-bold text-cyan-800">Thông tin chuyển khoản:</div>
-                            {settings?.bankName && <div>Ngân hàng: <strong>{settings.bankName}</strong></div>}
-                            {settings?.bankAccount && <div>STK: <strong className="tabular-nums">{settings.bankAccount}</strong></div>}
-                            {settings?.bankOwner && <div>Chủ TK: <strong>{settings.bankOwner}</strong></div>}
-                          </div>
-                        )}
                       </div>
+                    ) : (
+                      hasBankInfo && (
+                        <div className="text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 space-y-0.5">
+                          <div className="font-bold text-cyan-800">Thông tin chuyển khoản:</div>
+                          {settings?.bankName && <div>Ngân hàng: <strong>{settings.bankName}</strong></div>}
+                          {settings?.bankAccount && <div>STK: <strong className="tabular-nums">{settings.bankAccount}</strong></div>}
+                          {settings?.bankOwner && <div>Chủ TK: <strong>{settings.bankOwner}</strong></div>}
+                        </div>
+                      )
                     )}
                     {order.note && (
                       <div className="text-slate-600">
@@ -364,16 +328,8 @@ export function ReceiptModal({
               </div>
             </div>
           ) : (
-            /* -------------------- 80MM THERMAL ROLL PREVIEW -------------------- */
-            <div
-              className={`print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-3.5 py-3.5 text-black leading-snug shadow-sm self-start ${
-                scaleKey === 'small'
-                  ? 'text-[10.5px]'
-                  : scaleKey === 'large'
-                    ? 'text-[13px]'
-                    : 'text-[11.5px]'
-              }`}
-            >
+            /* -------------------- 80MM THERMAL ROLL PREVIEW (NHỎ SCALE) -------------------- */
+            <div className="print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-3.5 py-3.5 text-black text-[10.5px] leading-snug shadow-sm self-start">
               <div className="text-center space-y-0.5">
                 <div className="text-[1.35em] font-bold tracking-tight text-black">{storeName}</div>
                 {address && <div className="text-[0.9em] font-medium text-black">{address}</div>}
@@ -482,39 +438,73 @@ export function ReceiptModal({
                 <div className="mt-1 text-[0.92em] font-medium text-black">Wi-Fi: {wifiInfo}</div>
               )}
 
-              {qrDataUrl && (
+              {qrDataUrl && hasBankInfo ? (
+                <div className="mt-2.5 pt-2.5 border-t border-dashed border-black space-y-1.5">
+                  <div className="text-center text-[0.95em] font-bold text-black">
+                    QUÉT MÃ QR CHUYỂN KHOẢN
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={qrDataUrl}
+                      alt="Mã QR thanh toán"
+                      className="w-[80px] h-[80px] object-contain shrink-0 bg-white"
+                    />
+                    <div className="min-w-0 flex-1 text-[0.92em] text-left space-y-0.5 text-black">
+                      <div className="font-bold">Thông tin chuyển khoản:</div>
+                      {settings?.bankName && (
+                        <div>
+                          NH: <strong>{settings.bankName}</strong>
+                        </div>
+                      )}
+                      {settings?.bankAccount && (
+                        <div>
+                          STK: <strong className="tabular-nums">{settings.bankAccount}</strong>
+                        </div>
+                      )}
+                      {settings?.bankOwner && (
+                        <div>
+                          Chủ TK: <strong>{settings.bankOwner}</strong>
+                        </div>
+                      )}
+                      <div className="pt-0.5 text-[1em] tabular-nums">
+                        Số tiền: <strong>{formatVND(order.total)}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : qrDataUrl ? (
                 <div className="mt-2.5 pt-2.5 border-t border-dashed border-black text-center space-y-1">
                   <div className="text-[0.95em] font-bold text-black">QUÉT MÃ QR THANH TOÁN</div>
                   <img
                     src={qrDataUrl}
                     alt="Mã QR thanh toán"
-                    className="w-[88px] h-[88px] object-contain mx-auto bg-white"
+                    className="w-[82px] h-[82px] object-contain mx-auto bg-white"
                   />
                   <div className="text-[1.08em] font-bold tabular-nums text-black">
                     {formatVND(order.total)}
                   </div>
                 </div>
-              )}
-
-              {(settings?.bankName || settings?.bankAccount || settings?.bankOwner) && (
-                <div className="mt-2 text-[0.92em] text-left border border-dashed border-black rounded p-2 space-y-0.5 text-black bg-white">
-                  <div className="font-bold">Thông tin chuyển khoản:</div>
-                  {settings?.bankName && (
-                    <div>
-                      Ngân hàng: <strong>{settings.bankName}</strong>
-                    </div>
-                  )}
-                  {settings?.bankAccount && (
-                    <div>
-                      STK: <strong className="tabular-nums">{settings.bankAccount}</strong>
-                    </div>
-                  )}
-                  {settings?.bankOwner && (
-                    <div>
-                      Chủ TK: <strong>{settings.bankOwner}</strong>
-                    </div>
-                  )}
-                </div>
+              ) : (
+                hasBankInfo && (
+                  <div className="mt-2 text-[0.92em] text-left border border-dashed border-black rounded p-2 space-y-0.5 text-black bg-white">
+                    <div className="font-bold">Thông tin chuyển khoản:</div>
+                    {settings?.bankName && (
+                      <div>
+                        Ngân hàng: <strong>{settings.bankName}</strong>
+                      </div>
+                    )}
+                    {settings?.bankAccount && (
+                      <div>
+                        STK: <strong className="tabular-nums">{settings.bankAccount}</strong>
+                      </div>
+                    )}
+                    {settings?.bankOwner && (
+                      <div>
+                        Chủ TK: <strong>{settings.bankOwner}</strong>
+                      </div>
+                    )}
+                  </div>
+                )
               )}
 
               <div className="mt-2.5 pt-2 border-t border-dashed border-black text-center text-[0.92em] font-medium italic text-black">

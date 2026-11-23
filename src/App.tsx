@@ -14,8 +14,6 @@ import {
   EyeOff,
   Lock,
   User as UserIcon,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
 import {
   createUserWithEmailAndPassword,
@@ -35,7 +33,6 @@ import {
   reportFirestoreError,
 } from './lib/firebase';
 import { formatVND, getDateKey, resolveAssetUrl } from './lib/format';
-import { useFullscreen } from './lib/useFullscreen';
 import {
   cleanupSampleOrders,
   initializeStoreWithSeedData,
@@ -58,7 +55,6 @@ import { OrdersHistoryView } from './components/OrdersHistoryView';
 import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
 import { ReceiptModal } from './components/ReceiptModal';
-import { PWAInstallButton } from './components/PWAInstallButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
 const MANAGEMENT_NAV_ITEMS: { id: NavTab; label: string; icon: typeof UtensilsCrossed }[] = [
@@ -71,7 +67,6 @@ const MANAGEMENT_NAV_ITEMS: { id: NavTab; label: string; icon: typeof UtensilsCr
 ];
 
 export default function App() {
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -569,8 +564,6 @@ export default function App() {
                 </button>
               </form>
 
-              <PWAInstallButton variant="login" />
-
               <p className="text-xs text-slate-400">
                 Dữ liệu thực đơn, bàn, hóa đơn và báo cáo được bảo mật riêng theo từng tài khoản ID.
               </p>
@@ -689,25 +682,6 @@ export default function App() {
                 </div>
               </div>
 
-              <PWAInstallButton variant="topbar" />
-
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-700/80 text-xs font-semibold text-cyan-200 transition-colors whitespace-nowrap"
-                title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-                aria-label={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
-              >
-                {isFullscreen ? (
-                  <Minimize2 className="w-3.5 h-3.5 shrink-0" />
-                ) : (
-                  <Maximize2 className="w-3.5 h-3.5 shrink-0" />
-                )}
-                <span className="hidden xl:inline">
-                  {isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}
-                </span>
-              </button>
-
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -782,12 +756,6 @@ export default function App() {
                         </button>
                       );
                     })}
-                    <div className="pt-1.5">
-                      <PWAInstallButton
-                        variant="drawer"
-                        onAfterClick={() => setMobileNavOpen(false)}
-                      />
-                    </div>
                   </div>
                 </div>
                 <div className="p-4 border-t border-slate-200 flex items-center justify-between">
