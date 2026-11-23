@@ -217,8 +217,8 @@ export function buildA5InvoiceHtml(
       background: #f8fafc;
     }
     .qr-img {
-      width: 140px;
-      height: 140px;
+      width: 104px;
+      height: 104px;
       object-fit: contain;
       border-radius: 6px;
       background: #ffffff;
@@ -274,8 +274,6 @@ export function buildA5InvoiceHtml(
     </div>
 
     <div class="meta-grid">
-      <div class="meta-row"><span class="muted">Khu vực / Bàn:</span><strong>${escapeHtml(order.tableName)}</strong></div>
-      <div class="meta-row"><span class="muted">Thu ngân:</span><span>${escapeHtml(order.cashierName || 'Thu ngân')}</span></div>
       <div class="meta-row"><span class="muted">Khách hàng:</span><span>${escapeHtml(order.customerName || 'Khách lẻ')}</span></div>
       <div class="meta-row"><span class="muted">Thanh toán:</span><span>${escapeHtml(isProvisional ? 'Chưa thanh toán' : getPaymentMethodLabel(order.paymentMethod))}</span></div>
     </div>
@@ -315,14 +313,6 @@ export function buildA5InvoiceHtml(
             : ''
         }
         <div class="tot-grand"><span>TỔNG CỘNG:</span><span>${escapeHtml(formatVND(order.total))}</span></div>
-        ${
-          !isProvisional && order.paymentMethod === 'cash'
-            ? `
-          <div class="tot-row" style="margin-top:4px"><span>Tiền khách đưa:</span><span>${escapeHtml(formatVND(order.cashReceived))}</span></div>
-          <div class="tot-row"><span>Tiền thối lại:</span><span class="font-semibold">${escapeHtml(formatVND(order.changeAmount))}</span></div>
-        `
-            : ''
-        }
       </div>
     </div>
 
@@ -360,18 +350,18 @@ export function build80mmReceiptHtml(
           ? item.toppings
               .map(
                 (t) =>
-                  `<div class="sub-line">+ ${escapeHtml(t.name)} x${item.qty} = ${escapeHtml(
+                  `<div class="r80-sub">+ ${escapeHtml(t.name)} x${item.qty} = ${escapeHtml(
                     formatVND(t.price * item.qty),
                   )}</div>`,
               )
               .join('')
           : '';
       const noteHtml = item.note
-        ? `<div class="sub-line">Ghi chú: ${escapeHtml(item.note)}</div>`
+        ? `<div class="r80-sub">Ghi chú: ${escapeHtml(item.note)}</div>`
         : '';
       const discHtml =
         itemDiscount > 0
-          ? `<div class="disc-line">Chiết khấu món: ${
+          ? `<div class="r80-disc">Chiết khấu món: ${
               item.discountType === 'percent' && (item.discountValue ?? 0) > 0
                 ? `-${item.discountValue}% (-${escapeHtml(formatVND(itemDiscount))})`
                 : `-${escapeHtml(formatVND(itemDiscount))}`
@@ -379,13 +369,13 @@ export function build80mmReceiptHtml(
           : '';
 
       return `
-      <div class="item-block">
-        <div class="item-name">${idx + 1}. ${escapeHtml(item.name)}</div>
+      <div class="r80-item">
+        <div class="r80-item-name">${idx + 1}. ${escapeHtml(item.name)}</div>
         ${toppingsHtml}
         ${noteHtml}
-        <div class="item-calc">
+        <div class="r80-calc">
           <span>${item.qty} × ${escapeHtml(formatVND(unitPrice))}</span>
-          <span class="font-bold">${escapeHtml(formatVND(netTotal))}</span>
+          <span class="r80-bold">${escapeHtml(formatVND(netTotal))}</span>
         </div>
         ${discHtml}
       </div>
@@ -396,10 +386,10 @@ export function build80mmReceiptHtml(
   const bankDetailsHtml =
     settings?.bankName || settings?.bankAccount || settings?.bankOwner
       ? `
-        <div class="bank-box">
-          <div class="bank-title">Thông tin chuyển khoản:</div>
+        <div class="r80-bank">
+          <div class="r80-bank-title">Thông tin chuyển khoản:</div>
           ${settings?.bankName ? `<div>Ngân hàng: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
-          ${settings?.bankAccount ? `<div>STK: <strong class="tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
+          ${settings?.bankAccount ? `<div>STK: <strong class="r80-tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
           ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
         </div>
       `
@@ -407,10 +397,10 @@ export function build80mmReceiptHtml(
 
   const qrBlockHtml = qrDataUrl
     ? `
-      <div class="qr-section">
-        <div class="qr-heading">QUÉT MÃ QR THANH TOÁN</div>
-        <img src="${qrDataUrl}" alt="Mã QR thanh toán" class="qr-img-80" />
-        <div class="qr-amount">${escapeHtml(formatVND(order.total))}</div>
+      <div class="r80-qr-section">
+        <div class="r80-qr-heading">QUÉT MÃ QR THANH TOÁN</div>
+        <img src="${qrDataUrl}" alt="Mã QR thanh toán" class="r80-qr-img" />
+        <div class="r80-qr-amount">${escapeHtml(formatVND(order.total))}</div>
       </div>
       ${bankDetailsHtml}
     `
@@ -423,355 +413,346 @@ export function build80mmReceiptHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} 80mm - ${escapeHtml(order.orderNumber)}</title>
   <style>
-    :root {
-      /* On screen preview: 1% of 80mm (~302px) */
-      --u: 3.02px;
-    }
     @page {
       margin: 0;
     }
-    * {
+    .r80-sheet {
+      --u: 1vw;
       box-sizing: border-box;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    html, body {
+      width: 100%;
       margin: 0;
-      padding: 0;
+      padding: calc(var(--u) * 1.8) calc(var(--u) * 3);
       background: #ffffff;
       color: #000000;
       font-family: Arial, Helvetica, "Roboto", "Segoe UI", sans-serif;
+      font-size: calc(var(--u) * 4.8);
+      line-height: 1.32;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
-      -webkit-text-size-adjust: 100%;
-    }
-    body {
-      width: 80mm;
-      margin: 0 auto;
-      padding: calc(var(--u) * 2.5) calc(var(--u) * 4);
-      font-size: calc(var(--u) * 4.5);
-      line-height: 1.38;
-      font-weight: 500;
       word-break: break-word;
       overflow-wrap: break-word;
+      -webkit-text-size-adjust: 100%;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    @media print {
-      :root {
-        /* Dynamically fills 100% of whatever page width Android Print / iMinPrinterPlugin or K80 driver uses (80mm, 72mm, A4-scaled-to-80mm...) */
-        --u: 1vw;
-      }
-      html, body {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
+    .r80-sheet * {
+      box-sizing: border-box;
+    }
+    /* Screen-only preview sizing when opened as a standalone .html file */
+    @media screen {
+      .r80-sheet {
+        --u: 3.02px;
+        width: 80mm;
+        margin: 0 auto;
       }
     }
-    .tabular { font-variant-numeric: tabular-nums; }
-    .center { text-align: center; }
-    .brand {
-      font-size: calc(var(--u) * 6.8);
+    .r80-tabular { font-variant-numeric: tabular-nums; }
+    .r80-center { text-align: center; }
+    .r80-brand {
+      font-size: calc(var(--u) * 7.2);
       font-weight: 800;
       letter-spacing: -0.01em;
-      line-height: 1.2;
+      line-height: 1.18;
       color: #000000;
     }
-    .muted {
-      font-size: calc(var(--u) * 4.1);
+    .r80-muted {
+      font-size: calc(var(--u) * 4.2);
       font-weight: 600;
       color: #000000;
-      margin-top: calc(var(--u) * 0.6);
+      margin-top: calc(var(--u) * 0.4);
     }
-    .title {
+    .r80-title {
       font-size: calc(var(--u) * 5.6);
       font-weight: 800;
-      margin-top: calc(var(--u) * 2.2);
-      padding-top: calc(var(--u) * 2.2);
+      margin-top: calc(var(--u) * 1.6);
+      padding-top: calc(var(--u) * 1.6);
       border-top: calc(var(--u) * 0.45) dashed #000000;
       color: #000000;
     }
-    .divider {
+    .r80-divider {
       border-top: calc(var(--u) * 0.45) dashed #000000;
-      margin: calc(var(--u) * 2.4) 0;
+      margin: calc(var(--u) * 1.8) 0;
     }
-    .meta-row {
+    .r80-meta {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: calc(var(--u) * 2);
-      font-size: calc(var(--u) * 4.3);
-      font-weight: 500;
-      padding: calc(var(--u) * 0.5) 0;
+      font-size: calc(var(--u) * 4.5);
+      font-weight: 600;
+      padding: calc(var(--u) * 0.35) 0;
       color: #000000;
     }
-    .meta-row > span:first-child {
-      flex-shrink: 0;
-    }
-    .meta-row > span:last-child,
-    .meta-row > strong {
+    .r80-meta > span:first-child { flex-shrink: 0; }
+    .r80-meta > span:last-child,
+    .r80-meta > strong {
       text-align: right;
-      font-weight: 700;
+      font-weight: 800;
     }
-    .item-block {
-      padding: calc(var(--u) * 1.8) 0;
+    .r80-item {
+      padding: calc(var(--u) * 1.3) 0;
       border-bottom: calc(var(--u) * 0.35) dotted #000000;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .item-block:last-child {
-      border-bottom: none;
-    }
-    .item-name {
+    .r80-item:last-child { border-bottom: none; }
+    .r80-item-name {
       font-weight: 800;
-      font-size: calc(var(--u) * 4.9);
-      line-height: 1.3;
+      font-size: calc(var(--u) * 5.2);
+      line-height: 1.26;
       color: #000000;
     }
-    .sub-line {
-      font-size: calc(var(--u) * 4.1);
+    .r80-sub {
+      font-size: calc(var(--u) * 4.3);
       font-weight: 600;
       color: #000000;
-      padding-left: calc(var(--u) * 2.8);
-      margin-top: calc(var(--u) * 0.5);
+      padding-left: calc(var(--u) * 2.4);
+      margin-top: calc(var(--u) * 0.35);
     }
-    .disc-line {
-      font-size: calc(var(--u) * 4.1);
+    .r80-disc {
+      font-size: calc(var(--u) * 4.3);
       font-weight: 700;
       color: #000000;
-      padding-left: calc(var(--u) * 2.8);
+      padding-left: calc(var(--u) * 2.4);
+      margin-top: calc(var(--u) * 0.35);
+    }
+    .r80-calc {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: calc(var(--u) * 2);
+      padding-left: calc(var(--u) * 2.4);
       margin-top: calc(var(--u) * 0.5);
-    }
-    .item-calc {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: calc(var(--u) * 2);
-      padding-left: calc(var(--u) * 2.8);
-      margin-top: calc(var(--u) * 0.8);
-      font-size: calc(var(--u) * 4.5);
-      font-weight: 600;
+      font-size: calc(var(--u) * 4.8);
+      font-weight: 700;
       color: #000000;
     }
-    .font-bold { font-weight: 800; }
-    .tot-row {
+    .r80-bold { font-weight: 800; }
+    .r80-tot {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: calc(var(--u) * 2);
-      padding: calc(var(--u) * 0.7) 0;
-      font-size: calc(var(--u) * 4.6);
-      font-weight: 600;
+      padding: calc(var(--u) * 0.5) 0;
+      font-size: calc(var(--u) * 4.8);
+      font-weight: 700;
       color: #000000;
     }
-    .tot-grand {
+    .r80-grand {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: calc(var(--u) * 2);
-      padding: calc(var(--u) * 2) 0 calc(var(--u) * 1.2);
-      margin-top: calc(var(--u) * 1.5);
+      padding: calc(var(--u) * 1.5) 0 calc(var(--u) * 0.8);
+      margin-top: calc(var(--u) * 1);
       border-top: calc(var(--u) * 0.6) solid #000000;
-      font-size: calc(var(--u) * 6.0);
+      font-size: calc(var(--u) * 6.2);
       font-weight: 800;
       color: #000000;
     }
-    .qr-section {
+    .r80-qr-section {
       text-align: center;
-      margin-top: calc(var(--u) * 2.8);
-      padding-top: calc(var(--u) * 2.8);
+      margin-top: calc(var(--u) * 2);
+      padding-top: calc(var(--u) * 1.8);
       border-top: calc(var(--u) * 0.45) dashed #000000;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .qr-heading {
-      font-size: calc(var(--u) * 4.5);
+    .r80-qr-heading {
+      font-size: calc(var(--u) * 4.6);
       font-weight: 800;
-      margin-bottom: calc(var(--u) * 1.6);
+      margin-bottom: calc(var(--u) * 1.2);
       color: #000000;
     }
-    .qr-img-80 {
-      width: calc(var(--u) * 46);
-      height: calc(var(--u) * 46);
+    .r80-qr-img {
+      width: calc(var(--u) * 32);
+      height: calc(var(--u) * 32);
       object-fit: contain;
       display: block;
       margin: 0 auto;
     }
-    .qr-amount {
+    .r80-qr-amount {
       font-size: calc(var(--u) * 5.2);
       font-weight: 800;
-      margin-top: calc(var(--u) * 1.4);
+      margin-top: calc(var(--u) * 1);
       color: #000000;
     }
-    .bank-box {
-      margin-top: calc(var(--u) * 2.4);
-      padding: calc(var(--u) * 2.2);
+    .r80-bank {
+      margin-top: calc(var(--u) * 1.8);
+      padding: calc(var(--u) * 1.6) calc(var(--u) * 2);
       border: calc(var(--u) * 0.45) dashed #000000;
-      border-radius: calc(var(--u) * 1.2);
-      font-size: calc(var(--u) * 4.2);
-      line-height: 1.42;
-      font-weight: 500;
+      border-radius: calc(var(--u) * 1);
+      font-size: calc(var(--u) * 4.3);
+      line-height: 1.35;
+      font-weight: 600;
       color: #000000;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .bank-title {
+    .r80-bank-title {
       font-weight: 800;
-      margin-bottom: calc(var(--u) * 0.8);
+      margin-bottom: calc(var(--u) * 0.5);
     }
-    .note-line {
-      margin-top: calc(var(--u) * 2);
-      font-size: calc(var(--u) * 4.2);
+    .r80-note {
+      margin-top: calc(var(--u) * 1.4);
+      font-size: calc(var(--u) * 4.3);
       font-weight: 600;
       color: #000000;
     }
-    .footer {
+    .r80-footer {
       text-align: center;
-      margin-top: calc(var(--u) * 3);
-      padding-top: calc(var(--u) * 2.4);
-      padding-bottom: calc(var(--u) * 4);
+      margin-top: calc(var(--u) * 2);
+      padding-top: calc(var(--u) * 1.6);
+      padding-bottom: calc(var(--u) * 2);
       border-top: calc(var(--u) * 0.45) dashed #000000;
       font-size: calc(var(--u) * 4.2);
       font-weight: 600;
       font-style: italic;
       color: #000000;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   </style>
 </head>
-<body>
-  <div class="center">
-    <div class="brand">${storeName}</div>
-    ${address ? `<div class="muted">${address}</div>` : ''}
-    ${phone ? `<div class="muted">ĐT: ${phone}</div>` : ''}
-    <div class="title">${title}</div>
+<body style="margin:0;padding:0;background:#ffffff;">
+  <div class="r80-sheet">
+    <div class="r80-center">
+      <div class="r80-brand">${storeName}</div>
+      ${address ? `<div class="r80-muted">${address}</div>` : ''}
+      ${phone ? `<div class="r80-muted">ĐT: ${phone}</div>` : ''}
+      <div class="r80-title">${title}</div>
+    </div>
+
+    <div class="r80-divider"></div>
+
+    <div class="r80-meta"><span>Số HĐ:</span><strong>${escapeHtml(order.orderNumber)}</strong></div>
+    <div class="r80-meta"><span>Thời gian:</span><span>${escapeHtml(order.displayTime)}</span></div>
+    <div class="r80-meta"><span>Khách hàng:</span><span>${escapeHtml(order.customerName || 'Khách lẻ')}</span></div>
+    <div class="r80-meta"><span>Thanh toán:</span><span>${escapeHtml(isProvisional ? 'Chưa thanh toán' : getPaymentMethodLabel(order.paymentMethod))}</span></div>
+
+    <div class="r80-divider"></div>
+
+    <div>${itemsHtml}</div>
+
+    <div class="r80-divider"></div>
+
+    <div class="r80-tot"><span>Tạm tính (${totalQty} món):</span><span class="r80-bold">${escapeHtml(formatVND(order.subtotal))}</span></div>
+    ${
+      order.discountAmount > 0
+        ? `<div class="r80-tot"><span>Giảm giá${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
+        : ''
+    }
+    ${
+      order.vatRate > 0
+        ? `<div class="r80-tot"><span>Thuế VAT (${order.vatRate}%):</span><span>${escapeHtml(formatVND(order.vatAmount))}</span></div>`
+        : ''
+    }
+    <div class="r80-grand"><span>TỔNG CỘNG:</span><span>${escapeHtml(formatVND(order.total))}</span></div>
+
+    ${order.note ? `<div class="r80-note"><strong>Ghi chú:</strong> ${escapeHtml(order.note)}</div>` : ''}
+    ${wifiInfo ? `<div class="r80-note">Wi-Fi: ${wifiInfo}</div>` : ''}
+
+    ${qrBlockHtml}
+
+    <div class="r80-footer">${footerText}</div>
   </div>
-
-  <div class="divider"></div>
-
-  <div class="meta-row"><span>Số HĐ:</span><strong>${escapeHtml(order.orderNumber)}</strong></div>
-  <div class="meta-row"><span>Thời gian:</span><span>${escapeHtml(order.displayTime)}</span></div>
-  <div class="meta-row"><span>Bàn / Khu:</span><strong>${escapeHtml(order.tableName)}</strong></div>
-  <div class="meta-row"><span>Khách hàng:</span><span>${escapeHtml(order.customerName || 'Khách lẻ')}</span></div>
-  <div class="meta-row"><span>Thu ngân:</span><span>${escapeHtml(order.cashierName || 'Thu ngân')}</span></div>
-  <div class="meta-row"><span>Thanh toán:</span><span>${escapeHtml(isProvisional ? 'Chưa thanh toán' : getPaymentMethodLabel(order.paymentMethod))}</span></div>
-
-  <div class="divider"></div>
-
-  <div>${itemsHtml}</div>
-
-  <div class="divider"></div>
-
-  <div class="tot-row"><span>Tạm tính (${totalQty} món):</span><span class="font-bold">${escapeHtml(formatVND(order.subtotal))}</span></div>
-  ${
-    order.discountAmount > 0
-      ? `<div class="tot-row"><span>Giảm giá${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
-      : ''
-  }
-  ${
-    order.vatRate > 0
-      ? `<div class="tot-row"><span>Thuế VAT (${order.vatRate}%):</span><span>${escapeHtml(formatVND(order.vatAmount))}</span></div>`
-      : ''
-  }
-  <div class="tot-grand"><span>TỔNG CỘNG:</span><span>${escapeHtml(formatVND(order.total))}</span></div>
-  ${
-    !isProvisional && order.paymentMethod === 'cash'
-      ? `
-    <div class="tot-row"><span>Khách đưa:</span><span>${escapeHtml(formatVND(order.cashReceived))}</span></div>
-    <div class="tot-row"><span>Tiền thối lại:</span><span class="font-bold">${escapeHtml(formatVND(order.changeAmount))}</span></div>
-  `
-      : ''
-  }
-
-  ${order.note ? `<div class="note-line"><strong>Ghi chú:</strong> ${escapeHtml(order.note)}</div>` : ''}
-  ${wifiInfo ? `<div class="note-line">Wi-Fi: ${wifiInfo}</div>` : ''}
-
-  ${qrBlockHtml}
-
-  <div class="footer">${footerText}</div>
 </body>
 </html>`;
 }
 
 /**
- * Triggers the native browser/Android Print dialog via a dedicated off-screen iframe
- * sized cleanly (never 0x0, avoiding Android WebView / iMinPrinterPlugin scale bugs)
- * and preserved until printing finishes.
+ * Prints standalone HTML cleanly via a top-level #pos-print-root container + window.print().
+ * Why top-level instead of iframe.contentWindow.print()?
+ * Android Chrome / WebView (used by iMinPrinterPlugin) ignores iframe print isolation
+ * and prints the parent document instead. Printing directly from #pos-print-root with
+ * #root hidden during @media print guarantees identical crisp output on Android POS
+ * terminals (iMin, Sunmi), iOS, and desktop browsers with zero page overlap.
  */
 export function triggerHtmlPrint(
   html: string,
-  paperSize: 'a5' | '80mm' = 'a5',
+  paperSize: 'a5' | '80mm' | 'a4' = 'a5',
 ): Promise<{ printed: boolean }> {
   return new Promise((resolve) => {
-    // Clean up any leftover previous print frame
-    document.querySelectorAll('iframe[data-pos-print-frame="true"]').forEach((el) => el.remove());
+    // Remove any previous injected print artifacts
+    document.getElementById('pos-print-root')?.remove();
+    document.getElementById('pos-dynamic-print-style')?.remove();
+    document.body.classList.remove('pos-printing');
 
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('data-pos-print-frame', 'true');
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.left = '-10000px';
-    iframe.style.top = '0';
-    iframe.style.width = paperSize === '80mm' ? '302px' : '560px';
-    iframe.style.height = '900px';
-    iframe.style.border = '0';
-    iframe.style.opacity = '0';
-    iframe.style.pointerEvents = 'none';
-    document.body.appendChild(iframe);
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+
+    // Strip any script tags for safety before mounting into the print portal
+    parsed.querySelectorAll('script').forEach((s) => s.remove());
+
+    // Extract styles from the standalone HTML and wrap non-@page rules inside @media print
+    // so they never affect the live POS interface on screen.
+    const rawCss = Array.from(parsed.querySelectorAll('style'))
+      .map((el) => el.textContent || '')
+      .join('\n');
+
+    // Strip @page and @media screen blocks so injected CSS has zero nested @media queries
+    // (critical for older Android WebView / iMin Chrome builds).
+    const flatPrintCss = rawCss
+      .replace(/@page\s*\{[^}]*\}/g, '')
+      .replace(/@media\s+screen\s*\{[\s\S]*?\}\s*\}/g, '');
+    const pageRule =
+      paperSize === '80mm'
+        ? '@page { margin: 0; }'
+        : paperSize === 'a4'
+          ? '@page { size: A4 portrait; margin: 10mm; }'
+          : '@page { size: A5 portrait; margin: 8mm; }';
+
+    const styleEl = document.createElement('style');
+    styleEl.id = 'pos-dynamic-print-style';
+    styleEl.textContent = `${pageRule}\n@media print {\n${flatPrintCss}\n}`;
+    document.head.appendChild(styleEl);
+
+    const printRoot = document.createElement('div');
+    printRoot.id = 'pos-print-root';
+    Array.from(parsed.body.childNodes).forEach((node) => {
+      printRoot.appendChild(document.importNode(node, true));
+    });
+    document.body.appendChild(printRoot);
+    document.body.classList.add('pos-printing');
 
     let cleaned = false;
     const cleanup = () => {
       if (cleaned) return;
       cleaned = true;
-      if (iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-      }
+      window.removeEventListener('afterprint', onAfterPrint);
+      document.body.classList.remove('pos-printing');
+      printRoot.remove();
+      styleEl.remove();
     };
+
+    const onAfterPrint = () => {
+      window.setTimeout(cleanup, 300);
+    };
+    window.addEventListener('afterprint', onAfterPrint);
+    // Safety cleanup after 2 minutes in case afterprint does not fire on an embedded browser
+    window.setTimeout(cleanup, 120_000);
 
     const runPrint = () => {
       try {
-        const win = iframe.contentWindow;
-        if (!win) {
-          cleanup();
-          resolve({ printed: false });
-          return;
-        }
-        // Keep iframe alive until afterprint (critical for async Android Print / iMinPrinterPlugin)
-        win.addEventListener('afterprint', () => {
-          window.setTimeout(cleanup, 1500);
-        });
-        // Fallback cleanup after 2 minutes if afterprint doesn't fire
-        window.setTimeout(cleanup, 120_000);
-
-        win.focus();
         const started = Date.now();
-        win.print();
+        window.print();
         const elapsed = Date.now() - started;
-        // On Android Chrome, win.print() may return asynchronously in < 25ms when opening the native print spooler,
-        // so treat top-level browsing contexts as printed.
         resolve({ printed: elapsed >= 25 || window.top === window.self });
       } catch {
         cleanup();
-        try {
-          window.print();
-          resolve({ printed: true });
-        } catch {
-          resolve({ printed: false });
-        }
+        resolve({ printed: false });
       }
     };
 
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      cleanup();
-      resolve({ printed: false });
-      return;
-    }
-
-    doc.open();
-    doc.write(html);
-    doc.close();
-
-    // Wait for any inline QR image to finish decoding before printing
-    const images = Array.from(doc.images);
+    // Wait for any QR image inside #pos-print-root to finish loading before printing
+    const images = Array.from(printRoot.querySelectorAll('img'));
     if (images.length === 0 || images.every((img) => img.complete)) {
-      window.setTimeout(runPrint, 200);
+      window.setTimeout(runPrint, 120);
     } else {
       let triggered = false;
       const triggerOnce = () => {
         if (triggered) return;
         triggered = true;
-        window.setTimeout(runPrint, 150);
+        window.setTimeout(runPrint, 100);
       };
       let remaining = images.filter((img) => !img.complete).length;
       images.forEach((img) => {

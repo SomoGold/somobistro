@@ -618,7 +618,7 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
     setPrinting(true);
     setPrintFallbackHint(false);
     const html = buildReportPrintHtml();
-    const result = await triggerHtmlPrint(html);
+    const result = await triggerHtmlPrint(html, 'a4');
     setPrinting(false);
     if (!result.printed) {
       setPrintFallbackHint(true);

@@ -41,53 +41,55 @@
   background-color: #94a3b8;
 }
 
-/* Print Stylesheet: A5 Portrait Bill (148mm x 210mm) and Printable Reports */
+/* Dedicated print container injected only during print — hidden on screen */
+#pos-print-root {
+  display: none;
+}
+
+/* Print Stylesheet: Static flow (no position:fixed repetition/overlap across pages) */
 @media print {
-  @page {
-    size: A5 portrait;
-    margin: 8mm;
-  }
-
-  body * {
-    visibility: hidden !important;
-  }
-
-  .print-receipt-root,
-  .print-receipt-root *,
-  .print-report-root,
-  .print-report-root * {
-    visibility: visible !important;
-  }
-
-  .print-receipt-root {
-    position: fixed !important;
-    inset: 0 !important;
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
     width: 100% !important;
-    max-width: 148mm !important;
-    margin: 0 auto !important;
-    padding: 4mm 6mm !important;
+    height: auto !important;
+    overflow: visible !important;
     background: #ffffff !important;
     color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* When printing via triggerHtmlPrint: hide the entire app UI and render only #pos-print-root */
+  body.pos-printing > *:not(#pos-print-root) {
+    display: none !important;
+  }
+
+  body.pos-printing > #pos-print-root {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* Fallback when user triggers browser Ctrl+P directly without clicking the Print button */
+  body:not(.pos-printing) .no-print {
+    display: none !important;
+  }
+
+  body:not(.pos-printing) .print-receipt-root {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
     box-shadow: none !important;
     border: none !important;
-  }
-
-  .print-receipt-80mm {
-    max-width: none !important;
-    width: 100% !important;
-    padding: 2vw 3.5vw !important;
-    font-size: 4.5vw !important;
-  }
-
-  .print-report-root {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
     background: #ffffff !important;
-    color: #0f172a !important;
-  }
-
-  .no-print {
-    display: none !important;
+    color: #000000 !important;
   }
 }

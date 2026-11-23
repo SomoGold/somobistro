@@ -149,16 +149,6 @@ export function ReceiptModal({
                 {/* Order Meta Grid */}
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 py-3.5 border-b border-slate-200 text-xs">
                   <div className="flex justify-between gap-2">
-                    <span className="text-slate-500">Khu vực / Bàn:</span>
-                    <span className="font-semibold text-slate-900">{order.tableName}</span>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <span className="text-slate-500">Thu ngân:</span>
-                    <span className="font-medium text-slate-900">
-                      {order.cashierName || 'Thu ngân'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between gap-2">
                     <span className="text-slate-500">Khách hàng:</span>
                     <span className="font-medium text-slate-900">
                       {order.customerName || 'Khách lẻ'}
@@ -255,7 +245,7 @@ export function ReceiptModal({
                           <img
                             src={qrDataUrl}
                             alt="Mã QR thanh toán chuyển khoản"
-                            className="w-32 h-32 object-contain rounded border border-slate-200 bg-white p-1 shrink-0"
+                            className="w-24 h-24 object-contain rounded border border-slate-200 bg-white p-1 shrink-0"
                           />
                           <div className="space-y-1 min-w-0">
                             <div className="font-bold text-cyan-700">Quét mã QR thanh toán</div>
@@ -313,20 +303,6 @@ export function ReceiptModal({
                       <span>TỔNG CỘNG:</span>
                       <span className="tabular-nums text-cyan-700">{formatVND(order.total)}</span>
                     </div>
-                    {!isProvisional && order.paymentMethod === 'cash' && (
-                      <div className="pt-1.5 space-y-1 text-slate-600">
-                        <div className="flex justify-between">
-                          <span>Tiền khách đưa:</span>
-                          <span className="tabular-nums">{formatVND(order.cashReceived)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Tiền thối lại:</span>
-                          <span className="tabular-nums font-semibold text-slate-900">
-                            {formatVND(order.changeAmount)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -357,16 +333,8 @@ export function ReceiptModal({
                   <span className="font-bold tabular-nums">{order.displayTime}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span>Bàn / Khu:</span>
-                  <span className="font-bold">{order.tableName}</span>
-                </div>
-                <div className="flex justify-between gap-2">
                   <span>Khách hàng:</span>
                   <span className="font-bold">{order.customerName || 'Khách lẻ'}</span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span>Thu ngân:</span>
-                  <span className="font-bold">{order.cashierName || 'Thu ngân'}</span>
                 </div>
                 <div className="flex justify-between gap-2">
                   <span>Thanh toán:</span>
@@ -443,18 +411,6 @@ export function ReceiptModal({
                   <span>TỔNG CỘNG:</span>
                   <span className="tabular-nums">{formatVND(order.total)}</span>
                 </div>
-                {!isProvisional && order.paymentMethod === 'cash' && (
-                  <>
-                    <div className="flex justify-between text-[13px] pt-1">
-                      <span>Khách đưa:</span>
-                      <span className="tabular-nums">{formatVND(order.cashReceived)}</span>
-                    </div>
-                    <div className="flex justify-between text-[13px] font-extrabold">
-                      <span>Tiền thối lại:</span>
-                      <span className="tabular-nums">{formatVND(order.changeAmount)}</span>
-                    </div>
-                  </>
-                )}
               </div>
 
               {order.note && (
@@ -472,7 +428,7 @@ export function ReceiptModal({
                   <img
                     src={qrDataUrl}
                     alt="Mã QR thanh toán"
-                    className="w-[140px] h-[140px] object-contain mx-auto"
+                    className="w-[104px] h-[104px] object-contain mx-auto"
                   />
                   <div className="text-[15px] font-extrabold tabular-nums text-black">
                     {formatVND(order.total)}
