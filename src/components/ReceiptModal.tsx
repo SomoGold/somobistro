@@ -371,8 +371,8 @@ export function ReceiptModal({
               </div>
             </div>
           ) : (
-            /* -------------------- 80MM THERMAL ROLL PREVIEW (NHỎ -10% SCALE) -------------------- */
-            <div className="print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-[30px] py-3.5 text-black text-[9.5px] leading-snug shadow-sm self-start">
+            /* -------------------- 80MM THERMAL ROLL PREVIEW (CRISP 203 DPI SCALE) -------------------- */
+            <div className="print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-[30px] py-3.5 text-black text-[11.2px] font-semibold leading-snug shadow-sm self-start">
               <div className="text-center space-y-0.5">
                 <div className="text-[1.35em] font-bold tracking-tight text-black">{storeName}</div>
                 {address && <div className="text-[0.9em] font-medium text-black">{address}</div>}
@@ -568,7 +568,7 @@ export function ReceiptModal({
                 )
               )}
 
-              <div className="mt-2.5 pt-2 border-t border-dashed border-black text-center text-[0.92em] font-medium italic text-black">
+              <div className="mt-2.5 pt-2 border-t border-dashed border-black text-center text-[0.9em] font-semibold text-black">
                 {footerText}
               </div>
             </div>

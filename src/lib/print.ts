@@ -491,8 +491,9 @@ export function build80mmReceiptHtml(
       print-color-adjust: exact !important;
     }
     .r80-sheet {
-      /* Calibrated "Nhỏ" (-10% => 0.765) thermal scale for iMinPrinterPlugin */
-      --s: 0.765;
+      /* Calibrated crisp 203 DPI thermal scale (576 dots / 72mm printable width)
+         ensures every glyph is >= 19 thermal dots tall so Vietnamese accents never break */
+      --s: 1.18;
       --u: calc(1vw * var(--s));
       box-sizing: border-box;
       width: 100%;
@@ -504,13 +505,17 @@ export function build80mmReceiptHtml(
       color-scheme: light !important;
       border: none !important;
       box-shadow: none !important;
-      font-family: Arial, Helvetica, "Roboto", "Segoe UI", sans-serif;
+      font-family: "Roboto", "Noto Sans", "Plus Jakarta Sans", Arial, Helvetica, sans-serif;
       font-size: calc(var(--u) * 3.15);
-      line-height: 1.35;
-      font-weight: 500;
+      line-height: 1.32;
+      font-weight: 600;
+      letter-spacing: 0.005em;
       font-variant-numeric: tabular-nums;
       word-break: break-word;
       overflow-wrap: break-word;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: auto !important;
+      -moz-osx-font-smoothing: auto !important;
       -webkit-text-size-adjust: 100%;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -527,43 +532,48 @@ export function build80mmReceiptHtml(
         padding: 6px 30px 12px;
         margin: 0 auto;
       }
+      .r80-qr-img {
+        width: 72px;
+        height: 72px;
+        padding: 2px;
+      }
     }
     .r80-tabular { font-variant-numeric: tabular-nums; }
     .r80-center { text-align: center; }
     .r80-brand {
       font-size: calc(var(--u) * 4.6);
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.01em;
-      line-height: 1.2;
+      line-height: 1.18;
       color: #000000;
     }
     .r80-muted {
       font-size: calc(var(--u) * 2.85);
-      font-weight: 500;
+      font-weight: 600;
       color: #000000;
-      margin-top: calc(var(--u) * 0.35);
+      margin-top: calc(var(--u) * 0.3);
     }
     .r80-title {
       font-size: calc(var(--u) * 3.65);
-      font-weight: 700;
-      margin-top: calc(var(--u) * 1.4);
-      margin-bottom: calc(var(--u) * 1.1);
-      padding-top: calc(var(--u) * 1.3);
+      font-weight: 800;
+      margin-top: calc(var(--u) * 1.1);
+      margin-bottom: calc(var(--u) * 0.9);
+      padding-top: calc(var(--u) * 1.0);
       border-top: 1px dashed #000000;
       color: #000000;
     }
     .r80-divider {
       border-top: 1px dashed #000000;
-      margin: calc(var(--u) * 1.4) 0;
+      margin: calc(var(--u) * 1.1) 0;
     }
     .r80-meta {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 1.8);
+      gap: calc(var(--u) * 1.4);
       font-size: calc(var(--u) * 3.0);
-      font-weight: 500;
-      padding: calc(var(--u) * 0.3) 0;
+      font-weight: 600;
+      padding: calc(var(--u) * 0.25) 0;
       color: #000000;
     }
     .r80-meta > span:first-child { flex-shrink: 0; }
@@ -573,7 +583,7 @@ export function build80mmReceiptHtml(
       font-weight: 700;
     }
     .r80-item {
-      padding: calc(var(--u) * 1.0) 0;
+      padding: calc(var(--u) * 0.85) 0;
       border-bottom: 1px dotted #000000;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -582,47 +592,47 @@ export function build80mmReceiptHtml(
     .r80-item-name {
       font-weight: 700;
       font-size: calc(var(--u) * 3.4);
-      line-height: 1.28;
+      line-height: 1.25;
       color: #000000;
     }
     .r80-sub {
-      font-size: calc(var(--u) * 2.85);
-      font-weight: 500;
+      font-size: calc(var(--u) * 2.9);
+      font-weight: 600;
       color: #000000;
-      padding-left: calc(var(--u) * 2.0);
-      margin-top: calc(var(--u) * 0.3);
+      padding-left: calc(var(--u) * 1.6);
+      margin-top: calc(var(--u) * 0.25);
     }
     .r80-sub-row {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 1.6);
+      gap: calc(var(--u) * 1.4);
       font-size: calc(var(--u) * 2.95);
-      font-weight: 500;
+      font-weight: 600;
       color: #000000;
-      padding-left: calc(var(--u) * 2.0);
-      margin-top: calc(var(--u) * 0.3);
+      padding-left: calc(var(--u) * 1.6);
+      margin-top: calc(var(--u) * 0.25);
     }
     .r80-disc-row {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 1.6);
+      gap: calc(var(--u) * 1.4);
       font-size: calc(var(--u) * 2.9);
-      font-weight: 600;
+      font-weight: 700;
       color: #000000;
-      padding-left: calc(var(--u) * 2.0);
-      margin-top: calc(var(--u) * 0.3);
+      padding-left: calc(var(--u) * 1.6);
+      margin-top: calc(var(--u) * 0.25);
     }
     .r80-calc {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 1.8);
-      padding-left: calc(var(--u) * 2.0);
-      margin-top: calc(var(--u) * 0.35);
+      gap: calc(var(--u) * 1.4);
+      padding-left: calc(var(--u) * 1.6);
+      margin-top: calc(var(--u) * 0.3);
       font-size: calc(var(--u) * 3.15);
-      font-weight: 500;
+      font-weight: 600;
       color: #000000;
     }
     .r80-nowrap { white-space: nowrap; flex-shrink: 0; }
@@ -631,10 +641,10 @@ export function build80mmReceiptHtml(
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 1.8);
-      padding: calc(var(--u) * 0.4) 0;
+      gap: calc(var(--u) * 1.4);
+      padding: calc(var(--u) * 0.32) 0;
       font-size: calc(var(--u) * 3.15);
-      font-weight: 500;
+      font-weight: 600;
       color: #000000;
     }
     .r80-grand {
@@ -650,8 +660,8 @@ export function build80mmReceiptHtml(
       color: #000000;
     }
     .r80-pay-section {
-      margin-top: calc(var(--u) * 1.6);
-      padding-top: calc(var(--u) * 1.4);
+      margin-top: calc(var(--u) * 1.2);
+      padding-top: calc(var(--u) * 1.1);
       border-top: 1px dashed #000000;
       background: #ffffff !important;
       break-inside: avoid;
@@ -661,26 +671,27 @@ export function build80mmReceiptHtml(
       text-align: center;
       font-size: calc(var(--u) * 3.0);
       font-weight: 700;
-      margin-bottom: calc(var(--u) * 1.1);
+      margin-bottom: calc(var(--u) * 0.9);
       color: #000000;
     }
     .r80-pay-row {
       display: flex;
       align-items: center;
-      gap: calc(var(--u) * 2.4);
+      gap: 2.4vw;
     }
     .r80-pay-qr {
       flex: 0 0 auto;
     }
     .r80-qr-img {
-      width: calc(var(--u) * 30);
-      height: calc(var(--u) * 30);
+      width: 24vw;
+      height: 24vw;
       object-fit: contain;
       display: block;
-      padding: 0.6vw;
+      padding: 0.4vw;
       background: #ffffff !important;
       background-color: #ffffff !important;
       border: none !important;
+      image-rendering: crisp-edges;
     }
     .r80-qr-center {
       margin: 0 auto;
@@ -689,54 +700,55 @@ export function build80mmReceiptHtml(
       flex: 1 1 auto;
       min-width: 0;
       text-align: left;
-      font-size: calc(var(--u) * 2.8);
-      line-height: 1.42;
-      font-weight: 500;
+      font-size: calc(var(--u) * 2.75);
+      line-height: 1.38;
+      font-weight: 600;
       color: #000000;
     }
     .r80-pay-amount {
-      margin-top: calc(var(--u) * 0.45);
-      font-size: calc(var(--u) * 3.05);
+      margin-top: calc(var(--u) * 0.35);
+      font-size: calc(var(--u) * 2.95);
+      font-weight: 700;
       color: #000000;
     }
     .r80-qr-amount {
       font-size: calc(var(--u) * 3.5);
       font-weight: 700;
-      margin-top: calc(var(--u) * 0.8);
+      margin-top: calc(var(--u) * 0.7);
       color: #000000;
     }
     .r80-bank {
-      margin-top: calc(var(--u) * 1.4);
-      padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+      margin-top: calc(var(--u) * 1.1);
+      padding: calc(var(--u) * 1.0) calc(var(--u) * 1.4);
       border: 1px dashed #000000;
       border-radius: 3px;
       background: #ffffff !important;
       font-size: calc(var(--u) * 2.85);
-      line-height: 1.38;
-      font-weight: 500;
+      line-height: 1.35;
+      font-weight: 600;
       color: #000000;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .r80-bank-title {
       font-weight: 700;
-      margin-bottom: calc(var(--u) * 0.35);
+      margin-bottom: calc(var(--u) * 0.3);
     }
     .r80-note {
-      margin-top: calc(var(--u) * 1.1);
+      margin-top: calc(var(--u) * 0.9);
       font-size: calc(var(--u) * 2.85);
-      font-weight: 500;
+      font-weight: 600;
       color: #000000;
     }
     .r80-footer {
       text-align: center;
-      margin-top: calc(var(--u) * 1.6);
-      padding-top: calc(var(--u) * 1.3);
-      padding-bottom: calc(var(--u) * 1.6);
+      margin-top: calc(var(--u) * 1.2);
+      padding-top: calc(var(--u) * 1.0);
+      padding-bottom: calc(var(--u) * 1.2);
       border-top: 1px dashed #000000;
       font-size: calc(var(--u) * 2.85);
-      font-weight: 500;
-      font-style: italic;
+      font-weight: 600;
+      font-style: normal;
       color: #000000;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -820,11 +832,28 @@ export function triggerHtmlPrint(
       .map((el) => el.textContent || '')
       .join('\n');
 
-    // Strip @page and @media screen blocks so injected CSS has zero nested @media queries
-    // (critical for older Android WebView / iMin Chrome builds).
-    const flatPrintCss = rawCss
-      .replace(/@page\s*\{[^}]*\}/g, '')
-      .replace(/@media\s+screen\s*\{[\s\S]*?\}\s*\}/g, '');
+    // Strip @page and @media screen blocks (brace-balanced) so injected CSS has zero nested
+    // @media queries (critical for older Android WebView / iMin Chrome builds).
+    const stripMediaScreen = (css: string): string => {
+      let out = '';
+      let idx = 0;
+      const re = /@media\s+screen\s*\{/g;
+      let match: RegExpExecArray | null;
+      while ((match = re.exec(css)) !== null) {
+        out += css.slice(idx, match.index);
+        let depth = 1;
+        let pos = re.lastIndex;
+        while (pos < css.length && depth > 0) {
+          if (css[pos] === '{') depth += 1;
+          else if (css[pos] === '}') depth -= 1;
+          pos += 1;
+        }
+        idx = pos;
+        re.lastIndex = pos;
+      }
+      return out + css.slice(idx);
+    };
+    const flatPrintCss = stripMediaScreen(rawCss).replace(/@page\s*\{[^}]*\}/g, '');
     const pageRule =
       paperSize === '80mm'
         ? '@page { margin: 0; background: #ffffff; }'

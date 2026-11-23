@@ -56,6 +56,8 @@ body.pos-printing {
   background-color: #ffffff !important;
   color: #000000 !important;
   color-scheme: light !important;
+  -webkit-font-smoothing: auto !important;
+  -moz-osx-font-smoothing: auto !important;
   overflow: visible !important;
   height: auto !important;
   min-height: 0 !important;
@@ -131,6 +133,8 @@ body.pos-printing > #pos-print-root {
     box-shadow: none !important;
     border: none !important;
     filter: none !important;
+    -webkit-font-smoothing: auto !important;
+    -moz-osx-font-smoothing: auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
