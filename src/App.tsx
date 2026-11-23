@@ -14,6 +14,8 @@ import {
   EyeOff,
   Lock,
   User as UserIcon,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import {
   createUserWithEmailAndPassword,
@@ -33,6 +35,7 @@ import {
   reportFirestoreError,
 } from './lib/firebase';
 import { formatVND, getDateKey, resolveAssetUrl } from './lib/format';
+import { useFullscreen } from './lib/useFullscreen';
 import {
   cleanupSampleOrders,
   initializeStoreWithSeedData,
@@ -66,6 +69,7 @@ const MANAGEMENT_NAV_ITEMS: { id: NavTab; label: string; icon: typeof UtensilsCr
 ];
 
 export default function App() {
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -679,6 +683,23 @@ export default function App() {
                   {formatVND(todayStats.revenue)} ({todayStats.count} đơn)
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-700/80 text-xs font-semibold text-cyan-200 transition-colors whitespace-nowrap"
+                title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+                aria-label={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-3.5 h-3.5 shrink-0" />
+                ) : (
+                  <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+                )}
+                <span className="hidden xl:inline">
+                  {isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}
+                </span>
+              </button>
 
               <button
                 type="button"
