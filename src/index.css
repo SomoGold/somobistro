@@ -41,6 +41,12 @@
   background-color: #94a3b8;
 }
 
+/* Receipt preview and print always use Tahoma font stack */
+.print-receipt-root,
+.print-receipt-root * {
+  font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif;
+}
+
 /* Dedicated print container injected only during print — hidden when inactive */
 #pos-print-root {
   display: none;
@@ -130,6 +136,7 @@ body.pos-printing > #pos-print-root {
     background-color: #ffffff !important;
     background-image: none !important;
     color: #000000 !important;
+    font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
     box-shadow: none !important;
     border: none !important;
     filter: none !important;
@@ -161,11 +168,21 @@ body.pos-printing > #pos-print-root {
     background: #ffffff !important;
     background-color: #ffffff !important;
     color: #000000 !important;
+    font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
     box-shadow: none !important;
     border: none !important;
   }
 
+  body.pos-printing > #pos-print-root * {
+    font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
+  }
+
   /* Fallback when user triggers browser Ctrl+P directly without clicking the Print button */
+  body:not(.pos-printing) .print-receipt-root,
+  body:not(.pos-printing) .print-receipt-root * {
+    font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
+  }
+
   body:not(.pos-printing) .print-receipt-root {
     position: static !important;
     width: 100% !important;

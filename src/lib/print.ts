@@ -130,19 +130,20 @@ export function buildA5InvoiceHtml(
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} - ${escapeHtml(order.orderNumber)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     @page {
       size: A5 portrait;
       margin: 8mm;
     }
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif;
+    }
+    html,
     body {
       margin: 0;
       padding: 0;
-      font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif;
       color: #0f172a;
       background: #ffffff;
       font-size: 10.8px;
@@ -487,12 +488,13 @@ export function build80mmReceiptHtml(
       background: #ffffff !important;
       background-color: #ffffff !important;
       color: #000000 !important;
+      font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
     .r80-sheet {
       /* Calibrated crisp 203 DPI thermal scale (576 dots / 72mm printable width)
-         ensures every glyph is >= 19 thermal dots tall so Vietnamese accents never break */
+         using Tahoma so every glyph is >= 19 thermal dots tall and Vietnamese accents stay sharp */
       --s: 1.18;
       --u: calc(1vw * var(--s));
       box-sizing: border-box;
@@ -505,10 +507,10 @@ export function build80mmReceiptHtml(
       color-scheme: light !important;
       border: none !important;
       box-shadow: none !important;
-      font-family: "Roboto", "Noto Sans", "Plus Jakarta Sans", Arial, Helvetica, sans-serif;
+      font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
       font-size: calc(var(--u) * 3.15);
       line-height: 1.32;
-      font-weight: 600;
+      font-weight: 400;
       letter-spacing: 0.005em;
       font-variant-numeric: tabular-nums;
       word-break: break-word;
@@ -523,6 +525,7 @@ export function build80mmReceiptHtml(
     .r80-sheet * {
       box-sizing: border-box;
       box-shadow: none !important;
+      font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important;
     }
     /* Screen-only preview sizing when opened as a standalone .html file */
     @media screen {
@@ -542,20 +545,20 @@ export function build80mmReceiptHtml(
     .r80-center { text-align: center; }
     .r80-brand {
       font-size: calc(var(--u) * 4.6);
-      font-weight: 800;
+      font-weight: 700;
       letter-spacing: -0.01em;
       line-height: 1.18;
       color: #000000;
     }
     .r80-muted {
       font-size: calc(var(--u) * 2.85);
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
       margin-top: calc(var(--u) * 0.3);
     }
     .r80-title {
       font-size: calc(var(--u) * 3.65);
-      font-weight: 800;
+      font-weight: 700;
       margin-top: calc(var(--u) * 1.1);
       margin-bottom: calc(var(--u) * 0.9);
       padding-top: calc(var(--u) * 1.0);
@@ -572,7 +575,7 @@ export function build80mmReceiptHtml(
       align-items: baseline;
       gap: calc(var(--u) * 1.4);
       font-size: calc(var(--u) * 3.0);
-      font-weight: 600;
+      font-weight: 400;
       padding: calc(var(--u) * 0.25) 0;
       color: #000000;
     }
@@ -597,7 +600,7 @@ export function build80mmReceiptHtml(
     }
     .r80-sub {
       font-size: calc(var(--u) * 2.9);
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
       padding-left: calc(var(--u) * 1.6);
       margin-top: calc(var(--u) * 0.25);
@@ -608,7 +611,7 @@ export function build80mmReceiptHtml(
       align-items: baseline;
       gap: calc(var(--u) * 1.4);
       font-size: calc(var(--u) * 2.95);
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
       padding-left: calc(var(--u) * 1.6);
       margin-top: calc(var(--u) * 0.25);
@@ -632,7 +635,7 @@ export function build80mmReceiptHtml(
       padding-left: calc(var(--u) * 1.6);
       margin-top: calc(var(--u) * 0.3);
       font-size: calc(var(--u) * 3.15);
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
     }
     .r80-nowrap { white-space: nowrap; flex-shrink: 0; }
@@ -644,7 +647,7 @@ export function build80mmReceiptHtml(
       gap: calc(var(--u) * 1.4);
       padding: calc(var(--u) * 0.32) 0;
       font-size: calc(var(--u) * 3.15);
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
     }
     .r80-grand {
@@ -656,7 +659,7 @@ export function build80mmReceiptHtml(
       margin-top: calc(var(--u) * 0.8);
       border-top: 1.5px solid #000000;
       font-size: calc(var(--u) * 4.15);
-      font-weight: 800;
+      font-weight: 700;
       color: #000000;
     }
     .r80-pay-section {
@@ -702,7 +705,7 @@ export function build80mmReceiptHtml(
       text-align: left;
       font-size: calc(var(--u) * 2.75);
       line-height: 1.38;
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
     }
     .r80-pay-amount {
@@ -725,7 +728,7 @@ export function build80mmReceiptHtml(
       background: #ffffff !important;
       font-size: calc(var(--u) * 2.85);
       line-height: 1.35;
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -737,7 +740,7 @@ export function build80mmReceiptHtml(
     .r80-note {
       margin-top: calc(var(--u) * 0.9);
       font-size: calc(var(--u) * 2.85);
-      font-weight: 600;
+      font-weight: 400;
       color: #000000;
     }
     .r80-footer {
@@ -747,7 +750,7 @@ export function build80mmReceiptHtml(
       padding-bottom: calc(var(--u) * 1.2);
       border-top: 1px dashed #000000;
       font-size: calc(var(--u) * 2.85);
-      font-weight: 600;
+      font-weight: 400;
       font-style: normal;
       color: #000000;
       break-inside: avoid;
@@ -868,12 +871,17 @@ export function triggerHtmlPrint(
     styleEl.textContent = `${pageRule}
 body.pos-printing > *:not(#pos-print-root) { display: none !important; }
 body.pos-printing > #pos-print-root { display: block !important; background: #ffffff !important; }
+body.pos-printing > #pos-print-root .r80-sheet,
+body.pos-printing > #pos-print-root .r80-sheet *,
+body.pos-printing > #pos-print-root .sheet,
+body.pos-printing > #pos-print-root .sheet * { font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important; }
 ${flatPrintCss}
 @media print {
-  html, body { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; color-scheme: light !important; }
+  html, body { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; color-scheme: light !important; font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important; }
   .no-print, .pos-print-toolbar { display: none !important; }
   body.pos-printing > *:not(#pos-print-root) { display: none !important; }
-  body.pos-printing > #pos-print-root { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; }
+  body.pos-printing > #pos-print-root { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 0 !important; background: #ffffff !important; font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important; }
+  body.pos-printing > #pos-print-root * { font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif !important; }
 ${flatPrintCss}
 }`;
     document.head.appendChild(styleEl);

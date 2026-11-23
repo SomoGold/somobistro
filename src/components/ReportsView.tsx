@@ -582,11 +582,10 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
 <head>
   <meta charset="UTF-8" />
   <title>${escapeHtml(title)} - ${escapeHtml(storeName)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     @page { size: A4 portrait; margin: 12mm; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #0f172a; font-size: 12px; font-variant-numeric: tabular-nums; }
+    * { box-sizing: border-box; font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif; }
+    body { margin: 0; font-family: Tahoma, "Tahoma", Geneva, Verdana, sans-serif; color: #0f172a; font-size: 12px; font-variant-numeric: tabular-nums; }
     .head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 10px; border-bottom: 1.5px solid #cbd5e1; margin-bottom: 14px; }
     .brand { font-size: 18px; font-weight: 700; color: #0e7490; }
     .sub { font-size: 13px; font-weight: 600; color: #334155; }
