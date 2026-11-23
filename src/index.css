@@ -46,19 +46,27 @@
   display: none;
 }
 
-/* Print Stylesheet: Static flow (no position:fixed repetition/overlap across pages) */
+/* Print Stylesheet: Static flow + pure opaque white surface for Android iMinPrinterPlugin */
 @media print {
+  :root,
   html,
   body {
+    color-scheme: light !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    min-height: 100% !important;
     height: auto !important;
     overflow: visible !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
     color: #000000 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    box-shadow: none !important;
+    border: none !important;
+    filter: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* When printing via triggerHtmlPrint: hide the entire app UI and render only #pos-print-root */
@@ -70,11 +78,16 @@
     display: block !important;
     position: static !important;
     width: 100% !important;
+    min-height: 100% !important;
     height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   /* Fallback when user triggers browser Ctrl+P directly without clicking the Print button */
@@ -90,6 +103,7 @@
     box-shadow: none !important;
     border: none !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #000000 !important;
   }
 }

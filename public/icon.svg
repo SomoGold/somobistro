@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d2a75" />
+      <stop offset="100%" stop-color="#071a42" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#0891b2" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)" />
+  <rect x="28" y="28" width="456" height="456" rx="86" fill="none" stroke="#22d3ee" stroke-opacity="0.28" stroke-width="6" />
+  <!-- Stylized coffee cup / bistro mark -->
+  <path d="M138 192h186v112c0 46-36 82-82 82h-22c-46 0-82-36-82-82V192z" fill="url(#accent)" />
+  <path d="M324 212h26c26 0 46 20 46 44s-20 44-46 44h-26v-26h24c12 0 22-8 22-18s-10-18-22-18h-24v-26z" fill="#38bdf8" />
+  <rect x="116" y="402" width="230" height="22" rx="11" fill="#fbbf24" />
+  <!-- Steam waves -->
+  <path d="M188 158c0-20 18-24 18-42" fill="none" stroke="#fbbf24" stroke-width="14" stroke-linecap="round" />
+  <path d="M236 158c0-20 18-24 18-42" fill="none" stroke="#bae6fd" stroke-width="14" stroke-linecap="round" />
+  <path d="M284 158c0-20 18-24 18-42" fill="none" stroke="#fbbf24" stroke-width="14" stroke-linecap="round" />
+  <!-- POS badge monogram -->
+  <text x="231" y="308" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="88" fill="#071a42">SB</text>
+</svg>

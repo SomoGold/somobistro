@@ -58,6 +58,8 @@ import { OrdersHistoryView } from './components/OrdersHistoryView';
 import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
 import { ReceiptModal } from './components/ReceiptModal';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 const MANAGEMENT_NAV_ITEMS: { id: NavTab; label: string; icon: typeof UtensilsCrossed }[] = [
   { id: 'tables' as NavTab, label: 'Quản lý bàn', icon: LayoutGrid },
@@ -567,6 +569,8 @@ export default function App() {
                 </button>
               </form>
 
+              <PWAInstallButton variant="login" />
+
               <p className="text-xs text-slate-400">
                 Dữ liệu thực đơn, bàn, hóa đơn và báo cáo được bảo mật riêng theo từng tài khoản ID.
               </p>
@@ -613,6 +617,7 @@ export default function App() {
 
   return (
     <>
+      <OfflineIndicator />
       {isPosScreen ? (
         /* ================= FULL-SCREEN KAS POS TERMINAL ================= */
         <PosTerminal
@@ -683,6 +688,8 @@ export default function App() {
                   {formatVND(todayStats.revenue)} ({todayStats.count} đơn)
                 </div>
               </div>
+
+              <PWAInstallButton variant="topbar" />
 
               <button
                 type="button"
@@ -775,6 +782,12 @@ export default function App() {
                         </button>
                       );
                     })}
+                    <div className="pt-1.5">
+                      <PWAInstallButton
+                        variant="drawer"
+                        onAfterClick={() => setMobileNavOpen(false)}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="p-4 border-t border-slate-200 flex items-center justify-between">

@@ -329,7 +329,12 @@ export function build80mmReceiptHtml(
   settings: StoreSettings | null,
   isProvisional: boolean,
   qrDataUrl: string,
+  fontScale: number = 1,
 ): string {
+  const safeScale =
+    Number.isFinite(fontScale) && fontScale >= 0.7 && fontScale <= 1.4
+      ? Number(fontScale.toFixed(2))
+      : 1;
   const storeName = escapeHtml(settings?.storeName || 'Somo Bistro');
   const address = escapeHtml(settings?.address || '');
   const phone = escapeHtml(settings?.phone || '');
@@ -411,202 +416,228 @@ export function build80mmReceiptHtml(
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
   <title>${title} 80mm - ${escapeHtml(order.orderNumber)}</title>
   <style>
     @page {
       margin: 0;
+      background: #ffffff;
+    }
+    html,
+    body {
+      color-scheme: light !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     .r80-sheet {
-      --u: 1vw;
+      --s: ${safeScale};
+      --u: calc(1vw * var(--s));
       box-sizing: border-box;
       width: 100%;
       margin: 0;
-      padding: calc(var(--u) * 1.8) calc(var(--u) * 3);
-      background: #ffffff;
-      color: #000000;
+      padding: 2vw 4.5vw 3.5vw;
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      color-scheme: light !important;
+      border: none !important;
+      box-shadow: none !important;
       font-family: Arial, Helvetica, "Roboto", "Segoe UI", sans-serif;
-      font-size: calc(var(--u) * 4.8);
-      line-height: 1.32;
-      font-weight: 600;
+      font-size: calc(var(--u) * 3.15);
+      line-height: 1.35;
+      font-weight: 500;
       font-variant-numeric: tabular-nums;
       word-break: break-word;
       overflow-wrap: break-word;
       -webkit-text-size-adjust: 100%;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     .r80-sheet * {
       box-sizing: border-box;
+      box-shadow: none !important;
     }
     /* Screen-only preview sizing when opened as a standalone .html file */
     @media screen {
       .r80-sheet {
-        --u: 3.02px;
+        --u: calc(3.02px * var(--s));
         width: 80mm;
+        padding: 6px 14px 12px;
         margin: 0 auto;
       }
     }
     .r80-tabular { font-variant-numeric: tabular-nums; }
     .r80-center { text-align: center; }
     .r80-brand {
-      font-size: calc(var(--u) * 7.2);
-      font-weight: 800;
+      font-size: calc(var(--u) * 4.6);
+      font-weight: 700;
       letter-spacing: -0.01em;
-      line-height: 1.18;
+      line-height: 1.2;
       color: #000000;
     }
     .r80-muted {
-      font-size: calc(var(--u) * 4.2);
-      font-weight: 600;
+      font-size: calc(var(--u) * 2.85);
+      font-weight: 500;
       color: #000000;
-      margin-top: calc(var(--u) * 0.4);
+      margin-top: calc(var(--u) * 0.35);
     }
     .r80-title {
-      font-size: calc(var(--u) * 5.6);
-      font-weight: 800;
-      margin-top: calc(var(--u) * 1.6);
-      padding-top: calc(var(--u) * 1.6);
-      border-top: calc(var(--u) * 0.45) dashed #000000;
+      font-size: calc(var(--u) * 3.65);
+      font-weight: 700;
+      margin-top: calc(var(--u) * 1.4);
+      padding-top: calc(var(--u) * 1.3);
+      border-top: 1px dashed #000000;
       color: #000000;
     }
     .r80-divider {
-      border-top: calc(var(--u) * 0.45) dashed #000000;
-      margin: calc(var(--u) * 1.8) 0;
+      border-top: 1px dashed #000000;
+      margin: calc(var(--u) * 1.4) 0;
     }
     .r80-meta {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 2);
-      font-size: calc(var(--u) * 4.5);
-      font-weight: 600;
-      padding: calc(var(--u) * 0.35) 0;
+      gap: calc(var(--u) * 1.8);
+      font-size: calc(var(--u) * 3.0);
+      font-weight: 500;
+      padding: calc(var(--u) * 0.3) 0;
       color: #000000;
     }
     .r80-meta > span:first-child { flex-shrink: 0; }
     .r80-meta > span:last-child,
     .r80-meta > strong {
       text-align: right;
-      font-weight: 800;
+      font-weight: 700;
     }
     .r80-item {
-      padding: calc(var(--u) * 1.3) 0;
-      border-bottom: calc(var(--u) * 0.35) dotted #000000;
+      padding: calc(var(--u) * 1.0) 0;
+      border-bottom: 1px dotted #000000;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .r80-item:last-child { border-bottom: none; }
     .r80-item-name {
-      font-weight: 800;
-      font-size: calc(var(--u) * 5.2);
-      line-height: 1.26;
+      font-weight: 700;
+      font-size: calc(var(--u) * 3.4);
+      line-height: 1.28;
       color: #000000;
     }
     .r80-sub {
-      font-size: calc(var(--u) * 4.3);
-      font-weight: 600;
+      font-size: calc(var(--u) * 2.85);
+      font-weight: 500;
       color: #000000;
-      padding-left: calc(var(--u) * 2.4);
-      margin-top: calc(var(--u) * 0.35);
+      padding-left: calc(var(--u) * 2.0);
+      margin-top: calc(var(--u) * 0.3);
     }
     .r80-disc {
-      font-size: calc(var(--u) * 4.3);
-      font-weight: 700;
+      font-size: calc(var(--u) * 2.85);
+      font-weight: 600;
       color: #000000;
-      padding-left: calc(var(--u) * 2.4);
-      margin-top: calc(var(--u) * 0.35);
+      padding-left: calc(var(--u) * 2.0);
+      margin-top: calc(var(--u) * 0.3);
     }
     .r80-calc {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 2);
-      padding-left: calc(var(--u) * 2.4);
-      margin-top: calc(var(--u) * 0.5);
-      font-size: calc(var(--u) * 4.8);
-      font-weight: 700;
+      gap: calc(var(--u) * 1.8);
+      padding-left: calc(var(--u) * 2.0);
+      margin-top: calc(var(--u) * 0.4);
+      font-size: calc(var(--u) * 3.15);
+      font-weight: 500;
       color: #000000;
     }
-    .r80-bold { font-weight: 800; }
+    .r80-bold { font-weight: 700; }
     .r80-tot {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 2);
-      padding: calc(var(--u) * 0.5) 0;
-      font-size: calc(var(--u) * 4.8);
-      font-weight: 700;
+      gap: calc(var(--u) * 1.8);
+      padding: calc(var(--u) * 0.4) 0;
+      font-size: calc(var(--u) * 3.15);
+      font-weight: 500;
       color: #000000;
     }
     .r80-grand {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: calc(var(--u) * 2);
-      padding: calc(var(--u) * 1.5) 0 calc(var(--u) * 0.8);
-      margin-top: calc(var(--u) * 1);
-      border-top: calc(var(--u) * 0.6) solid #000000;
-      font-size: calc(var(--u) * 6.2);
+      gap: calc(var(--u) * 1.8);
+      padding: calc(var(--u) * 1.2) 0 calc(var(--u) * 0.6);
+      margin-top: calc(var(--u) * 0.8);
+      border-top: 1.5px solid #000000;
+      font-size: calc(var(--u) * 4.15);
       font-weight: 800;
       color: #000000;
     }
     .r80-qr-section {
       text-align: center;
-      margin-top: calc(var(--u) * 2);
-      padding-top: calc(var(--u) * 1.8);
-      border-top: calc(var(--u) * 0.45) dashed #000000;
+      margin-top: calc(var(--u) * 1.6);
+      padding-top: calc(var(--u) * 1.4);
+      border-top: 1px dashed #000000;
+      background: #ffffff !important;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .r80-qr-heading {
-      font-size: calc(var(--u) * 4.6);
-      font-weight: 800;
-      margin-bottom: calc(var(--u) * 1.2);
+      font-size: calc(var(--u) * 3.05);
+      font-weight: 700;
+      margin-bottom: calc(var(--u) * 1.0);
       color: #000000;
     }
     .r80-qr-img {
-      width: calc(var(--u) * 32);
-      height: calc(var(--u) * 32);
+      width: calc(var(--u) * 28);
+      height: calc(var(--u) * 28);
       object-fit: contain;
       display: block;
       margin: 0 auto;
+      padding: 1vw;
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      border: none !important;
     }
     .r80-qr-amount {
-      font-size: calc(var(--u) * 5.2);
-      font-weight: 800;
-      margin-top: calc(var(--u) * 1);
+      font-size: calc(var(--u) * 3.5);
+      font-weight: 700;
+      margin-top: calc(var(--u) * 0.8);
       color: #000000;
     }
     .r80-bank {
-      margin-top: calc(var(--u) * 1.8);
-      padding: calc(var(--u) * 1.6) calc(var(--u) * 2);
-      border: calc(var(--u) * 0.45) dashed #000000;
-      border-radius: calc(var(--u) * 1);
-      font-size: calc(var(--u) * 4.3);
-      line-height: 1.35;
-      font-weight: 600;
+      margin-top: calc(var(--u) * 1.4);
+      padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+      border: 1px dashed #000000;
+      border-radius: 3px;
+      background: #ffffff !important;
+      font-size: calc(var(--u) * 2.85);
+      line-height: 1.38;
+      font-weight: 500;
       color: #000000;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .r80-bank-title {
-      font-weight: 800;
-      margin-bottom: calc(var(--u) * 0.5);
+      font-weight: 700;
+      margin-bottom: calc(var(--u) * 0.4);
     }
     .r80-note {
-      margin-top: calc(var(--u) * 1.4);
-      font-size: calc(var(--u) * 4.3);
-      font-weight: 600;
+      margin-top: calc(var(--u) * 1.1);
+      font-size: calc(var(--u) * 2.85);
+      font-weight: 500;
       color: #000000;
     }
     .r80-footer {
       text-align: center;
-      margin-top: calc(var(--u) * 2);
-      padding-top: calc(var(--u) * 1.6);
-      padding-bottom: calc(var(--u) * 2);
-      border-top: calc(var(--u) * 0.45) dashed #000000;
-      font-size: calc(var(--u) * 4.2);
-      font-weight: 600;
+      margin-top: calc(var(--u) * 1.6);
+      padding-top: calc(var(--u) * 1.3);
+      padding-bottom: calc(var(--u) * 1.6);
+      border-top: 1px dashed #000000;
+      font-size: calc(var(--u) * 2.85);
+      font-weight: 500;
       font-style: italic;
       color: #000000;
       break-inside: avoid;
@@ -614,7 +645,7 @@ export function build80mmReceiptHtml(
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background:#ffffff;">
+<body style="margin:0;padding:0;background:#ffffff;color:#000000;color-scheme:light;">
   <div class="r80-sheet">
     <div class="r80-center">
       <div class="r80-brand">${storeName}</div>
@@ -666,7 +697,7 @@ export function build80mmReceiptHtml(
  * Android Chrome / WebView (used by iMinPrinterPlugin) ignores iframe print isolation
  * and prints the parent document instead. Printing directly from #pos-print-root with
  * #root hidden during @media print guarantees identical crisp output on Android POS
- * terminals (iMin, Sunmi), iOS, and desktop browsers with zero page overlap.
+ * terminals (iMin, Sunmi), iOS, and desktop browsers with zero page overlap or dark frames.
  */
 export function triggerHtmlPrint(
   html: string,
@@ -696,10 +727,10 @@ export function triggerHtmlPrint(
       .replace(/@media\s+screen\s*\{[\s\S]*?\}\s*\}/g, '');
     const pageRule =
       paperSize === '80mm'
-        ? '@page { margin: 0; }'
+        ? '@page { margin: 0; background: #ffffff; }'
         : paperSize === 'a4'
-          ? '@page { size: A4 portrait; margin: 10mm; }'
-          : '@page { size: A5 portrait; margin: 8mm; }';
+          ? '@page { size: A4 portrait; margin: 10mm; background: #ffffff; }'
+          : '@page { size: A5 portrait; margin: 8mm; background: #ffffff; }';
 
     const styleEl = document.createElement('style');
     styleEl.id = 'pos-dynamic-print-style';
@@ -715,21 +746,48 @@ export function triggerHtmlPrint(
     document.body.classList.add('pos-printing');
 
     let cleaned = false;
+    let afterPrintFired = false;
+    let cleanupTimer: number | null = null;
+
     const cleanup = () => {
       if (cleaned) return;
       cleaned = true;
+      if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
       window.removeEventListener('afterprint', onAfterPrint);
+      document.removeEventListener('visibilitychange', onVisibilityOrFocus);
+      window.removeEventListener('focus', onVisibilityOrFocus);
       document.body.classList.remove('pos-printing');
       printRoot.remove();
       styleEl.remove();
     };
 
-    const onAfterPrint = () => {
-      window.setTimeout(cleanup, 300);
+    const scheduleVisibleCleanup = () => {
+      if (cleaned) return;
+      if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
+      cleanupTimer = window.setTimeout(cleanup, 600);
     };
+
+    // On Android Chrome + iMinPrinterPlugin, afterprint may fire while the Android Print
+    // Spooler activity is still open (tab hidden). Keeping #pos-print-root alive until the
+    // tab becomes visible again prevents switching paper sizes from falling back to the dark modal.
+    const onVisibilityOrFocus = () => {
+      if (afterPrintFired && document.visibilityState === 'visible') {
+        scheduleVisibleCleanup();
+      }
+    };
+
+    const onAfterPrint = () => {
+      afterPrintFired = true;
+      if (document.visibilityState === 'visible') {
+        scheduleVisibleCleanup();
+      }
+    };
+
     window.addEventListener('afterprint', onAfterPrint);
-    // Safety cleanup after 2 minutes in case afterprint does not fire on an embedded browser
-    window.setTimeout(cleanup, 120_000);
+    document.addEventListener('visibilitychange', onVisibilityOrFocus);
+    window.addEventListener('focus', onVisibilityOrFocus);
+    // Safety cleanup after 3 minutes in case afterprint does not fire on an embedded browser
+    window.setTimeout(cleanup, 180_000);
 
     const runPrint = () => {
       try {

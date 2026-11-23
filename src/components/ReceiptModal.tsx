@@ -22,6 +22,25 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
+type Receipt80ScaleKey = 'small' | 'medium' | 'large';
+
+const SCALE_STORAGE_KEY = 'somo_pos_80mm_scale';
+const SCALE_OPTIONS: { key: Receipt80ScaleKey; label: string; factor: number }[] = [
+  { key: 'small', label: 'Nhỏ', factor: 0.85 },
+  { key: 'medium', label: 'Vừa', factor: 1 },
+  { key: 'large', label: 'Lớn', factor: 1.15 },
+];
+
+function loadSaved80Scale(): Receipt80ScaleKey {
+  try {
+    const raw = window.localStorage.getItem(SCALE_STORAGE_KEY);
+    if (raw === 'small' || raw === 'medium' || raw === 'large') return raw;
+  } catch {
+    // Ignore storage read errors in restricted frames
+  }
+  return 'medium';
+}
+
 export function ReceiptModal({
   order,
   settings,
@@ -31,8 +50,21 @@ export function ReceiptModal({
   const [paperSize, setPaperSize] = useState<ReceiptPaperSize>(
     settings?.defaultPrintSize === '80mm' ? '80mm' : 'a5',
   );
+  const [scaleKey, setScaleKey] = useState<Receipt80ScaleKey>(loadSaved80Scale);
   const [printing, setPrinting] = useState(false);
   const [sandboxHint, setSandboxHint] = useState(false);
+
+  const scaleFactor =
+    SCALE_OPTIONS.find((opt) => opt.key === scaleKey)?.factor ?? 1;
+
+  const handleSelectScale = (next: Receipt80ScaleKey) => {
+    setScaleKey(next);
+    try {
+      window.localStorage.setItem(SCALE_STORAGE_KEY, next);
+    } catch {
+      // Ignore storage write errors
+    }
+  };
 
   const storeName = settings?.storeName || 'Somo Bistro';
   const address = settings?.address || '42 Nguyễn Đình Chiểu, Quận 1, TP. Hồ Chí Minh';
@@ -45,7 +77,7 @@ export function ReceiptModal({
 
   const buildCurrentHtml = () =>
     paperSize === '80mm'
-      ? build80mmReceiptHtml(order, settings, isProvisional, qrDataUrl)
+      ? build80mmReceiptHtml(order, settings, isProvisional, qrDataUrl, scaleFactor)
       : buildA5InvoiceHtml(order, settings, isProvisional, qrDataUrl);
 
   const handlePrint = async () => {
@@ -67,12 +99,12 @@ export function ReceiptModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4 print:static print:inset-auto print:bg-white print:backdrop-blur-none print:p-0 print:block"
       role="dialog"
       aria-modal="true"
       aria-label="Xem trước và in hóa đơn"
     >
-      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl max-h-[94vh] flex flex-col overflow-hidden shadow-2xl">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl max-h-[94vh] flex flex-col overflow-hidden shadow-2xl print:border-0 print:rounded-none print:shadow-none print:max-w-none print:max-h-none print:overflow-visible">
         {/* Modal Header + Paper Size Switcher (Hidden on Print) */}
         <div className="no-print flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-200">
           <div className="flex items-center gap-2">
@@ -82,7 +114,7 @@ export function ReceiptModal({
             </h3>
           </div>
 
-          <div className="flex items-center gap-2.5 ml-auto">
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
             {/* Segmented Paper Size Toggle: A5 vs 80mm */}
             <div className="inline-flex rounded-lg bg-slate-100 p-1 border border-slate-200">
               <button
@@ -109,6 +141,26 @@ export function ReceiptModal({
               </button>
             </div>
 
+            {paperSize === '80mm' && (
+              <div className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1 border border-slate-200">
+                <span className="px-1.5 text-[11px] font-semibold text-slate-500">Cỡ chữ:</span>
+                {SCALE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => handleSelectScale(opt.key)}
+                    className={`px-2 py-1 text-[11px] font-bold rounded-md transition-colors whitespace-nowrap ${
+                      scaleKey === opt.key
+                        ? 'bg-cyan-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={onClose}
@@ -121,7 +173,7 @@ export function ReceiptModal({
         </div>
 
         {/* Printable Preview Body */}
-        <div className="flex-1 overflow-y-auto pos-scroll bg-slate-100/80 p-5 flex justify-center">
+        <div className="flex-1 overflow-y-auto pos-scroll bg-slate-100/80 p-5 flex justify-center print:bg-white print:p-0 print:overflow-visible print:block">
           {paperSize === 'a5' ? (
             /* -------------------- A5 PORTRAIT PREVIEW -------------------- */
             <div className="print-receipt-root w-full max-w-[560px] bg-white border border-slate-200 px-7 py-7 text-slate-900 text-[13px] leading-relaxed flex flex-col justify-between min-h-[660px] shadow-xs">
@@ -313,17 +365,25 @@ export function ReceiptModal({
             </div>
           ) : (
             /* -------------------- 80MM THERMAL ROLL PREVIEW -------------------- */
-            <div className="print-receipt-root print-receipt-80mm w-[312px] bg-white border border-slate-300 px-3.5 py-4 text-black text-[13.5px] leading-snug shadow-sm self-start">
+            <div
+              className={`print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-3.5 py-3.5 text-black leading-snug shadow-sm self-start ${
+                scaleKey === 'small'
+                  ? 'text-[10.5px]'
+                  : scaleKey === 'large'
+                    ? 'text-[13px]'
+                    : 'text-[11.5px]'
+              }`}
+            >
               <div className="text-center space-y-0.5">
-                <div className="text-xl font-extrabold tracking-tight text-black">{storeName}</div>
-                {address && <div className="text-[12px] font-semibold text-black">{address}</div>}
-                {phone && <div className="text-[12px] font-semibold text-black tabular-nums">ĐT: {phone}</div>}
-                <div className="pt-2 mt-2 border-t border-dashed border-black text-base font-extrabold text-black">
+                <div className="text-[1.35em] font-bold tracking-tight text-black">{storeName}</div>
+                {address && <div className="text-[0.9em] font-medium text-black">{address}</div>}
+                {phone && <div className="text-[0.9em] font-medium text-black tabular-nums">ĐT: {phone}</div>}
+                <div className="pt-1.5 mt-1.5 border-t border-dashed border-black text-[1.12em] font-bold text-black">
                   {isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}
                 </div>
               </div>
 
-              <div className="my-2.5 py-2 border-y border-dashed border-black space-y-1 text-[12.5px] font-medium text-black">
+              <div className="my-2 py-1.5 border-y border-dashed border-black space-y-0.5 text-[0.95em] font-medium text-black">
                 <div className="flex justify-between gap-2">
                   <span>Số HĐ:</span>
                   <span className="font-bold tabular-nums">{order.orderNumber}</span>
@@ -351,31 +411,31 @@ export function ReceiptModal({
                   const netTotal = getItemNetTotal(item);
                   return (
                     <div key={`${item.itemId}_${idx}`} className="py-1.5">
-                      <div className="font-extrabold text-[14.5px] text-black">
+                      <div className="font-bold text-[1.06em] text-black">
                         {idx + 1}. {item.name}
                       </div>
                       {item.toppings && item.toppings.length > 0 && (
                         <div className="space-y-0.5 pl-2.5 mt-0.5">
                           {item.toppings.map((t, tIdx) => (
-                            <div key={tIdx} className="text-[12px] font-semibold text-black tabular-nums">
+                            <div key={tIdx} className="text-[0.9em] font-medium text-black tabular-nums">
                               + {t.name} x{item.qty} = {formatVND(t.price * item.qty)}
                             </div>
                           ))}
                         </div>
                       )}
                       {item.note && (
-                        <div className="text-[12px] font-semibold text-black pl-2.5 italic">
+                        <div className="text-[0.9em] font-medium text-black pl-2.5 italic">
                           Ghi chú: {item.note}
                         </div>
                       )}
-                      <div className="flex justify-between pl-2.5 mt-0.5 tabular-nums text-[13.5px] font-semibold text-black">
+                      <div className="flex justify-between pl-2.5 mt-0.5 tabular-nums text-[1em] font-medium text-black">
                         <span>
                           {item.qty} × {formatVND(unitPrice)}
                         </span>
-                        <span className="font-extrabold">{formatVND(netTotal)}</span>
+                        <span className="font-bold">{formatVND(netTotal)}</span>
                       </div>
                       {itemDiscount > 0 && (
-                        <div className="text-[12px] text-black pl-2.5 tabular-nums font-bold">
+                        <div className="text-[0.9em] text-black pl-2.5 tabular-nums font-semibold">
                           Chiết khấu món:{' '}
                           {item.discountType === 'percent' && (item.discountValue ?? 0) > 0
                             ? `-${item.discountValue}% (-${formatVND(itemDiscount)})`
@@ -387,10 +447,10 @@ export function ReceiptModal({
                 })}
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-dashed border-black space-y-1 text-[13.5px] font-semibold text-black">
+              <div className="mt-2 pt-1.5 border-t border-dashed border-black space-y-0.5 text-[1em] font-medium text-black">
                 <div className="flex justify-between">
                   <span>Tạm tính ({totalQty} món):</span>
-                  <span className="font-extrabold tabular-nums">{formatVND(order.subtotal)}</span>
+                  <span className="font-bold tabular-nums">{formatVND(order.subtotal)}</span>
                 </div>
                 {order.discountAmount > 0 && (
                   <div className="flex justify-between">
@@ -407,38 +467,38 @@ export function ReceiptModal({
                     <span className="tabular-nums">{formatVND(order.vatAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t-2 border-black text-[17px] font-extrabold text-black">
+                <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-black text-[1.28em] font-extrabold text-black">
                   <span>TỔNG CỘNG:</span>
                   <span className="tabular-nums">{formatVND(order.total)}</span>
                 </div>
               </div>
 
               {order.note && (
-                <div className="mt-2 text-[12.5px] font-semibold text-black">
+                <div className="mt-1.5 text-[0.92em] font-medium text-black">
                   <strong>Ghi chú:</strong> {order.note}
                 </div>
               )}
               {wifiInfo && (
-                <div className="mt-1 text-[12.5px] font-semibold text-black">Wi-Fi: {wifiInfo}</div>
+                <div className="mt-1 text-[0.92em] font-medium text-black">Wi-Fi: {wifiInfo}</div>
               )}
 
               {qrDataUrl && (
-                <div className="mt-3 pt-3 border-t border-dashed border-black text-center space-y-1.5">
-                  <div className="text-[13px] font-extrabold text-black">QUÉT MÃ QR THANH TOÁN</div>
+                <div className="mt-2.5 pt-2.5 border-t border-dashed border-black text-center space-y-1">
+                  <div className="text-[0.95em] font-bold text-black">QUÉT MÃ QR THANH TOÁN</div>
                   <img
                     src={qrDataUrl}
                     alt="Mã QR thanh toán"
-                    className="w-[104px] h-[104px] object-contain mx-auto"
+                    className="w-[88px] h-[88px] object-contain mx-auto bg-white"
                   />
-                  <div className="text-[15px] font-extrabold tabular-nums text-black">
+                  <div className="text-[1.08em] font-bold tabular-nums text-black">
                     {formatVND(order.total)}
                   </div>
                 </div>
               )}
 
               {(settings?.bankName || settings?.bankAccount || settings?.bankOwner) && (
-                <div className="mt-2.5 text-[12.5px] text-left border border-dashed border-black rounded p-2 space-y-0.5 text-black">
-                  <div className="font-extrabold">Thông tin chuyển khoản:</div>
+                <div className="mt-2 text-[0.92em] text-left border border-dashed border-black rounded p-2 space-y-0.5 text-black bg-white">
+                  <div className="font-bold">Thông tin chuyển khoản:</div>
                   {settings?.bankName && (
                     <div>
                       Ngân hàng: <strong>{settings.bankName}</strong>
@@ -457,7 +517,7 @@ export function ReceiptModal({
                 </div>
               )}
 
-              <div className="mt-3 pt-2.5 border-t border-dashed border-black text-center text-[12.5px] font-semibold italic text-black">
+              <div className="mt-2.5 pt-2 border-t border-dashed border-black text-center text-[0.92em] font-medium italic text-black">
                 {footerText}
               </div>
             </div>

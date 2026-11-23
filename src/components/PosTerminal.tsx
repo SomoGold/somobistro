@@ -65,6 +65,7 @@ import { MenuThumbnail } from './MenuThumbnail';
 import { KasItemModal } from './KasItemModal';
 import { KasAddTableModal, KasCancelBillModal, KasTransferMergeModal } from './KasTableModals';
 import { KasPaymentPanel } from './KasPaymentPanel';
+import { PWAInstallButton } from './PWAInstallButton';
 
 type KasViewMode = 'floor' | 'menu' | 'payment';
 type ZoneFilter = 'Tất cả' | TableZone | 'Mang về';
@@ -1018,6 +1019,8 @@ export function PosTerminal({
                     )}
                   </div>
 
+                  <PWAInstallButton variant="topbar" />
+
                   <button
                     type="button"
                     onClick={toggleFullscreen}
@@ -1285,6 +1288,8 @@ export function PosTerminal({
                       Thanh toán ngay
                     </button>
                   )}
+
+                  <PWAInstallButton variant="topbar" />
 
                   <button
                     type="button"
@@ -1872,6 +1877,11 @@ export function PosTerminal({
                   )}
                   {isFullscreen ? 'Thoát toàn màn hình' : 'Bật toàn màn hình'}
                 </button>
+
+                <PWAInstallButton
+                  variant="drawer"
+                  onAfterClick={() => setShowFunctionsDrawer(false)}
+                />
 
                 <button
                   type="button"
