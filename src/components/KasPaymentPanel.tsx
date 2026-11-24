@@ -94,11 +94,11 @@ export function KasPaymentPanel({
     !(discountType === 'percent' && (discountValue === 10 || discountValue === 20));
   const isCustomDiscountActive = customDiscountOpen || hasCustomDiscount;
 
-  const uploadedQrUrl = settings?.qrImageUrl || '';
   const quickCashAmounts = [20000, 50000, 100000, 200000, 500000]
     .filter((amt) => amt > total)
     .slice(0, 4);
   const insufficientCash = paymentMethod === 'cash' && parsedCashReceived < total;
+  const hasCashChange = paymentMethod === 'cash' && parsedCashReceived > total;
 
   const selectedCustomer = useMemo(
     () => customers.find((c) => c.id === selectedCustomerId) ?? null,
@@ -293,20 +293,37 @@ export function KasPaymentPanel({
             </div>
 
             <div className="grid grid-cols-12 items-center gap-2">
-              <label className="col-span-4 text-sm font-bold text-red-600 text-right pr-2">
+              <label
+                className={`col-span-4 text-sm font-bold text-right pr-2 ${
+                  insufficientCash
+                    ? 'text-red-600'
+                    : hasCashChange
+                      ? 'text-blue-700'
+                      : 'text-emerald-700'
+                }`}
+              >
                 Khách trả
               </label>
               <div className="col-span-8">
                 {paymentMethod === 'cash' ? (
                   <div
                     aria-label="Khách trả"
-                    className="w-full h-10 px-3 rounded-md bg-white border-2 border-red-300 flex items-center justify-end gap-1 text-lg font-bold tabular-nums text-red-600 select-none"
+                    className={`w-full h-10 px-3 rounded-md border-2 flex items-center justify-end gap-1 text-lg font-bold tabular-nums select-none transition-colors ${
+                      insufficientCash
+                        ? 'bg-white border-red-400 text-red-600'
+                        : hasCashChange
+                          ? 'bg-blue-50/40 border-blue-500 text-blue-700'
+                          : 'bg-emerald-50/40 border-emerald-500 text-emerald-700'
+                    }`}
                   >
                     <span>{formatDotNumber(parsedCashReceived) || '0'}</span>
-                    <span className="text-xs font-bold text-slate-400">₫</span>
+                    <span className="text-xs font-bold opacity-60">₫</span>
                   </div>
                 ) : (
-                  <div className="h-10 px-3 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-end text-lg font-bold tabular-nums text-red-600">
+                  <div
+                    aria-label="Khách trả"
+                    className="h-10 px-3 rounded-md bg-emerald-50/40 border-2 border-emerald-500 flex items-center justify-end text-lg font-bold tabular-nums text-emerald-700"
+                  >
                     {formatDotNumber(total) || '0'} ₫
                   </div>
                 )}
@@ -368,115 +385,65 @@ export function KasPaymentPanel({
           </div>
         )}
 
-        {/* Middle Payment Methods + LARGE Store QR Preview */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start pt-2 border-t border-slate-200">
-          <div className={paymentMethod === 'transfer' ? 'xl:col-span-5 space-y-2.5' : 'xl:col-span-12 space-y-2.5'}>
-            {(
-              [
-                { id: 'cash', label: 'Tiền mặt', hint: 'Thanh toán tiền mặt tại quầy', icon: Banknote },
-                { id: 'transfer', label: 'Chuyển khoản QR', hint: 'Quét mã QR ngân hàng của quán', icon: QrCode },
-                { id: 'card', label: 'Thẻ ngân hàng / VISA', hint: 'Quẹt thẻ POS / Napas / Visa', icon: CreditCard },
-              ] as const
-            ).map(({ id, label, hint, icon: Icon }) => {
-              const active = paymentMethod === id;
-              const displayAmount = active
-                ? id === 'cash'
-                  ? parsedCashReceived
-                  : total
-                : 0;
+        {/* Payment Methods */}
+        <div className="pt-2 border-t border-slate-200 space-y-2.5">
+          {(
+            [
+              { id: 'cash', label: 'Tiền mặt', hint: 'Thanh toán tiền mặt tại quầy', icon: Banknote },
+              { id: 'transfer', label: 'Chuyển khoản QR', hint: 'Quét mã QR ngân hàng của quán', icon: QrCode },
+              { id: 'card', label: 'Thẻ ngân hàng / VISA', hint: 'Quẹt thẻ POS / Napas / Visa', icon: CreditCard },
+            ] as const
+          ).map(({ id, label, hint, icon: Icon }) => {
+            const active = paymentMethod === id;
+            const displayAmount = active
+              ? id === 'cash'
+                ? parsedCashReceived
+                : total
+              : 0;
 
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => onChangePaymentMethod(id)}
-                  className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-lg border-2 text-left transition-all ${
-                    active
-                      ? 'bg-cyan-50/70 border-cyan-600 shadow-xs'
-                      : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
-                        active ? 'bg-[#0a2268] text-white' : 'bg-white border border-slate-300 text-slate-500'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <div
-                        className={`text-sm font-bold ${
-                          active ? 'text-[#0a2268]' : 'text-slate-800'
-                        }`}
-                      >
-                        {label}
-                      </div>
-                      <div className="text-xs text-slate-500 truncate">{hint}</div>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`min-w-[125px] h-10 px-3 rounded-md border flex items-center justify-end text-base font-bold tabular-nums shrink-0 ${
-                      active
-                        ? 'bg-white border-cyan-500 text-cyan-800'
-                        : 'bg-slate-100 border-slate-200 text-slate-400'
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onChangePaymentMethod(id)}
+                className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-lg border-2 text-left transition-all ${
+                  active
+                    ? 'bg-cyan-50/70 border-cyan-600 shadow-xs'
+                    : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
+                      active ? 'bg-[#0a2268] text-white' : 'bg-white border border-slate-300 text-slate-500'
                     }`}
                   >
-                    {formatDotNumber(displayAmount) || '0'}
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <div
+                      className={`text-sm font-bold ${
+                        active ? 'text-[#0a2268]' : 'text-slate-800'
+                      }`}
+                    >
+                      {label}
+                    </div>
+                    <div className="text-xs text-slate-500 truncate">{hint}</div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                </div>
 
-          {paymentMethod === 'transfer' && (
-            <div className="xl:col-span-7 rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col sm:flex-row items-center gap-4">
-              {uploadedQrUrl ? (
-                <img
-                  src={uploadedQrUrl}
-                  alt="Mã QR chuyển khoản của quán"
-                  className="w-44 h-44 object-contain rounded-lg bg-white border border-slate-200 p-2 shrink-0"
-                />
-              ) : (
-                <div className="w-40 h-40 rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-center p-3 shrink-0 gap-2">
-                  <QrCode className="w-8 h-8 text-slate-300" />
-                  <span className="text-xs text-slate-500">Chưa tải ảnh QR</span>
-                  <button
-                    type="button"
-                    onClick={onOpenSettings}
-                    className="text-xs font-bold text-cyan-700 hover:underline"
-                  >
-                    Cài đặt mã QR
-                  </button>
+                <div
+                  className={`min-w-[125px] h-10 px-3 rounded-md border flex items-center justify-end text-base font-bold tabular-nums shrink-0 ${
+                    active
+                      ? 'bg-white border-cyan-500 text-cyan-800'
+                      : 'bg-slate-100 border-slate-200 text-slate-400'
+                  }`}
+                >
+                  {formatDotNumber(displayAmount) || '0'}
                 </div>
-              )}
-              <div className="flex-1 min-w-0 space-y-1.5 text-sm text-slate-700 text-center sm:text-left">
-                <div className="text-xs font-bold uppercase tracking-wide text-cyan-700">
-                  Thông tin chuyển khoản
-                </div>
-                {settings?.bankName && (
-                  <div>
-                    Ngân hàng: <strong className="text-slate-900">{settings.bankName}</strong>
-                  </div>
-                )}
-                {settings?.bankAccount && (
-                  <div>
-                    Số tài khoản:{' '}
-                    <strong className="text-slate-900 tabular-nums">{settings.bankAccount}</strong>
-                  </div>
-                )}
-                {settings?.bankOwner && (
-                  <div>
-                    Chủ tài khoản: <strong className="text-slate-900">{settings.bankOwner}</strong>
-                  </div>
-                )}
-                <div className="pt-1 text-base font-extrabold text-[#0a2268] tabular-nums">
-                  Cần thanh toán: {formatVND(total)}
-                </div>
-              </div>
-            </div>
-          )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Bottom Cashier / Customer Picker / Order Note Strip */}

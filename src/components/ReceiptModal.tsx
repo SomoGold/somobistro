@@ -172,7 +172,7 @@ export function ReceiptModal({
                       <tr className="border-y border-slate-400 bg-slate-50 text-slate-900 font-bold">
                         <th className="py-1.5 px-1.5">Tên món</th>
                         <th className="py-1.5 px-1.5 w-9 text-center">SL</th>
-                        <th className="py-1.5 px-1.5 w-20 text-right">Đơn giá</th>
+                        <th className="py-1.5 px-1.5 w-20 text-right">Đ.giá</th>
                         <th className="py-1.5 px-1.5 w-20 text-right">Chiết khấu</th>
                         <th className="py-1.5 px-1.5 w-22 text-right">Thành tiền</th>
                       </tr>
@@ -436,7 +436,7 @@ export function ReceiptModal({
                   <tr className="border-y border-black text-[1em] font-bold">
                     <th className="py-1 pr-1 text-left whitespace-nowrap">Tên món</th>
                     <th className="py-1 text-center whitespace-nowrap">SL</th>
-                    <th className="py-1 pl-0.5 text-right whitespace-nowrap">Đơn giá</th>
+                    <th className="py-1 pl-0.5 text-right whitespace-nowrap">Đ.giá</th>
                     <th className="py-1 pl-0.5 text-right whitespace-nowrap">Thành tiền</th>
                   </tr>
                 </thead>

@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { DiscountType, OrderItem, PaymentMethod } from '../types/pos';
+import { DiscountType, Order, OrderItem, PaymentMethod } from '../types/pos';
 
 export function resolveAssetUrl(url: string): string {
   if (!url) return '';
@@ -81,12 +81,27 @@ export function generateDocId(prefix: string): string {
   return `${prefix}_${ts}_${rand}`.replace(/[^a-zA-Z0-9_-]/g, '');
 }
 
-export function generateOrderNumber(date: Date = new Date()): string {
+export function generateOrderNumber(
+  date: Date = new Date(),
+  existingOrders: ReadonlyArray<Pick<Order, 'dateKey' | 'orderNumber'>> = [],
+): string {
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
-  const seq = String(Math.floor(100 + Math.random() * 900));
-  return `HD${yy}${mm}${dd}-${seq}`;
+  const prefix = `HD${yy}${mm}${dd}-`;
+  const todayKey = getDateKey(date);
+
+  const todayOrders = existingOrders.filter(
+    (o) => o.dateKey === todayKey || o.orderNumber.startsWith(prefix),
+  );
+  const usedNumbers = new Set(todayOrders.map((o) => o.orderNumber));
+
+  let nextSeq = todayOrders.length + 1;
+  while (usedNumbers.has(`${prefix}${String(nextSeq).padStart(3, '0')}`)) {
+    nextSeq += 1;
+  }
+
+  return `${prefix}${String(nextSeq).padStart(3, '0')}`;
 }
 
 export function getItemToppingTotal(item: OrderItem): number {

@@ -190,38 +190,37 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
   const openTablesCount = tables.filter((t) => t.status === 'occupied').length;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-5 sm:p-6 max-w-3xl mx-auto space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="bg-white border border-slate-200 rounded-xl overflow-hidden"
+        className="bg-white border border-zinc-200 rounded-xl overflow-hidden"
       >
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-900">
+        <div className="px-6 py-4 border-b border-zinc-200">
+          <h2 className="text-base font-bold text-zinc-950">
             Thông tin quán & mẫu hóa đơn (A5 / 80mm)
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Các thông tin dưới đây sẽ hiển thị trực tiếp trên hóa đơn thanh toán, màn hình thanh toán
-            QR và phiếu tạm tính khổ A5 / 80mm.
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Các thông tin dưới đây sẽ in trực tiếp trên hóa đơn thanh toán và phiếu tạm tính khổ A5 / 80mm.
           </p>
         </div>
 
         <div className="p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Tên quán cà phê / nhà hàng <span className="text-red-600">*</span>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                Tên quán cà phê / nhà hàng <span className="text-rose-600">*</span>
               </label>
               <input
                 type="text"
                 required
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value.slice(0, LIMITS.STORE_NAME_MAX))}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                 Số điện thoại / Hotline
               </label>
               <input
@@ -229,64 +228,64 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.slice(0, LIMITS.PHONE_MAX))}
                 placeholder="0908 456 789"
-                className="w-full px-3 py-2 text-sm tabular-nums border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Địa chỉ quán</label>
+            <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Địa chỉ quán</label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value.slice(0, LIMITS.ADDRESS_MAX))}
               placeholder="42 Nguyễn Đình Chiểu, Quận 1, TP. Hồ Chí Minh"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+              className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Tên ngân hàng</label>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Tên ngân hàng</label>
               <input
                 type="text"
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value.slice(0, LIMITS.BANK_NAME_MAX))}
                 placeholder="VD: Techcombank, VCB..."
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Số tài khoản (STK)</label>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Số tài khoản (STK)</label>
               <input
                 type="text"
                 value={bankAccount}
                 onChange={(e) => setBankAccount(e.target.value.slice(0, LIMITS.BANK_ACCOUNT_MAX))}
                 placeholder="VD: 1903xxxxxxxxxx"
-                className="w-full px-3 py-2 text-sm tabular-nums border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Chủ tài khoản (Họ tên)</label>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Chủ tài khoản (Họ tên)</label>
               <input
                 type="text"
                 value={bankOwner}
                 onChange={(e) => setBankOwner(e.target.value.slice(0, LIMITS.BANK_OWNER_MAX))}
                 placeholder="VD: NGUYEN VAN A"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                 Thuế VAT mặc định
               </label>
               <select
                 value={defaultVatRate}
                 onChange={(e) => setDefaultVatRate(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm tabular-nums bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               >
                 <option value={0}>0% (Không VAT)</option>
                 <option value={8}>8% (Giảm thuế VAT)</option>
@@ -295,7 +294,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                 Thông tin Wi-Fi in trên bill
               </label>
               <input
@@ -303,41 +302,41 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 value={wifiInfo}
                 onChange={(e) => setWifiInfo(e.target.value.slice(0, LIMITS.WIFI_MAX))}
                 placeholder="SomoBistro_5G / Pass: somobistro"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+                className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
               Khổ giấy in hóa đơn mặc định
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setDefaultPrintSize('a5')}
-                className={`p-3 rounded-lg border text-left transition-colors ${
+                className={`p-3.5 rounded-xl border text-left transition-colors ${
                   defaultPrintSize === 'a5'
-                    ? 'bg-cyan-50 border-cyan-600 text-cyan-900'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'bg-emerald-50/80 border-emerald-600 text-emerald-950 ring-1 ring-emerald-600/20'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
                 <div className="text-sm font-bold">Khổ A5 (148 × 210 mm)</div>
-                <div className="text-xs text-slate-500 mt-0.5">
+                <div className="text-xs text-zinc-500 mt-0.5">
                   Hóa đơn chi tiết dạng bảng đầy đủ, phù hợp máy in văn phòng
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setDefaultPrintSize('80mm')}
-                className={`p-3 rounded-lg border text-left transition-colors ${
+                className={`p-3.5 rounded-xl border text-left transition-colors ${
                   defaultPrintSize === '80mm'
-                    ? 'bg-cyan-50 border-cyan-600 text-cyan-900'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'bg-emerald-50/80 border-emerald-600 text-emerald-950 ring-1 ring-emerald-600/20'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
                 <div className="text-sm font-bold">Khổ 80mm (Máy in bill nhiệt K80)</div>
-                <div className="text-xs text-slate-500 mt-0.5">
+                <div className="text-xs text-zinc-500 mt-0.5">
                   Khổ cuộn 80mm gọn gàng, in nhanh trực tiếp tại quầy thu ngân
                 </div>
               </button>
@@ -345,7 +344,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
               Lời chào cuối hóa đơn
             </label>
             <input
@@ -353,19 +352,19 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
               value={receiptFooter}
               onChange={(e) => setReceiptFooter(e.target.value.slice(0, LIMITS.FOOTER_MAX))}
               placeholder="Cảm ơn quý khách đã ghé thăm Somo Bistro! Hẹn gặp lại."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+              className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
             />
           </div>
 
           {/* Custom Payment QR Upload */}
-          <div className="pt-4 border-t border-slate-200 space-y-3">
+          <div className="pt-4 border-t border-zinc-200 space-y-3">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">
-                Ảnh mã QR thanh toán của quán
+              <h3 className="text-sm font-bold text-zinc-950">
+                Ảnh mã QR thanh toán in trên hóa đơn
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Tải lên ảnh mã QR chuyển khoản của bạn (từ ứng dụng ngân hàng, ví điện tử...). Ảnh
-                này sẽ hiển thị trực tiếp ở mục Chuyển khoản tại quầy POS và trên hóa đơn khổ A5.
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Tải lên ảnh mã QR chuyển khoản của quán (từ ứng dụng ngân hàng, ví điện tử...). Ảnh
+                này sẽ được in trực tiếp ở phần chuyển khoản trên hóa đơn.
               </p>
             </div>
 
@@ -378,8 +377,8 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
             />
 
             {qrImageUrl ? (
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="w-36 h-36 rounded-xl bg-white border border-slate-200 p-2 flex items-center justify-center shrink-0">
+              <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="w-36 h-36 rounded-xl bg-white border border-zinc-200 p-2 flex items-center justify-center shrink-0">
                   <img
                     src={qrImageUrl}
                     alt="Mã QR thanh toán đã tải lên"
@@ -387,20 +386,20 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                   />
                 </div>
                 <div className="space-y-2.5 flex-1">
-                  <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-700">
+                  <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
                     <QrCode className="w-4 h-4" />
                     Đã sẵn sàng ảnh mã QR
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Nhấn <strong>Lưu cài đặt</strong> bên dưới để lưu vĩnh viễn ảnh QR này cho toàn
-                    bộ hóa đơn và quầy bán hàng.
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Nhấn <strong>Lưu cài đặt</strong> bên dưới để lưu vĩnh viễn ảnh QR này cho mẫu
+                    in hóa đơn.
                   </p>
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <button
                       type="button"
                       disabled={uploadingQr}
                       onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-300 hover:bg-zinc-100 rounded-lg transition-colors"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       {uploadingQr ? 'Đang xử lý...' : 'Đổi ảnh QR khác'}
@@ -408,7 +407,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                     <button
                       type="button"
                       onClick={() => setQrImageUrl('')}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                       Gỡ ảnh QR
@@ -421,27 +420,27 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 type="button"
                 disabled={uploadingQr}
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full p-6 border-2 border-dashed border-slate-300 hover:border-cyan-500 hover:bg-cyan-50/30 rounded-xl flex flex-col items-center justify-center gap-2 text-center transition-colors"
+                className="w-full p-6 border-2 border-dashed border-zinc-300 hover:border-emerald-600 hover:bg-emerald-50/40 rounded-xl flex flex-col items-center justify-center gap-2 text-center transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
                   <Upload className="w-5 h-5" />
                 </div>
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-zinc-900">
                   {uploadingQr ? 'Đang xử lý ảnh QR...' : 'Nhấn để tải ảnh mã QR của bạn lên'}
                 </div>
-                <div className="text-xs text-slate-500">
-                  Hỗ trợ ảnh PNG, JPG, WebP (tự động tối ưu dung lượng để hiển thị sắc nét)
+                <div className="text-xs text-zinc-500">
+                  Hỗ trợ ảnh PNG, JPG, WebP (tự động tối ưu dung lượng để in sắc nét)
                 </div>
               </button>
             )}
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+        <div className="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex justify-end">
           <button
             type="submit"
             disabled={saving || uploadingQr}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg transition-colors"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Đang lưu...' : 'Lưu cài đặt'}
@@ -450,18 +449,18 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
       </form>
 
       {/* Data Reset Utility */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-900">Quản lý dữ liệu bán hàng</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+      <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-200">
+          <h2 className="text-base font-bold text-zinc-950">Quản lý dữ liệu bán hàng</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">
             Xóa toàn bộ hóa đơn hiện có và đưa tất cả bàn về trạng thái trống. Thực đơn và cấu hình
             quán được giữ nguyên.
           </p>
         </div>
         <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="text-xs text-slate-600 tabular-nums">
-            Hiện có <span className="font-semibold text-slate-900">{orders.length}</span> đơn hàng
-            và <span className="font-semibold text-slate-900">{openTablesCount}</span> bàn đang treo
+          <div className="text-xs text-zinc-600">
+            Hiện có <span className="font-mono tabular-nums font-bold text-zinc-950">{orders.length}</span> đơn hàng
+            và <span className="font-mono tabular-nums font-bold text-zinc-950">{openTablesCount}</span> bàn đang treo
             bill.
           </div>
 
@@ -470,7 +469,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
               type="button"
               onClick={() => setConfirmReset(true)}
               disabled={orders.length === 0 && openTablesCount === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed border border-red-200 rounded-lg transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-40 disabled:cursor-not-allowed border border-rose-200 rounded-lg transition-colors whitespace-nowrap"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Xóa toàn bộ hóa đơn & đặt lại bàn trống
@@ -481,7 +480,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 type="button"
                 onClick={() => setConfirmReset(false)}
                 disabled={resetting}
-                className="px-3.5 py-2 text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg"
+                className="px-3.5 py-2 text-xs font-semibold text-zinc-600 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-lg"
               >
                 Hủy
               </button>
@@ -489,7 +488,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 type="button"
                 onClick={handlePurgeOrders}
                 disabled={resetting}
-                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg whitespace-nowrap"
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg whitespace-nowrap"
               >
                 {resetting ? 'Đang xóa...' : 'Xác nhận xóa toàn bộ'}
               </button>
@@ -500,5 +499,3 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
     </div>
   );
 }
-
-

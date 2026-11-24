@@ -157,6 +157,7 @@ export function PosTerminal({
   const [showAddTable, setShowAddTable] = useState(false);
   const [transferMode, setTransferMode] = useState<null | 'move' | 'merge'>(null);
   const [showCancelBillModal, setShowCancelBillModal] = useState(false);
+  const [confirmDeleteItemIdx, setConfirmDeleteItemIdx] = useState<number | null>(null);
   const [showFunctionsDrawer, setShowFunctionsDrawer] = useState(false);
 
   // Live clock
@@ -233,13 +234,16 @@ export function PosTerminal({
       setIsDirty(false);
     }
     setModalItemState(null);
+    setConfirmDeleteItemIdx(null);
   }, [selectedTableId, activeOpenOrder, settings?.defaultVatRate]);
 
   // Close open modal on Escape key
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (modalItemState) {
+      if (confirmDeleteItemIdx !== null) {
+        setConfirmDeleteItemIdx(null);
+      } else if (modalItemState) {
         setModalItemState(null);
       } else if (showAddTable) {
         setShowAddTable(false);
@@ -253,7 +257,14 @@ export function PosTerminal({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [modalItemState, showAddTable, transferMode, showCancelBillModal, showFunctionsDrawer]);
+  }, [
+    confirmDeleteItemIdx,
+    modalItemState,
+    showAddTable,
+    transferMode,
+    showCancelBillModal,
+    showFunctionsDrawer,
+  ]);
 
   // Totals
   const totals = useMemo(
@@ -537,7 +548,7 @@ export function PosTerminal({
     return {
       id: activeOpenOrder?.id ?? 'preview',
       ownerId,
-      orderNumber: activeOpenOrder?.orderNumber ?? generateOrderNumber(nowDate),
+      orderNumber: activeOpenOrder?.orderNumber ?? generateOrderNumber(nowDate, orders),
       orderType: selectedTable ? 'dine_in' : 'takeaway',
       tableId: selectedTable?.id ?? '',
       tableName: selectedTable?.name ?? 'Mang về',
@@ -573,6 +584,7 @@ export function PosTerminal({
     discountType,
     discountValue,
     orderNote,
+    orders,
     ownerId,
     parsedCashReceived,
     paymentMethod,
@@ -658,7 +670,7 @@ export function PosTerminal({
         targetPath = `orders/${newOrderId} + diningTables/${selectedTable.id}`;
         batch.set(doc(db, 'orders', newOrderId), {
           ownerId,
-          orderNumber: generateOrderNumber(nowDate),
+          orderNumber: generateOrderNumber(nowDate, orders),
           orderType: 'dine_in',
           tableId: selectedTable.id,
           tableName: sanitizeText(selectedTable.name, LIMITS.TABLE_NAME_MAX) || 'Bàn',
@@ -712,6 +724,7 @@ export function PosTerminal({
     isSubmitting,
     onNotify,
     orderNote,
+    orders,
     ownerId,
     selectedCustomerId,
     selectedTable,
@@ -824,7 +837,7 @@ export function PosTerminal({
         };
       } else {
         const newOrderId = generateDocId('ord');
-        const newOrderNumber = generateOrderNumber(nowDate);
+        const newOrderNumber = generateOrderNumber(nowDate, orders);
         targetPath = `orders/${newOrderId}`;
         opType = OperationType.CREATE;
         const safeTableName = selectedTable
@@ -910,6 +923,7 @@ export function PosTerminal({
     onNotify,
     onPrintReceipt,
     orderNote,
+    orders,
     ownerId,
     parsedCashReceived,
     paymentMethod,
@@ -1797,7 +1811,7 @@ export function PosTerminal({
                         </button>
                         <button
                           type="button"
-                          onClick={() => removeCartItem(idx)}
+                          onClick={() => setConfirmDeleteItemIdx(idx)}
                           className="text-xs font-bold text-orange-600 hover:text-red-700 hover:underline"
                         >
                           Xóa
@@ -1817,7 +1831,9 @@ export function PosTerminal({
                           <button
                             type="button"
                             onClick={() =>
-                              item.qty <= 1 ? removeCartItem(idx) : adjustCartItemQty(idx, -1)
+                              item.qty <= 1
+                                ? setConfirmDeleteItemIdx(idx)
+                                : adjustCartItemQty(idx, -1)
                             }
                             className="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
                             aria-label={`Giảm số lượng ${item.name}`}
@@ -2177,6 +2193,58 @@ export function PosTerminal({
               >
                 <LogOut className="w-4 h-4" />
                 Đăng xuất tài khoản
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ================= XÁC NHẬN XÓA MÓN TRÊN THANH ORDER ================= */}
+      {confirmDeleteItemIdx !== null && cartItems[confirmDeleteItemIdx] && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4"
+          onClick={() => setConfirmDeleteItemIdx(null)}
+        >
+          <div
+            className="w-full max-w-sm bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3.5 bg-[#091d4f] text-white flex items-center justify-between">
+              <span className="text-sm font-bold">Xác nhận xóa món</span>
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteItemIdx(null)}
+                className="p-1 text-slate-300 hover:text-white rounded"
+                aria-label="Đóng"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-2">
+              <p className="text-sm text-slate-800">
+                Bạn có muốn xóa món{' '}
+                <strong className="text-[#0a2268]">
+                  {cartItems[confirmDeleteItemIdx].name}
+                </strong>{' '}
+                (SL: {cartItems[confirmDeleteItemIdx].qty}) khỏi đơn hàng không?
+              </p>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteItemIdx(null)}
+                className="px-4 py-2 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
+              >
+                Không
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeCartItem(confirmDeleteItemIdx);
+                  setConfirmDeleteItemIdx(null);
+                }}
+                className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors"
+              >
+                Có, xóa món
               </button>
             </div>
           </div>

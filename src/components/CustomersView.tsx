@@ -105,7 +105,11 @@ export function CustomersView({
       const normalizedName = cust.name.trim().toLowerCase();
       const matched = completedOrders.filter((ord) => {
         if (ord.customerId && ord.customerId === cust.id) return true;
-        if (!ord.customerId && ord.customerName && ord.customerName.trim().toLowerCase() === normalizedName) {
+        if (
+          !ord.customerId &&
+          ord.customerName &&
+          ord.customerName.trim().toLowerCase() === normalizedName
+        ) {
           return true;
         }
         return false;
@@ -303,27 +307,27 @@ export function CustomersView({
     <div className="p-5 sm:p-6 max-w-[1440px] mx-auto space-y-5">
       {/* Top KPI Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-medium text-slate-500">Khách hàng đã lưu</div>
-          <div className="text-2xl font-bold tabular-nums text-slate-900 mt-1">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
+          <div className="text-xs font-medium text-zinc-500">Khách hàng đã lưu</div>
+          <div className="text-2xl font-bold font-mono tabular-nums text-zinc-950 mt-1">
             {overallSummary.totalCustomers}
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-medium text-slate-500">Có chiết khấu mặc định</div>
-          <div className="text-2xl font-bold tabular-nums text-amber-700 mt-1">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
+          <div className="text-xs font-medium text-zinc-500">Có chiết khấu mặc định</div>
+          <div className="text-2xl font-bold font-mono tabular-nums text-amber-700 mt-1">
             {overallSummary.withDiscount}
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-medium text-slate-500">Tổng chi tiêu khách quen</div>
-          <div className="text-2xl font-bold tabular-nums text-cyan-700 mt-1">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
+          <div className="text-xs font-medium text-zinc-500">Tổng chi tiêu khách quen</div>
+          <div className="text-2xl font-bold font-mono tabular-nums text-emerald-700 mt-1">
             {formatVND(overallSummary.totalSpent)}
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-medium text-slate-500">Tổng lượt mua</div>
-          <div className="text-2xl font-bold tabular-nums text-slate-900 mt-1">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
+          <div className="text-xs font-medium text-zinc-500">Tổng lượt mua</div>
+          <div className="text-2xl font-bold font-mono tabular-nums text-zinc-950 mt-1">
             {overallSummary.totalOrders}
           </div>
         </div>
@@ -332,22 +336,22 @@ export function CustomersView({
       {/* Main 2-Column Split: Customer Directory (Left) + Purchase History & Details (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Directory */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex flex-wrap items-center gap-2.5">
+        <div className="lg:col-span-5 bg-white border border-zinc-200 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-zinc-200 flex flex-wrap items-center gap-2.5">
             <div className="relative flex-1 min-w-[180px]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm tên, số điện thoại..."
-                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-cyan-600"
+                className="w-full pl-9 pr-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
             <button
               type="button"
               onClick={() => openCreateModal('')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors whitespace-nowrap shrink-0"
             >
               <UserPlus className="w-4 h-4" />
               Thêm khách hàng
@@ -356,18 +360,19 @@ export function CustomersView({
 
           {filteredCustomers.length === 0 ? (
             <div className="p-10 text-center space-y-2">
-              <Users className="w-8 h-8 text-slate-300 mx-auto" />
-              <div className="text-sm font-semibold text-slate-600">
+              <Users className="w-8 h-8 text-zinc-300 mx-auto" />
+              <div className="text-sm font-semibold text-zinc-700">
                 {customers.length === 0
                   ? 'Chưa có khách hàng nào được lưu'
                   : 'Không tìm thấy khách hàng phù hợp'}
               </div>
-              <p className="text-xs text-slate-400">
-                Lưu thông tin khách quen để theo dõi lịch sử mua hàng và tự động áp dụng chiết khấu mặc định khi thanh toán.
+              <p className="text-xs text-zinc-400">
+                Lưu thông tin khách quen để theo dõi lịch sử mua hàng và tự động áp dụng chiết khấu
+                mặc định khi thanh toán.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto pos-scroll">
+            <div className="divide-y divide-zinc-100 max-h-[600px] overflow-y-auto pos-scroll">
               {filteredCustomers.map((cust) => {
                 const stats = customerStatsMap.get(cust.id);
                 const isSelected = selectedCustomer?.id === cust.id;
@@ -381,33 +386,39 @@ export function CustomersView({
                       if (e.key === 'Enter' || e.key === ' ') setSelectedId(cust.id);
                     }}
                     className={`p-3.5 cursor-pointer transition-colors ${
-                      isSelected ? 'bg-cyan-50/80 border-l-4 border-l-cyan-600' : 'hover:bg-slate-50'
+                      isSelected
+                        ? 'bg-emerald-50/70 ring-1 ring-inset ring-emerald-200'
+                        : 'hover:bg-zinc-50/80'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-slate-900 truncate">{cust.name}</div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-slate-500">
+                        <div className="text-sm font-bold text-zinc-950 truncate">{cust.name}</div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-zinc-500">
                           {cust.phone && (
-                            <span className="inline-flex items-center gap-1 tabular-nums">
+                            <span className="inline-flex items-center gap-1 font-mono tabular-nums">
                               <Phone className="w-3 h-3" />
                               {cust.phone}
                             </span>
                           )}
                           {cust.defaultDiscountValue > 0 && (
-                            <span className="inline-flex items-center gap-1 font-bold text-amber-700 tabular-nums">
+                            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 font-mono tabular-nums">
                               <Percent className="w-3 h-3" />
-                              CK mặc định: {formatDiscountBadge(cust.defaultDiscountType, cust.defaultDiscountValue)}
+                              CK mặc định:{' '}
+                              {formatDiscountBadge(
+                                cust.defaultDiscountType,
+                                cust.defaultDiscountValue,
+                              )}
                             </span>
                           )}
                         </div>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className="text-sm font-bold tabular-nums text-cyan-700">
+                        <div className="text-sm font-bold font-mono tabular-nums text-emerald-700">
                           {formatVND(stats?.totalSpent ?? 0)}
                         </div>
-                        <div className="text-[11px] text-slate-500 tabular-nums">
+                        <div className="text-[11px] text-zinc-500 font-mono tabular-nums">
                           {stats?.orders.length ?? 0} hóa đơn
                         </div>
                       </div>
@@ -420,26 +431,26 @@ export function CustomersView({
 
           {/* Walk-in Named Customers from Past Orders */}
           {unsavedNamedCustomers.length > 0 && (
-            <div className="border-t border-slate-200 bg-slate-50/80 p-4 space-y-2.5">
-              <div className="text-xs font-bold text-slate-700">
+            <div className="border-t border-zinc-200 bg-zinc-50 p-4 space-y-2.5">
+              <div className="text-xs font-bold text-zinc-700">
                 Khách đã nhập tên trên hóa đơn ({unsavedNamedCustomers.length})
               </div>
               <div className="space-y-1.5 max-h-44 overflow-y-auto pos-scroll">
                 {unsavedNamedCustomers.map((walkIn) => (
                   <div
                     key={walkIn.name}
-                    className="flex items-center justify-between gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs"
+                    className="flex items-center justify-between gap-2 px-3 py-2 bg-white border border-zinc-200 rounded-lg text-xs"
                   >
                     <div className="min-w-0">
-                      <div className="font-semibold text-slate-800 truncate">{walkIn.name}</div>
-                      <div className="text-[11px] text-slate-500 tabular-nums">
+                      <div className="font-semibold text-zinc-900 truncate">{walkIn.name}</div>
+                      <div className="text-[11px] text-zinc-500 font-mono tabular-nums">
                         {walkIn.orderCount} đơn · {formatVND(walkIn.totalSpent)}
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => openCreateModal(walkIn.name)}
-                      className="px-2.5 py-1 text-[11px] font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 rounded-md whitespace-nowrap"
+                      className="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md whitespace-nowrap"
                     >
                       + Lưu khách quen
                     </button>
@@ -453,26 +464,27 @@ export function CustomersView({
         {/* Right Detail & Purchase History Panel */}
         <div className="lg:col-span-7 space-y-4">
           {!selectedCustomer ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-sm text-slate-400">
-              Chọn một khách hàng ở danh sách bên trái để xem chi tiết chiết khấu và lịch sử mua hàng.
+            <div className="bg-white border border-zinc-200 rounded-xl p-12 text-center text-sm text-zinc-400">
+              Chọn một khách hàng ở danh sách bên trái để xem chi tiết chiết khấu và lịch sử mua
+              hàng.
             </div>
           ) : (
             <>
               {/* Profile Card */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+              <div className="bg-white border border-zinc-200 rounded-xl p-5 space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-bold text-slate-900">{selectedCustomer.name}</h2>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                    <h2 className="text-lg font-bold text-zinc-950">{selectedCustomer.name}</h2>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-600">
                       <span>
                         SĐT:{' '}
-                        <strong className="tabular-nums text-slate-800">
+                        <strong className="font-mono tabular-nums text-zinc-900">
                           {selectedCustomer.phone || 'Chưa cập nhật'}
                         </strong>
                       </span>
                       <span>
                         Chiết khấu mặc định:{' '}
-                        <strong className="tabular-nums text-amber-700">
+                        <strong className="font-mono tabular-nums text-amber-700">
                           {formatDiscountBadge(
                             selectedCustomer.defaultDiscountType,
                             selectedCustomer.defaultDiscountValue,
@@ -481,14 +493,14 @@ export function CustomersView({
                       </span>
                       <span>
                         Mua gần nhất:{' '}
-                        <strong className="tabular-nums text-slate-800">
+                        <strong className="font-mono tabular-nums text-zinc-900">
                           {selectedStats?.lastOrderTime || 'Chưa có đơn'}
                         </strong>
                       </span>
                     </div>
                     {selectedCustomer.note && (
-                      <p className="text-xs text-slate-500 pt-1">
-                        Ghi chú: <span className="text-slate-700">{selectedCustomer.note}</span>
+                      <p className="text-xs text-zinc-500 pt-1">
+                        Ghi chú: <span className="text-zinc-800">{selectedCustomer.note}</span>
                       </p>
                     )}
                   </div>
@@ -497,7 +509,7 @@ export function CustomersView({
                     <button
                       type="button"
                       onClick={() => openEditModal(selectedCustomer)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors whitespace-nowrap"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       Chỉnh sửa
@@ -507,14 +519,14 @@ export function CustomersView({
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg"
+                          className="px-2.5 py-1.5 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg"
                         >
                           Hủy
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteCustomer(selectedCustomer)}
-                          className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                          className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg whitespace-nowrap"
                         >
                           Xác nhận xóa
                         </button>
@@ -523,7 +535,7 @@ export function CustomersView({
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(selectedCustomer.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         title="Xóa khách hàng"
                         aria-label="Xóa khách hàng"
                       >
@@ -533,22 +545,24 @@ export function CustomersView({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-100">
-                  <div className="p-3 rounded-lg bg-cyan-50/60 border border-cyan-100">
-                    <div className="text-[11px] text-slate-600">Tổng tiền đã mua</div>
-                    <div className="text-base font-extrabold tabular-nums text-cyan-800 mt-0.5">
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-zinc-100">
+                  <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                    <div className="text-[11px] font-medium text-emerald-900/75">
+                      Tổng tiền đã mua
+                    </div>
+                    <div className="text-base font-bold font-mono tabular-nums text-emerald-800 mt-0.5">
                       {formatVND(selectedStats?.totalSpent ?? 0)}
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80">
-                    <div className="text-[11px] text-slate-600">Số hóa đơn</div>
-                    <div className="text-base font-extrabold tabular-nums text-slate-900 mt-0.5">
+                  <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80">
+                    <div className="text-[11px] font-medium text-zinc-500">Số hóa đơn</div>
+                    <div className="text-base font-bold font-mono tabular-nums text-zinc-950 mt-0.5">
                       {selectedStats?.orders.length ?? 0}
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80">
-                    <div className="text-[11px] text-slate-600">Trung bình / đơn</div>
-                    <div className="text-base font-extrabold tabular-nums text-slate-900 mt-0.5">
+                  <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80">
+                    <div className="text-[11px] font-medium text-zinc-500">Trung bình / đơn</div>
+                    <div className="text-base font-bold font-mono tabular-nums text-zinc-950 mt-0.5">
                       {formatVND(
                         selectedStats && selectedStats.orders.length > 0
                           ? Math.round(selectedStats.totalSpent / selectedStats.orders.length)
@@ -561,20 +575,20 @@ export function CustomersView({
 
               {/* Top Favorite Items */}
               {selectedStats && selectedStats.topItems.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                    <Coffee className="w-4 h-4 text-cyan-600" />
+                <div className="bg-white border border-zinc-200 rounded-xl p-5 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-bold text-zinc-950">
+                    <Coffee className="w-4 h-4 text-emerald-700" />
                     Món khách hay gọi nhất
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {selectedStats.topItems.map((it) => (
                       <div
                         key={it.name}
-                        className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                        className="px-3 py-2 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-between gap-2 text-xs"
                       >
-                        <span className="font-semibold text-slate-800 truncate">{it.name}</span>
-                        <span className="tabular-nums text-slate-600 whitespace-nowrap">
-                          <strong className="text-cyan-700">{it.qty}</strong> lần ·{' '}
+                        <span className="font-semibold text-zinc-900 truncate">{it.name}</span>
+                        <span className="font-mono tabular-nums text-zinc-600 whitespace-nowrap">
+                          <strong className="text-emerald-700">{it.qty}</strong> lần ·{' '}
                           {formatVND(it.revenue)}
                         </span>
                       </div>
@@ -584,41 +598,43 @@ export function CustomersView({
               )}
 
               {/* Order History Table */}
-              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                    <ReceiptText className="w-4 h-4 text-cyan-600" />
+              <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-zinc-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-bold text-zinc-950">
+                    <ReceiptText className="w-4 h-4 text-emerald-700" />
                     Lịch sử mua hàng ({selectedStats?.orders.length ?? 0} đơn)
                   </div>
                 </div>
 
                 {!selectedStats || selectedStats.orders.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">
+                  <div className="p-8 text-center text-xs text-zinc-400">
                     Khách hàng này chưa có hóa đơn thanh toán nào.
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100 max-h-[420px] overflow-y-auto pos-scroll">
+                  <div className="divide-y divide-zinc-100 max-h-[420px] overflow-y-auto pos-scroll">
                     {selectedStats.orders.map((ord) => (
-                      <div key={ord.id} className="p-4 hover:bg-slate-50/70 space-y-2">
+                      <div key={ord.id} className="p-4 hover:bg-zinc-50/80 space-y-2 transition-colors">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-                            <span className="font-bold text-[#0a2268] tabular-nums">
+                            <span className="font-bold font-mono tabular-nums text-zinc-950">
                               {ord.orderNumber}
                             </span>
-                            <span className="text-slate-500 tabular-nums">{ord.displayTime}</span>
-                            <span className="text-slate-600">{ord.tableName}</span>
-                            <span className="text-slate-500">
+                            <span className="text-zinc-500 font-mono tabular-nums">
+                              {ord.displayTime}
+                            </span>
+                            <span className="text-zinc-700 font-medium">{ord.tableName}</span>
+                            <span className="text-zinc-500">
                               {getPaymentMethodLabel(ord.paymentMethod)}
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-extrabold tabular-nums text-cyan-700">
+                            <span className="text-sm font-bold font-mono tabular-nums text-emerald-700">
                               {formatVND(ord.total)}
                             </span>
                             <button
                               type="button"
                               onClick={() => onPrintReceipt(ord, false)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-md"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg transition-colors"
                             >
                               <Printer className="w-3 h-3" />
                               In bill
@@ -626,7 +642,7 @@ export function CustomersView({
                           </div>
                         </div>
 
-                        <div className="text-xs text-slate-600 leading-relaxed">
+                        <div className="text-xs text-zinc-600 leading-relaxed">
                           {ord.items
                             .map((it) => {
                               const topStr =
@@ -639,8 +655,8 @@ export function CustomersView({
                         </div>
 
                         {ord.discountAmount > 0 && (
-                          <div className="text-[11px] font-medium text-amber-700 tabular-nums">
-                            Đã giảm đơn: -{formatVND(ord.discountAmount)}
+                          <div className="text-[11px] font-medium text-amber-700 font-mono tabular-nums">
+                            Chiết khấu: -{formatVND(ord.discountAmount)}
                             {ord.discountType === 'percent' ? ` (${ord.discountValue}%)` : ''}
                           </div>
                         )}
@@ -657,23 +673,23 @@ export function CustomersView({
       {/* Add / Edit Customer Modal */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/55 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-zinc-950/45 backdrop-blur-[1px] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label={form.id ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới'}
         >
           <form
             onSubmit={handleSaveCustomer}
-            className="bg-white border-2 border-[#0a2268] rounded-xl w-full max-w-md overflow-hidden shadow-2xl"
+            className="bg-white border border-zinc-200 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl"
           >
-            <div className="bg-[#091d4f] text-white px-5 py-3.5 flex items-center justify-between">
-              <div className="font-bold text-sm">
+            <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
+              <div className="font-bold text-sm text-zinc-950">
                 {form.id ? 'Chỉnh sửa thông tin khách hàng' : 'Thêm khách hàng mới'}
               </div>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="p-1 text-slate-300 hover:text-white rounded"
+                className="p-1 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100"
                 aria-label="Đóng"
               >
                 <X className="w-4 h-4" />
@@ -682,8 +698,8 @@ export function CustomersView({
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Tên khách hàng <span className="text-red-600">*</span>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                  Tên khách hàng <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -697,12 +713,12 @@ export function CustomersView({
                     }))
                   }
                   placeholder="VD: Anh Minh, Chị Lan..."
-                  className="w-full h-10 px-3 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
+                  className="w-full h-10 px-3 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                   Số điện thoại
                 </label>
                 <input
@@ -715,12 +731,12 @@ export function CustomersView({
                     }))
                   }
                   placeholder="090x xxx xxx"
-                  className="w-full h-10 px-3 text-sm tabular-nums border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
+                  className="w-full h-10 px-3 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                   Chiết khấu mặc định khi thanh toán
                 </label>
                 <div className="flex items-center gap-2">
@@ -744,15 +760,17 @@ export function CustomersView({
                           }));
                         }
                       }}
-                      placeholder={form.defaultDiscountType === 'percent' ? '0 - 100' : 'VD: 10.000'}
-                      className="w-full h-10 px-3 pr-8 text-sm font-bold tabular-nums text-right border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
+                      placeholder={
+                        form.defaultDiscountType === 'percent' ? '0 - 100' : 'VD: 10.000'
+                      }
+                      className="w-full h-10 px-3 pr-8 text-sm font-bold font-mono tabular-nums text-right bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">
                       {form.defaultDiscountType === 'percent' ? '%' : '₫'}
                     </span>
                   </div>
 
-                  <div className="inline-flex rounded-lg overflow-hidden border border-slate-300 h-10 shrink-0">
+                  <div className="inline-flex rounded-lg overflow-hidden border border-zinc-200 h-10 shrink-0">
                     <button
                       type="button"
                       onClick={() =>
@@ -762,10 +780,10 @@ export function CustomersView({
                           defaultDiscountValue: '',
                         }))
                       }
-                      className={`px-3 text-xs font-bold ${
+                      className={`px-3 text-xs font-bold transition-colors ${
                         form.defaultDiscountType === 'percent'
-                          ? 'bg-[#091d4f] text-white'
-                          : 'bg-white text-slate-700 hover:bg-slate-50'
+                          ? 'bg-zinc-900 text-white'
+                          : 'bg-white text-zinc-700 hover:bg-zinc-50'
                       }`}
                     >
                       %
@@ -779,10 +797,10 @@ export function CustomersView({
                           defaultDiscountValue: '',
                         }))
                       }
-                      className={`px-3 text-xs font-bold border-l border-slate-300 ${
+                      className={`px-3 text-xs font-bold border-l border-zinc-200 transition-colors ${
                         form.defaultDiscountType === 'fixed'
-                          ? 'bg-[#091d4f] text-white'
-                          : 'bg-white text-slate-700 hover:bg-slate-50'
+                          ? 'bg-zinc-900 text-white'
+                          : 'bg-white text-zinc-700 hover:bg-zinc-50'
                       }`}
                     >
                       VNĐ
@@ -792,7 +810,7 @@ export function CustomersView({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                   Ghi chú sở thích / thông tin thêm
                 </label>
                 <textarea
@@ -805,23 +823,23 @@ export function CustomersView({
                     }))
                   }
                   placeholder="VD: Uống ít đường, hay ngồi khu sân vườn..."
-                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
+                  className="w-full p-2.5 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                 />
               </div>
             </div>
 
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+            <div className="px-5 py-3.5 bg-zinc-50 border-t border-zinc-200 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg"
               >
                 Đóng
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg"
               >
                 {saving ? 'Đang lưu...' : form.id ? 'Lưu thay đổi' : 'Thêm khách hàng'}
               </button>

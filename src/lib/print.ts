@@ -351,7 +351,7 @@ export function buildA5InvoiceHtml(
         <tr>
           <th>Tên món</th>
           <th style="width:32px" class="col-center">SL</th>
-          <th style="width:72px" class="col-right">Đơn giá</th>
+          <th style="width:72px" class="col-right">Đ.giá</th>
           <th style="width:70px" class="col-right">Chiết khấu</th>
           <th style="width:80px" class="col-right">Thành tiền</th>
         </tr>
@@ -824,7 +824,7 @@ export function build80mmReceiptHtml(
         <tr>
           <th class="r80-th-l">Tên món</th>
           <th class="r80-th-c">SL</th>
-          <th class="r80-th-r">Đơn giá</th>
+          <th class="r80-th-r">Đ.giá</th>
           <th class="r80-th-r">Thành tiền</th>
         </tr>
       </thead>
