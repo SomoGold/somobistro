@@ -7,6 +7,7 @@ import {
   Search,
   X,
   Plus,
+  Minus,
   ArrowRightLeft,
   Combine,
   ReceiptText,
@@ -19,6 +20,7 @@ import {
   Save,
   CreditCard,
   UserCheck,
+  UserPlus,
   LayoutGrid,
   Power,
 } from 'lucide-react';
@@ -42,6 +44,7 @@ import {
 } from '../lib/format';
 import {
   clampNumber,
+  ComboSelectionRule,
   Customer,
   DiningTable,
   DiscountType,
@@ -87,8 +90,15 @@ interface PosTerminalProps {
   onSelectTableId: (tableId: string) => void;
   onNavigateTab: (tab: NavTab) => void;
   onPrintReceipt: (order: Order, isProvisional: boolean) => void;
+  onOpenCreateAccount: () => void;
   onSignOut: () => void;
   onNotify: (message: string, tone?: 'success' | 'error') => void;
+}
+
+function getEffectiveComboRule(item?: MenuItem | null): ComboSelectionRule {
+  if (!item?.isCombo) return 'all';
+  if (item.comboRule) return item.comboRule;
+  return (item.comboMaxToppings ?? 0) > 0 ? 'max' : 'all';
 }
 
 function formatKasClock(date: Date): string {
@@ -117,6 +127,7 @@ export function PosTerminal({
   onSelectTableId,
   onNavigateTab,
   onPrintReceipt,
+  onOpenCreateAccount,
   onSignOut,
   onNotify,
 }: PosTerminalProps) {
@@ -390,8 +401,9 @@ export function PosTerminal({
   // ---------------- CART & ITEM POPUP ACTIONS ----------------
   // Clicking any menu item immediately opens KasItemModal (pre-loading free toppings only for fixed Combos)
   const handleSelectMenuItem = useCallback((menuItem: MenuItem) => {
+    const effectiveRule = getEffectiveComboRule(menuItem);
     const isPickableCombo =
-      Boolean(menuItem.isCombo) && (menuItem.comboMaxToppings ?? 0) > 0;
+      Boolean(menuItem.isCombo) && effectiveRule !== 'all' && (menuItem.comboMaxToppings ?? 0) > 0;
     const comboToppings =
       menuItem.isCombo &&
       !isPickableCombo &&
@@ -427,6 +439,19 @@ export function PosTerminal({
       if (curr.index === idx) return null;
       return curr.index > idx ? { ...curr, index: curr.index - 1 } : curr;
     });
+  }, []);
+
+  const adjustCartItemQty = useCallback((idx: number, delta: number) => {
+    setIsDirty(true);
+    setCartItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== idx) return it;
+        const nextQty = Math.min(999, Math.max(1, it.qty + delta));
+        const updated = { ...it, qty: nextQty };
+        updated.discountAmount = getItemDiscountAmount(updated);
+        return updated;
+      }),
+    );
   }, []);
 
   const handleConfirmModalItem = useCallback(
@@ -1023,17 +1048,17 @@ export function PosTerminal({
     viewMode === 'menu' && Boolean(selectedTable) && (!activeOpenOrder || isDirty);
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-100 select-none">
-      {/* MAIN 2-PANE WORKSPACE (SWAPPED: LEFT = FLOOR/MENU/PAYMENT, RIGHT = ORDER TICKET & PRICE) */}
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-zinc-100 select-none">
+      {/* MAIN 2-PANE WORKSPACE (LEFT = FLOOR / MENU / PAYMENT, RIGHT = ORDER TICKET) */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
         {/* ================= LEFT DYNAMIC WORKSPACE (FLOOR / MENU / PAYMENT) ================= */}
-        <section className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-white">
+        <section className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-zinc-100">
           {/* -------------------- MODE A: TABLE FLOOR PLAN -------------------- */}
           {viewMode === 'floor' && (
             <>
-              {/* Top Deep-Navy Zone Tabs & Table Search Bar */}
-              <div className="bg-[#091d4f] px-2.5 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-blue-950 shrink-0">
-                <div className="flex flex-wrap items-center gap-1.5">
+              {/* Clean White Zone Bar & Table Search */}
+              <div className="bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 border-b border-zinc-200 shrink-0">
+                <div className="flex flex-wrap items-center gap-1 p-1 bg-zinc-100 rounded-xl border border-zinc-200/80">
                   {(['Tất cả', ...TABLE_ZONES, 'Mang về'] as ZoneFilter[]).map((zone) => {
                     const active = zoneFilter === zone;
                     const busyCount = zone !== 'Mang về' ? occupiedCountByZone[zone] || 0 : 0;
@@ -1048,17 +1073,17 @@ export function PosTerminal({
                           }
                           setZoneFilter(zone);
                         }}
-                        className={`h-10 px-4 rounded-md text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                        className={`h-9 px-3.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                           active
-                            ? 'bg-orange-500 text-white border border-orange-300 shadow-xs'
-                            : 'bg-[#132f7a] hover:bg-[#1c40a3] text-slate-100 border border-blue-800/80'
+                            ? 'bg-zinc-900 text-white shadow-xs'
+                            : 'text-zinc-600 hover:text-zinc-950 hover:bg-white/80'
                         }`}
                       >
                         <span>{zone}</span>
                         {busyCount > 0 && (
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold tabular-nums ${
-                              active ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'
+                            className={`text-[11px] font-mono font-bold tabular-nums ${
+                              active ? 'text-amber-300' : 'text-amber-600'
                             }`}
                           >
                             {busyCount}
@@ -1069,92 +1094,90 @@ export function PosTerminal({
                   })}
                 </div>
 
-                <div className="flex items-center gap-2 ml-auto">
-                  <div className="relative w-44 sm:w-52">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={tableSearch}
-                      onChange={(e) => setTableSearch(e.target.value)}
-                      placeholder="Tìm bàn..."
-                      className="w-full h-9 pl-8 pr-7 text-xs bg-white text-slate-900 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                    />
-                    {tableSearch && (
-                      <button
-                        type="button"
-                        onClick={() => setTableSearch('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                        aria-label="Xóa tìm kiếm"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowFunctionsDrawer(true)}
-                    className="h-9 w-9 rounded-md bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-700 text-cyan-200 flex items-center justify-center shrink-0"
-                    title="Mở bảng chức năng quản lý"
-                    aria-label="Mở menu chức năng"
-                  >
-                    <MenuIcon className="w-4 h-4" />
-                  </button>
+                <div className="relative w-48 sm:w-60 ml-auto">
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Tìm tên bàn, khu vực..."
+                    className="w-full h-9 pl-9 pr-8 text-xs bg-zinc-50 text-zinc-900 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700 transition-colors"
+                  />
+                  {tableSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setTableSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+                      aria-label="Xóa tìm kiếm"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Legend Strip */}
-              <div className="px-4 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 shrink-0">
+              {/* Subtle Legend Strip */}
+              <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-200/80 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-600 shrink-0">
                 <div className="flex flex-wrap items-center gap-4">
                   <span className="inline-flex items-center gap-1.5 font-medium">
-                    <span className="w-3 h-3 rounded-xs bg-white border-2 border-slate-400" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-white border-2 border-zinc-400" />
                     Bàn trống ({tables.length - (occupiedCountByZone['Tất cả'] || 0)})
                   </span>
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-orange-700">
-                    <span className="w-3 h-3 rounded-xs bg-orange-500 border border-orange-600" />
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                     Đang treo bill ({occupiedCountByZone['Tất cả'] || 0})
                   </span>
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-[#0d47a1]">
-                    <span className="w-3 h-3 rounded-xs bg-[#0d47a1]" />
-                    Bàn đang chọn
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-900">
+                    <span className="w-2.5 h-2.5 rounded-full bg-zinc-900" />
+                    Đang chọn
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500">
-                  Nhấn 1 lần để xem bill · Nhấn lần 2 hoặc <strong>Gọi món</strong> để chọn món
+                <div className="text-[11px] text-zinc-500">
+                  Chạm 1 lần để xem bill · Chạm lần 2 hoặc nhấn{' '}
+                  <strong className="text-zinc-700">Gọi món</strong>
                 </div>
               </div>
 
               {/* Table Cards Grid */}
-              <div className="flex-1 overflow-y-auto pos-scroll p-3.5 bg-white">
+              <div className="flex-1 overflow-y-auto pos-scroll p-4 bg-zinc-100">
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                   {/* Takeaway Quick Card */}
                   {!tableSearch.trim() && zoneFilter === 'Tất cả' && (
                     <button
                       type="button"
                       onClick={handleSelectTakeaway}
-                      className={`min-h-[96px] rounded-md border-2 p-3 flex items-center gap-3 text-left transition-all ${
+                      className={`min-h-[104px] rounded-xl border p-3.5 flex flex-col justify-between text-left transition-all ${
                         !selectedTableId
-                          ? 'bg-[#0d47a1] text-white border-[#082c66] ring-2 ring-cyan-400 shadow-md'
-                          : 'bg-cyan-50/70 hover:bg-cyan-50 text-cyan-950 border-cyan-300 hover:border-cyan-500'
+                          ? 'bg-zinc-900 text-white border-zinc-900 ring-2 ring-emerald-600/30 shadow-sm'
+                          : 'bg-white hover:bg-emerald-50/40 text-zinc-900 border-zinc-200 hover:border-emerald-600/60'
                       }`}
                     >
-                      <div
-                        className={`w-11 h-11 rounded-md flex items-center justify-center shrink-0 ${
-                          !selectedTableId
-                            ? 'bg-white/15 text-cyan-200'
-                            : 'bg-cyan-600 text-white'
-                        }`}
-                      >
-                        <ShoppingBag className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-bold leading-tight truncate">Mang về</div>
-                        <div
-                          className={`text-xs mt-1 ${
-                            !selectedTableId ? 'text-cyan-100' : 'text-cyan-800'
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <span
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                            !selectedTableId
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
                           }`}
                         >
-                          Bán nhanh tại quầy
+                          <ShoppingBag className="w-4 h-4" />
+                        </span>
+                        <span
+                          className={`text-[11px] font-semibold ${
+                            !selectedTableId ? 'text-emerald-300' : 'text-emerald-700'
+                          }`}
+                        >
+                          Tại quầy
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="text-sm font-bold leading-tight truncate">Mang về</div>
+                        <div
+                          className={`text-xs mt-0.5 ${
+                            !selectedTableId ? 'text-zinc-400' : 'text-zinc-500'
+                          }`}
+                        >
+                          Bán nhanh không cần bàn
                         </div>
                       </div>
                     </button>
@@ -1169,13 +1192,13 @@ export function PosTerminal({
                       : 0;
 
                     let cardClasses =
-                      'bg-white hover:bg-cyan-50/40 text-slate-900 border-slate-300 hover:border-cyan-500';
+                      'bg-white hover:border-zinc-400 text-zinc-900 border-zinc-200';
                     if (isSelected) {
                       cardClasses =
-                        'bg-[#0d47a1] text-white border-[#082c66] ring-2 ring-cyan-400 shadow-md';
+                        'bg-zinc-900 text-white border-zinc-900 ring-2 ring-emerald-600/35 shadow-sm';
                     } else if (isOccupied) {
                       cardClasses =
-                        'bg-orange-500 hover:bg-orange-600 text-white border-orange-600 shadow-sm';
+                        'bg-amber-50/90 hover:bg-amber-50 text-zinc-900 border-amber-300 hover:border-amber-400';
                     }
 
                     return (
@@ -1187,67 +1210,98 @@ export function PosTerminal({
                           onSelectTableId(table.id);
                           setViewMode('menu');
                         }}
-                        className={`min-h-[96px] rounded-md border-2 p-3 flex items-center gap-3 text-left transition-all ${cardClasses}`}
+                        className={`min-h-[104px] rounded-xl border p-3.5 flex flex-col justify-between text-left transition-all ${cardClasses}`}
                       >
-                        <div
-                          className={`w-11 h-11 rounded-md flex items-center justify-center shrink-0 ${
-                            isSelected
-                              ? 'bg-white/15 text-amber-300'
-                              : isOccupied
-                                ? 'bg-white/20 text-white'
-                                : 'bg-slate-100 text-cyan-700'
-                          }`}
-                        >
-                          <Users className="w-5 h-5" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div
-                            className={`text-sm font-bold leading-tight truncate ${
-                              isSelected || isOccupied ? 'text-white' : 'text-cyan-800'
-                            }`}
-                          >
-                            {table.name}
-                          </div>
-
-                          {isOccupied && openOrder ? (
-                            <div className="mt-1 space-y-0.5">
-                              <div className="text-[11px] font-semibold text-white/95 tabular-nums flex items-center gap-1 truncate">
-                                <Clock className="w-3 h-3 shrink-0" />
-                                {openOrder.displayTime}
-                              </div>
-                              <div className="text-xs font-extrabold tabular-nums text-amber-100">
-                                {itemCount} món · {formatDotNumber(openOrder.total)} ₫
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className={`text-xs mt-1 ${
-                                isSelected ? 'text-cyan-100' : 'text-slate-500'
+                        <div className="flex items-start justify-between gap-2 w-full">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span
+                              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                isSelected
+                                  ? isOccupied
+                                    ? 'bg-amber-500/20 text-amber-300'
+                                    : 'bg-white/10 text-zinc-200'
+                                  : isOccupied
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-zinc-100 text-zinc-500'
                               }`}
                             >
-                              {table.zone} · {table.seats} chỗ
+                              <Users className="w-4 h-4" />
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold leading-tight truncate">
+                                {table.name}
+                              </div>
+                              <div
+                                className={`text-[11px] mt-0.5 truncate ${
+                                  isSelected ? 'text-zinc-400' : 'text-zinc-500'
+                                }`}
+                              >
+                                {table.zone} · {table.seats} chỗ
+                              </div>
                             </div>
+                          </div>
+
+                          {isOccupied && (
+                            <span
+                              className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${
+                                isSelected ? 'bg-amber-400' : 'bg-amber-500'
+                              }`}
+                              title="Đang treo bill"
+                            />
                           )}
                         </div>
+
+                        {isOccupied && openOrder ? (
+                          <div
+                            className={`mt-3 pt-2 border-t flex items-center justify-between gap-2 ${
+                              isSelected ? 'border-zinc-700/80' : 'border-amber-200/80'
+                            }`}
+                          >
+                            <span
+                              className={`text-[11px] font-mono tabular-nums inline-flex items-center gap-1 truncate ${
+                                isSelected ? 'text-zinc-300' : 'text-amber-800/80'
+                              }`}
+                            >
+                              <Clock className="w-3 h-3 shrink-0" />
+                              {itemCount} món
+                            </span>
+                            <span
+                              className={`text-xs font-bold font-mono tabular-nums ${
+                                isSelected ? 'text-amber-300' : 'text-amber-800'
+                              }`}
+                            >
+                              {formatDotNumber(openOrder.total)} ₫
+                            </span>
+                          </div>
+                        ) : (
+                          <div
+                            className={`mt-3 pt-2 border-t text-[11px] font-medium ${
+                              isSelected
+                                ? 'border-zinc-800 text-zinc-400'
+                                : 'border-zinc-100 text-zinc-400'
+                            }`}
+                          >
+                            Bàn trống
+                          </div>
+                        )}
                       </button>
                     );
                   })}
                 </div>
 
                 {filteredTables.length === 0 && zoneFilter !== 'Tất cả' && (
-                  <div className="py-16 text-center text-sm text-slate-400">
+                  <div className="py-16 text-center text-sm text-zinc-400">
                     Không tìm thấy bàn nào phù hợp trong khu vực này.
                   </div>
                 )}
               </div>
 
-              {/* Bottom Dark-Navy Action Bar (No F-key labels, No In kiểm bill) */}
-              <div className="bg-[#071a42] border-t border-blue-950 px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0">
+              {/* Clean Light Bottom Action Bar */}
+              <div className="bg-white border-t border-zinc-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowAddTable(true)}
-                  className="h-11 px-5 rounded-md bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-xs"
+                  className="h-10 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4" />
                   Thêm bàn
@@ -1256,18 +1310,9 @@ export function PosTerminal({
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setViewMode('menu')}
-                    className="h-11 px-5 rounded-md bg-cyan-600 hover:bg-cyan-500 border border-cyan-400/60 text-white text-xs font-extrabold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-xs"
-                  >
-                    <UtensilsCrossed className="w-4 h-4" />
-                    Gọi món
-                  </button>
-
-                  <button
-                    type="button"
                     disabled={!selectedTable || !activeOpenOrder}
                     onClick={() => handleOpenTransferMerge('move')}
-                    className="h-11 px-4 rounded-md bg-[#112d75] hover:bg-[#193d99] disabled:opacity-45 border border-blue-700/70 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                    className="h-10 px-3.5 rounded-xl bg-white hover:bg-zinc-50 disabled:opacity-40 border border-zinc-200 text-zinc-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
                   >
                     <ArrowRightLeft className="w-4 h-4" />
                     Chuyển bàn
@@ -1277,10 +1322,19 @@ export function PosTerminal({
                     type="button"
                     disabled={!selectedTable || !activeOpenOrder}
                     onClick={() => handleOpenTransferMerge('merge')}
-                    className="h-11 px-4 rounded-md bg-[#112d75] hover:bg-[#193d99] disabled:opacity-45 border border-blue-700/70 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                    className="h-10 px-3.5 rounded-xl bg-white hover:bg-zinc-50 disabled:opacity-40 border border-zinc-200 text-zinc-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
                   >
                     <Combine className="w-4 h-4" />
                     Gộp bàn
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('menu')}
+                    className="h-10 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                  >
+                    <UtensilsCrossed className="w-4 h-4" />
+                    Gọi món
                   </button>
                 </div>
               </div>
@@ -1290,38 +1344,30 @@ export function PosTerminal({
           {/* -------------------- MODE B: MENU ORDERING -------------------- */}
           {viewMode === 'menu' && (
             <>
-              {/* Top Deep-Navy Bar */}
-              <div className="bg-[#091d4f] px-2.5 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-blue-950 shrink-0">
-                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                  <button
-                    type="button"
-                    onClick={() => setActiveCategory('Tất cả')}
-                    className={`h-10 px-4 rounded-md text-xs font-extrabold uppercase transition-colors whitespace-nowrap ${
-                      activeCategory === 'Tất cả'
-                        ? 'bg-orange-500 text-white border border-orange-300'
-                        : 'bg-[#132f7a] hover:bg-[#1c40a3] text-white border border-blue-800'
-                    }`}
-                  >
-                    Tất cả
-                  </button>
+              {/* Clean White Menu Header */}
+              <div className="bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 border-b border-zinc-200 shrink-0">
+                <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
+                  <span className="h-9 px-3 rounded-lg bg-zinc-900 text-white text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                    {selectedTable ? `${selectedTable.zone} · ${selectedTable.name}` : 'Mang về'}
+                  </span>
 
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={menuSearch}
                       onChange={(e) => setMenuSearch(e.target.value)}
                       placeholder="Tìm món ăn, đồ uống..."
-                      className="w-full h-10 pl-9 pr-9 text-sm bg-white text-slate-900 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                      className="w-full h-9 pl-9 pr-8 text-sm bg-zinc-50 text-zinc-900 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700 transition-colors"
                     />
                     {menuSearch && (
                       <button
                         type="button"
                         onClick={() => setMenuSearch('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-red-500 hover:bg-red-50 rounded"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-rose-600 rounded"
                         aria-label="Xóa từ khóa"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -1331,18 +1377,18 @@ export function PosTerminal({
                   <button
                     type="button"
                     onClick={() => setToggleStockMode((prev) => !prev)}
-                    className={`h-10 px-3 rounded-md text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap border ${
+                    className={`h-9 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap border ${
                       toggleStockMode
-                        ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-300 shadow-xs'
-                        : 'bg-[#132f7a] hover:bg-[#1c40a3] text-white border-blue-700'
+                        ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600'
+                        : 'bg-white hover:bg-zinc-50 text-zinc-700 border-zinc-200'
                     }`}
                     title="Tắt món tạm hết hoặc bật lại món trên POS"
                   >
-                    <Power className="w-4 h-4 shrink-0" />
+                    <Power className="w-3.5 h-3.5 shrink-0" />
                     <span>{toggleStockMode ? 'Xong tắt/bật' : 'Tắt / Bật món'}</span>
                     {!toggleStockMode && outOfStockCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-extrabold tabular-nums">
-                        {outOfStockCount} tắt
+                      <span className="text-[11px] font-mono font-bold text-amber-600 tabular-nums">
+                        · {outOfStockCount} tắt
                       </span>
                     )}
                   </button>
@@ -1354,27 +1400,17 @@ export function PosTerminal({
                         setCashReceivedInput('');
                         setViewMode('payment');
                       }}
-                      className="h-10 px-4 rounded-md bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                      className="h-9 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
                     >
-                      <CheckCircle2 className="w-4 h-4" />
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                       Thanh toán ngay
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={() => setShowFunctionsDrawer(true)}
-                    className="h-10 w-10 rounded-md bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-700 text-cyan-200 flex items-center justify-center shrink-0"
-                    title="Mở bảng chức năng quản lý"
-                    aria-label="Mở menu chức năng"
-                  >
-                    <MenuIcon className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
               {toggleStockMode && (
-                <div className="bg-amber-50 border-b border-amber-200 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
                   <div className="flex items-center gap-2 text-xs font-medium text-amber-950">
                     <Power className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>
@@ -1393,7 +1429,7 @@ export function PosTerminal({
                         type="button"
                         disabled={togglingItemId === '__all__'}
                         onClick={handleEnableAllMenuItems}
-                        className="px-3 py-1 rounded-md bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 disabled:opacity-50 text-xs font-bold whitespace-nowrap"
+                        className="px-3 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 disabled:opacity-50 text-xs font-semibold whitespace-nowrap"
                       >
                         {togglingItemId === '__all__'
                           ? 'Đang bật...'
@@ -1403,7 +1439,7 @@ export function PosTerminal({
                     <button
                       type="button"
                       onClick={() => setToggleStockMode(false)}
-                      className="px-3 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold whitespace-nowrap"
+                      className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold whitespace-nowrap"
                     >
                       Hoàn tất
                     </button>
@@ -1411,13 +1447,53 @@ export function PosTerminal({
                 </div>
               )}
 
-              {/* Center Product Grid + Right Vertical Sky-Cyan Category Rail */}
+              {/* Far-Left Vertical Category Rail + Product Cards Grid */}
               <div className="flex-1 flex min-h-0 overflow-hidden">
-                {/* Product Cards Grid: Clicking any item opens KasItemModal directly (or toggles availability in toggleStockMode) */}
-                <div className="flex-1 overflow-y-auto pos-scroll p-3 bg-slate-50">
+                {/* Far-Left Vertical Category Rail (Single "Tất cả" button) + Pinned Khu vực bàn */}
+                <div className="w-[128px] sm:w-[152px] bg-white border-r border-zinc-200 p-2.5 flex flex-col justify-between gap-2 shrink-0">
+                  <div className="flex-1 overflow-y-auto pos-scroll flex flex-col gap-1">
+                    {(['Tất cả', ...MENU_CATEGORIES] as const).map((category) => {
+                      const active = activeCategory === category;
+                      const count = categoryCounts[category] || 0;
+                      return (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => setActiveCategory(category)}
+                          className={`w-full py-2.5 px-3 rounded-xl text-xs font-semibold text-left leading-tight transition-all flex items-center justify-between gap-1.5 ${
+                            active
+                              ? 'bg-zinc-900 text-white'
+                              : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950'
+                          }`}
+                        >
+                          <span className="leading-snug">{category}</span>
+                          <span
+                            className={`text-[11px] font-mono tabular-nums shrink-0 ${
+                              active ? 'text-emerald-300 font-bold' : 'text-zinc-400'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('floor')}
+                    className="w-full py-2.5 px-3 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold text-xs border border-zinc-200 flex items-center justify-center gap-1.5 leading-tight shrink-0 transition-colors"
+                  >
+                    <Home className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
+                    <span>Khu vực bàn</span>
+                  </button>
+                </div>
+
+                {/* Product Cards Grid */}
+                <div className="flex-1 overflow-y-auto pos-scroll p-3.5 bg-zinc-100">
                   {filteredMenuItems.length === 0 ? (
-                    <div className="py-20 text-center space-y-2 text-slate-400">
-                      <div className="text-sm font-semibold text-slate-600">
+                    <div className="py-20 text-center space-y-2 text-zinc-400">
+                      <div className="text-sm font-semibold text-zinc-600">
                         Không tìm thấy món phù hợp
                       </div>
                       <button
@@ -1426,13 +1502,13 @@ export function PosTerminal({
                           setActiveCategory('Tất cả');
                           setMenuSearch('');
                         }}
-                        className="text-xs font-bold text-cyan-700 hover:underline"
+                        className="text-xs font-semibold text-emerald-700 hover:underline"
                       >
                         Xem tất cả thực đơn
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3">
                       {filteredMenuItems.map((item) => {
                         const qtyInCart = cartQtyByItemId.get(item.id) || 0;
                         const isOff = !item.available;
@@ -1447,70 +1523,71 @@ export function PosTerminal({
                                 ? handleToggleMenuItemAvailable(item)
                                 : handleSelectMenuItem(item)
                             }
-                            className={`border-2 rounded-md p-2.5 flex items-stretch justify-between gap-2.5 text-left transition-all min-h-[100px] group disabled:opacity-60 ${
+                            className={`border rounded-xl p-3 flex items-stretch justify-between gap-3 text-left transition-all min-h-[104px] group disabled:opacity-60 ${
                               toggleStockMode
                                 ? isOff
-                                  ? 'bg-slate-100 border-dashed border-amber-400 opacity-80 hover:border-cyan-600'
-                                  : 'bg-white border-cyan-500/80 hover:border-amber-500'
+                                  ? 'bg-zinc-50 border-dashed border-amber-400 opacity-80 hover:border-emerald-600'
+                                  : 'bg-white border-emerald-500/70 hover:border-amber-500'
                                 : qtyInCart > 0
-                                  ? 'bg-cyan-50/20 border-cyan-600 shadow-xs'
-                                  : 'bg-white border-slate-300 hover:border-cyan-500'
+                                  ? 'bg-white border-emerald-600 ring-2 ring-emerald-600/15'
+                                  : 'bg-white border-zinc-200 hover:border-zinc-400'
                             }`}
                           >
-                            <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5 pr-1">
+                            <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
                               <div>
-                                <div className="flex items-start gap-1.5">
+                                <div className="flex items-start justify-between gap-1.5">
                                   <div
                                     className={`text-sm font-bold leading-snug line-clamp-2 ${
                                       isOff
-                                        ? 'text-slate-500 line-through'
-                                        : 'text-slate-900 group-hover:text-[#0a2268]'
+                                        ? 'text-zinc-400 line-through'
+                                        : 'text-zinc-900 group-hover:text-emerald-800'
                                     }`}
                                   >
                                     {item.name}
                                   </div>
-                                  {item.isCombo && (
-                                    <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase bg-orange-100 text-orange-700 border border-orange-200 rounded shrink-0 mt-0.5">
-                                      {(item.comboMaxToppings ?? 0) > 0
-                                        ? `Chọn ${item.comboMaxToppings}`
-                                        : 'Combo'}
+                                  {!toggleStockMode && qtyInCart > 0 && (
+                                    <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white text-[11px] font-mono font-bold tabular-nums shrink-0">
+                                      ×{qtyInCart}
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+
+                                <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
                                   {item.category} · {item.unit}
+                                  {item.isCombo && (() => {
+                                    const rule = getEffectiveComboRule(item);
+                                    const limit = item.comboMaxToppings ?? 0;
+                                    const label =
+                                      rule === 'exact' && limit > 0
+                                        ? ` · Chọn đúng ${limit}`
+                                        : rule === 'max' && limit > 0
+                                          ? ` · Tối đa ${limit}`
+                                          : ' · Combo';
+                                    return <span className="text-amber-700 font-semibold">{label}</span>;
+                                  })()}
                                 </div>
+
                                 {item.isCombo && item.comboToppings && item.comboToppings.length > 0 && (
-                                  <div className="text-[11px] text-cyan-700 mt-0.5 line-clamp-1">
-                                    {(item.comboMaxToppings ?? 0) > 0
-                                      ? `Tối đa ${item.comboMaxToppings}: `
-                                      : ''}
+                                  <div className="text-[11px] text-emerald-700 mt-0.5 line-clamp-1">
                                     {item.comboToppings.map((ct) => ct.name).join(' · ')}
                                   </div>
                                 )}
                               </div>
 
                               <div className="flex items-center justify-between gap-2 mt-2">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`text-base font-extrabold tabular-nums ${
-                                      isOff ? 'text-slate-400' : 'text-slate-900'
-                                    }`}
-                                  >
-                                    {formatDotNumber(item.price)} ₫
-                                  </span>
-                                  {!toggleStockMode && qtyInCart > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded bg-cyan-600 text-white text-[11px] font-bold tabular-nums">
-                                      ×{qtyInCart}
-                                    </span>
-                                  )}
-                                </div>
+                                <span
+                                  className={`text-[15px] font-bold font-mono tabular-nums ${
+                                    isOff ? 'text-zinc-400' : 'text-zinc-950'
+                                  }`}
+                                >
+                                  {formatDotNumber(item.price)} ₫
+                                </span>
 
                                 {toggleStockMode && (
                                   <span className="inline-flex items-center gap-1.5 shrink-0">
                                     <span
                                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                                        item.available ? 'bg-cyan-600' : 'bg-slate-300'
+                                        item.available ? 'bg-emerald-600' : 'bg-zinc-300'
                                       }`}
                                     >
                                       <span
@@ -1520,8 +1597,8 @@ export function PosTerminal({
                                       />
                                     </span>
                                     <span
-                                      className={`text-[11px] font-bold ${
-                                        item.available ? 'text-cyan-700' : 'text-amber-700'
+                                      className={`text-[11px] font-semibold ${
+                                        item.available ? 'text-emerald-700' : 'text-amber-700'
                                       }`}
                                     >
                                       {item.available ? 'Bật' : 'Đã tắt'}
@@ -1531,15 +1608,15 @@ export function PosTerminal({
                               </div>
                             </div>
 
-                            <div className="relative w-24 h-20 shrink-0 rounded overflow-hidden border border-slate-200 self-center">
+                            <div className="relative w-22 h-20 shrink-0 rounded-lg overflow-hidden border border-zinc-200/80 self-center bg-zinc-50">
                               <MenuThumbnail
                                 src={item.imageUrl}
                                 alt={item.name}
                                 category={item.category}
-                                className={`w-24 h-20 ${isOff ? 'grayscale opacity-50' : ''}`}
+                                className={`w-22 h-20 ${isOff ? 'grayscale opacity-50' : ''}`}
                               />
                               {isOff && (
-                                <span className="absolute inset-x-1 bottom-1 py-0.5 text-center rounded bg-amber-600/95 text-white text-[10px] font-extrabold uppercase tracking-wide">
+                                <span className="absolute inset-x-1 bottom-1 py-0.5 text-center rounded bg-amber-600/95 text-white text-[10px] font-bold uppercase tracking-wide">
                                   Đã tắt
                                 </span>
                               )}
@@ -1549,41 +1626,6 @@ export function PosTerminal({
                       })}
                     </div>
                   )}
-                </div>
-
-                {/* Vertical Category Rail + Pinned Golden Khu vực bàn Button */}
-                <div className="w-[116px] sm:w-[136px] bg-slate-200/80 border-l border-slate-300 p-1.5 flex flex-col justify-between gap-1.5 shrink-0">
-                  <div className="flex-1 overflow-y-auto pos-scroll flex flex-col gap-1.5">
-                    {(['Tất cả', ...MENU_CATEGORIES] as const).map((category) => {
-                      const active = activeCategory === category;
-                      const count = categoryCounts[category] || 0;
-                      return (
-                        <button
-                          key={category}
-                          type="button"
-                          onClick={() => setActiveCategory(category)}
-                          className={`w-full py-3 px-2 rounded-md text-xs font-extrabold uppercase tracking-tight text-center leading-tight transition-all shadow-xs ${
-                            active
-                              ? 'bg-orange-500 text-white ring-2 ring-orange-300'
-                              : 'bg-cyan-600 hover:bg-cyan-700 text-white'
-                          }`}
-                        >
-                          <div>{category}</div>
-                          <div className="text-[10px] font-semibold opacity-85 tabular-nums mt-0.5">
-                            ({count})
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('floor')}
-                    className="w-full py-3.5 px-2 rounded-md bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs border border-amber-500 shadow-xs flex items-center justify-center leading-tight shrink-0 transition-colors"
-                  >
-                    Khu vực bàn
-                  </button>
                 </div>
               </div>
             </>
@@ -1645,102 +1687,107 @@ export function PosTerminal({
           )}
         </section>
 
-        {/* ================= RIGHT PERSISTENT ORDER TICKET & PRICE PANEL ================= */}
-        <aside className="w-full lg:w-[360px] xl:w-[400px] max-h-[42vh] lg:max-h-none shrink-0 flex flex-col bg-white border-t-2 lg:border-t-0 lg:border-l-2 border-[#0a2268] overflow-hidden">
-          {/* Top Deep-Navy Command Bar (No Shortcut Labels) */}
-          <div className="bg-[#091d4f] text-white grid grid-cols-4 border-b border-blue-900 shrink-0">
+        {/* ================= RIGHT PERSISTENT ORDER TICKET PANEL ================= */}
+        <aside className="w-full lg:w-[372px] xl:w-[408px] max-h-[42vh] lg:max-h-none shrink-0 flex flex-col bg-white border-t lg:border-t-0 lg:border-l border-zinc-200 overflow-hidden">
+          {/* Top Clean 4-Action Navigation Strip */}
+          <div className="bg-zinc-50 grid grid-cols-4 border-b border-zinc-200 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('floor')}
-              className={`py-2.5 px-1.5 flex flex-col items-center justify-center border-r border-blue-900/80 transition-colors ${
+              className={`py-2.5 px-1.5 flex flex-col items-center justify-center gap-1 border-r border-zinc-200/80 transition-colors ${
                 viewMode === 'floor'
-                  ? 'bg-cyan-700 text-white'
-                  : 'bg-[#0c276d] hover:bg-[#13358f] text-white'
+                  ? 'bg-zinc-900 text-white'
+                  : 'text-zinc-600 hover:bg-white hover:text-zinc-950'
               }`}
             >
-              <Home className="w-3.5 h-3.5 mb-0.5 text-cyan-200" />
-              <span className="text-[11px] font-bold leading-none">Khu bàn</span>
+              <Home className="w-4 h-4" />
+              <span className="text-[11px] font-semibold leading-none">Khu bàn</span>
             </button>
 
             <button
               type="button"
               onClick={() => onNavigateTab('customers')}
-              className="py-2.5 px-1.5 flex flex-col items-center justify-center border-r border-blue-900/80 bg-[#0a2268] hover:bg-[#13358f] transition-colors"
+              className="py-2.5 px-1.5 flex flex-col items-center justify-center gap-1 border-r border-zinc-200/80 text-zinc-600 hover:bg-white hover:text-zinc-950 transition-colors"
             >
-              <UserCheck className="w-3.5 h-3.5 mb-0.5 text-cyan-200" />
+              <UserCheck className="w-4 h-4" />
               <span className="text-[11px] font-semibold leading-none">Khách hàng</span>
             </button>
 
             <button
               type="button"
               onClick={() => onNavigateTab('reports')}
-              className="py-2.5 px-1.5 flex flex-col items-center justify-center border-r border-blue-900/80 bg-[#0a2268] hover:bg-[#13358f] transition-colors"
+              className="py-2.5 px-1.5 flex flex-col items-center justify-center gap-1 border-r border-zinc-200/80 text-zinc-600 hover:bg-white hover:text-zinc-950 transition-colors"
             >
-              <BarChart3 className="w-3.5 h-3.5 mb-0.5 text-cyan-200" />
+              <BarChart3 className="w-4 h-4" />
               <span className="text-[11px] font-semibold leading-none">Báo cáo</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowFunctionsDrawer(true)}
-              className="py-2.5 px-1.5 flex flex-col items-center justify-center bg-[#0a2268] hover:bg-[#13358f] transition-colors"
+              className="py-2.5 px-1.5 flex flex-col items-center justify-center gap-1 text-zinc-700 hover:bg-white hover:text-zinc-950 transition-colors"
             >
-              <MenuIcon className="w-3.5 h-3.5 mb-0.5 text-cyan-200" />
-              <span className="text-[11px] font-bold leading-none">Chức năng</span>
+              <MenuIcon className="w-4 h-4" />
+              <span className="text-[11px] font-semibold leading-none">Chức năng</span>
             </button>
           </div>
 
-          {/* Ticket Header Metadata */}
-          <div className="bg-[#071a42] text-white px-3 py-2 border-b border-blue-950 shrink-0 space-y-0.5">
+          {/* Ticket Context Header */}
+          <div className="bg-white px-4 py-3 border-b border-zinc-200 shrink-0 space-y-1">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-xs font-bold text-white truncate">
-                {selectedTable ? `${selectedTable.zone} - ${selectedTable.name}` : 'Khách Mang về'}
+              <div className="text-sm font-bold text-zinc-950 truncate">
+                {selectedTable ? `${selectedTable.zone} · ${selectedTable.name}` : 'Khách Mang về'}
               </div>
               {activeOpenOrder ? (
-                <span className="text-[10px] font-bold text-orange-300 whitespace-nowrap">
+                <span className="text-[11px] font-semibold text-amber-700 inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
                   Đang treo bill
                 </span>
               ) : cartItems.length > 0 ? (
-                <span className="text-[10px] font-bold text-cyan-300 whitespace-nowrap">
+                <span className="text-[11px] font-semibold text-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
                   Chưa lưu bàn
                 </span>
               ) : (
-                <span className="text-[10px] text-slate-400 whitespace-nowrap">Bàn trống</span>
+                <span className="text-[11px] text-zinc-400 whitespace-nowrap">Bàn trống</span>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 text-[11px] text-slate-200 tabular-nums">
+            <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-500 font-mono tabular-nums">
               <span className="truncate">
-                Order:{' '}
-                <strong className="text-white">{activeOpenOrder?.orderNumber || 'Đơn mới'}</strong>
+                {activeOpenOrder?.orderNumber || 'Đơn mới'}
               </span>
-              <span className="text-cyan-200 whitespace-nowrap">{clockText}</span>
+              <span className="whitespace-nowrap">{clockText}</span>
             </div>
           </div>
 
-          {/* Amber Summary Strip */}
-          <div className="bg-[#041236] text-amber-300 px-3 py-1.5 text-[11px] font-bold tabular-nums border-b border-blue-950 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 shrink-0">
-            <span>[Tạm tính: {formatDotNumber(totals.subtotal) || '0'}]</span>
-            {totalDiscountCombined > 0 && (
-              <span className="text-orange-300">
-                [Giảm: -{formatDotNumber(totalDiscountCombined)}]
-              </span>
-            )}
-            {totals.vatAmount > 0 && (
-              <span className="text-cyan-300">
-                [VAT {vatRate}%: {formatDotNumber(totals.vatAmount)}]
-              </span>
-            )}
-          </div>
+          {/* Subtle Financial Breakdown Strip */}
+          {cartItems.length > 0 && (
+            <div className="bg-zinc-50 px-4 py-1.5 text-[11px] font-mono tabular-nums border-b border-zinc-200/80 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-zinc-600 shrink-0">
+              <span>Tạm tính: {formatDotNumber(totals.subtotal) || '0'} ₫</span>
+              {totalDiscountCombined > 0 && (
+                <span className="text-amber-700 font-semibold">
+                  Chiết khấu: -{formatDotNumber(totalDiscountCombined)} ₫
+                </span>
+              )}
+              {totals.vatAmount > 0 && (
+                <span className="text-zinc-700">
+                  VAT {vatRate}%: +{formatDotNumber(totals.vatAmount)} ₫
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Itemized Ticket List */}
-          <div className="flex-1 overflow-y-auto pos-scroll bg-white divide-y divide-slate-100">
+          <div className="flex-1 overflow-y-auto pos-scroll bg-white divide-y divide-zinc-100">
             {cartItems.length === 0 ? (
-              <div className="h-full min-h-[120px] flex flex-col items-center justify-center p-6 text-center text-slate-400">
-                <UtensilsCrossed className="w-7 h-7 text-slate-300 mb-2" />
-                <div className="text-xs font-semibold text-slate-500">Chưa có món nào trong đơn</div>
-                <p className="text-[11px] mt-1">
-                  Chọn bàn bên trái hoặc nhấn <strong className="text-slate-600">Gọi món</strong> để bắt đầu.
+              <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-6 text-center text-zinc-400">
+                <div className="w-11 h-11 rounded-2xl bg-zinc-100 flex items-center justify-center mb-2.5">
+                  <UtensilsCrossed className="w-5 h-5 text-zinc-400" />
+                </div>
+                <div className="text-xs font-semibold text-zinc-600">Chưa có món nào trong đơn</div>
+                <p className="text-[11px] mt-1 max-w-[220px] leading-relaxed">
+                  Chọn bàn bên trái hoặc nhấn <strong className="text-zinc-700">Gọi món</strong> để bắt đầu lên đơn.
                 </p>
               </div>
             ) : (
@@ -1754,14 +1801,14 @@ export function PosTerminal({
                 return (
                   <div
                     key={`${item.itemId}-${idx}`}
-                    className="px-3 py-2 hover:bg-cyan-50/40 transition-colors"
+                    className="px-4 py-2.5 hover:bg-zinc-50/80 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <button
                         type="button"
                         onClick={() => setModalItemState({ mode: 'edit', index: idx, item })}
-                        className={`text-left text-sm font-bold leading-snug hover:underline ${
-                          isUnsavedStyle ? 'text-rose-700' : 'text-[#0a2268]'
+                        className={`text-left text-sm font-semibold leading-snug hover:underline ${
+                          isUnsavedStyle ? 'text-zinc-950' : 'text-zinc-900'
                         }`}
                       >
                         {item.name}
@@ -1771,14 +1818,14 @@ export function PosTerminal({
                         <button
                           type="button"
                           onClick={() => setModalItemState({ mode: 'edit', index: idx, item })}
-                          className="text-xs font-bold text-cyan-700 hover:text-cyan-900 hover:underline"
+                          className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 hover:underline"
                         >
                           Sửa
                         </button>
                         <button
                           type="button"
                           onClick={() => removeCartItem(idx)}
-                          className="text-xs font-bold text-orange-600 hover:text-red-700 hover:underline"
+                          className="text-[11px] font-semibold text-zinc-400 hover:text-rose-600 hover:underline"
                         >
                           Xóa
                         </button>
@@ -1786,30 +1833,55 @@ export function PosTerminal({
                     </div>
 
                     {item.note && (
-                      <div className="text-[11px] italic text-slate-500 mt-0.5 pl-1">
-                        {item.note}
+                      <div className="text-[11px] italic text-zinc-500 mt-0.5">
+                        Ghi chú: {item.note}
                       </div>
                     )}
 
-                    <div className="mt-1 flex items-center justify-between gap-2 text-xs font-bold tabular-nums text-slate-800">
-                      <span className="flex items-center gap-2">
-                        <span className="text-rose-700 w-5">{item.qty}</span>
-                        <span className="text-slate-500 font-semibold">
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs tabular-nums">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-50 overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              item.qty <= 1 ? removeCartItem(idx) : adjustCartItemQty(idx, -1)
+                            }
+                            className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-200/80 transition-colors"
+                            aria-label={`Giảm số lượng ${item.name}`}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="min-w-[26px] text-center font-mono font-bold text-zinc-950 px-1">
+                            {item.qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => adjustCartItemQty(idx, 1)}
+                            className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-200/80 transition-colors"
+                            aria-label={`Tăng số lượng ${item.name}`}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </span>
+                        <span className="text-zinc-500 font-mono text-[11px]">
                           × {formatDotNumber(item.price)}
                         </span>
-                      </span>
-                      <span className="flex items-center gap-1.5">
+                      </div>
+
+                      <div className="flex items-center gap-1.5 font-mono">
                         {lineDiscount > 0 && (
-                          <span className="text-[11px] font-medium text-slate-400 line-through">
+                          <span className="text-[11px] text-zinc-400 line-through">
                             {formatDotNumber(lineGross)}
                           </span>
                         )}
-                        <span className="text-slate-900">= {formatDotNumber(lineNet)}</span>
-                      </span>
+                        <span className="font-bold text-zinc-950">
+                          {formatDotNumber(lineNet)} ₫
+                        </span>
+                      </div>
                     </div>
 
                     {lineDiscount > 0 && (
-                      <div className="mt-0.5 text-[11px] font-semibold text-amber-700 tabular-nums pl-5">
+                      <div className="mt-1 text-[11px] font-medium text-amber-700 font-mono tabular-nums">
                         Giảm món:{' '}
                         {item.discountType === 'percent' && (item.discountValue ?? 0) > 0
                           ? `${item.discountValue}% (-${formatDotNumber(lineDiscount)} ₫)`
@@ -1818,15 +1890,14 @@ export function PosTerminal({
                     )}
 
                     {item.toppings && item.toppings.length > 0 && (
-                      <div className="mt-1 pl-4 border-l-2 border-cyan-200 space-y-0.5">
+                      <div className="mt-1.5 pl-3 space-y-0.5 text-[11px] text-zinc-600">
                         {item.toppings.map((tp) => (
-                          <div key={tp.id} className="text-[11px] leading-tight">
-                            <div className="font-semibold text-slate-800">+ {tp.name}</div>
+                          <div key={tp.id} className="flex items-center justify-between gap-2">
+                            <span className="truncate">+ {tp.name}</span>
                             {tp.price > 0 && (
-                              <div className="text-slate-500 tabular-nums">
-                                {item.qty} × {formatDotNumber(tp.price)} ={' '}
-                                {formatDotNumber(tp.price * item.qty)}
-                              </div>
+                              <span className="font-mono tabular-nums text-zinc-500 shrink-0">
+                                +{formatDotNumber(tp.price * item.qty)}
+                              </span>
                             )}
                           </div>
                         ))}
@@ -1834,7 +1905,7 @@ export function PosTerminal({
                     )}
 
                     {item.toppings && item.toppings.length > 0 && unitPrice !== item.price && (
-                      <div className="mt-0.5 text-[10px] text-cyan-700 tabular-nums text-right">
+                      <div className="mt-1 text-[10px] text-emerald-700 font-mono tabular-nums text-right">
                         Đơn giá gồm topping: {formatDotNumber(unitPrice)} ₫
                       </div>
                     )}
@@ -1844,23 +1915,23 @@ export function PosTerminal({
             )}
           </div>
 
-          {/* Bottom Total + Cancel / Save or Pay Actions (No Shortcut Labels) */}
-          <div className="border-t-2 border-slate-200 bg-slate-50 px-3 pt-2 pb-2.5 space-y-2 shrink-0">
-            <div className="flex items-center justify-between text-slate-950 tabular-nums">
-              <span className="text-base font-extrabold">
-                {totalQty} <span className="text-xs font-semibold text-slate-500">món</span>
+          {/* Bottom Total + Cancel / Save or Pay Actions */}
+          <div className="border-t border-zinc-200 bg-zinc-50 px-4 pt-3 pb-3.5 space-y-3 shrink-0">
+            <div className="flex items-baseline justify-between text-zinc-950">
+              <span className="text-xs font-semibold text-zinc-500 tabular-nums">
+                Tổng cộng · <strong className="text-zinc-800">{totalQty}</strong> món
               </span>
-              <span className="text-lg font-extrabold text-[#0a2268]">
+              <span className="text-xl font-extrabold font-mono tabular-nums text-zinc-950">
                 {formatDotNumber(totals.total) || '0'} ₫
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
                 disabled={isSubmitting || (cartItems.length === 0 && !activeOpenOrder)}
                 onClick={handleCancelOrderAction}
-                className="h-11 rounded-md bg-red-600 hover:bg-red-700 disabled:bg-red-300/70 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-xs"
+                className="h-11 rounded-xl bg-white hover:bg-rose-50 disabled:opacity-40 border border-rose-200 text-rose-600 font-semibold text-xs flex items-center justify-center transition-colors"
               >
                 {activeOpenOrder ? 'Hủy bill' : 'Hủy order'}
               </button>
@@ -1869,7 +1940,7 @@ export function PosTerminal({
                 <button
                   type="button"
                   onClick={() => setViewMode('menu')}
-                  className="h-11 rounded-md bg-[#0a2268] hover:bg-[#11318f] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  className="h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Thêm món
@@ -1879,7 +1950,7 @@ export function PosTerminal({
                   type="button"
                   disabled={isSubmitting || cartItems.length === 0}
                   onClick={handleSaveOpenTab}
-                  className="h-11 rounded-md bg-[#0a2268] hover:bg-[#11318f] disabled:bg-slate-300 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  className="h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 text-white font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {isSubmitting ? 'Đang lưu...' : 'Lưu bàn'}
@@ -1892,7 +1963,7 @@ export function PosTerminal({
                     setCashReceivedInput('');
                     setViewMode('payment');
                   }}
-                  className="h-11 rounded-md bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-300 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  className="h-11 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:bg-zinc-300 text-white font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <CreditCard className="w-4 h-4" />
                   Thanh toán
@@ -1903,34 +1974,29 @@ export function PosTerminal({
         </aside>
       </div>
 
-      {/* ================= PERSISTENT DARK-NAVY STORE FOOTER BAR ================= */}
-      <footer className="bg-[#051233] text-slate-200 px-3.5 py-1.5 border-t border-blue-950 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs shrink-0">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0">
-          <span className="font-extrabold text-cyan-300 tracking-tight">{storeTitle}</span>
+      {/* ================= MINIMAL ARCHITECTURAL STORE FOOTER BAR ================= */}
+      <footer className="bg-white text-zinc-600 px-4 py-1.5 border-t border-zinc-200 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs shrink-0">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 min-w-0">
+          <span className="font-bold text-zinc-900 tracking-tight">{storeTitle}</span>
           {settings?.address && (
-            <span className="text-slate-300 truncate max-w-[320px] hidden sm:inline">
-              {settings.address}
+            <span className="text-zinc-400 truncate max-w-[300px] hidden sm:inline">
+              · {settings.address}
             </span>
           )}
-          {settings?.phone && (
-            <span className="text-slate-400 tabular-nums hidden md:inline">
-              ĐT: {settings.phone}
-            </span>
-          )}
-          <span className="text-slate-400 truncate">Thu ngân: {cashierName}</span>
+          <span className="text-zinc-500 truncate">· Thu ngân: {cashierName}</span>
         </div>
 
-        <div className="flex items-center gap-4 tabular-nums ml-auto">
+        <div className="flex items-center gap-4 font-mono tabular-nums ml-auto">
           <button
             type="button"
             onClick={() => onNavigateTab('reports')}
-            className="text-slate-200 hover:text-cyan-300 transition-colors"
+            className="text-zinc-600 hover:text-emerald-700 transition-colors"
           >
-            Hôm nay: <strong className="text-amber-300">{formatVND(todayRevenue)}</strong> (
-            {todayOrderCount} đơn)
+            Hôm nay: <strong className="text-emerald-700">{formatVND(todayRevenue)}</strong> ·{' '}
+            {todayOrderCount} đơn
           </button>
-          <span className="text-orange-300 font-semibold hidden sm:inline">
-            {occupiedCountByZone['Tất cả'] || 0} bàn đang phục vụ
+          <span className="text-amber-700 font-semibold hidden sm:inline">
+            {occupiedCountByZone['Tất cả'] || 0} bàn đang mở
           </span>
         </div>
       </footer>
@@ -1946,6 +2012,7 @@ export function PosTerminal({
               matchedMenuItem?.isCombo || modalItemState.item.category === 'Combo',
             )}
             comboToppings={matchedMenuItem?.comboToppings ?? []}
+            comboRule={getEffectiveComboRule(matchedMenuItem)}
             comboMaxToppings={matchedMenuItem?.comboMaxToppings ?? 0}
             toppings={toppings}
             onSave={handleConfirmModalItem}
@@ -1998,36 +2065,36 @@ export function PosTerminal({
       {showFunctionsDrawer && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div
-            className="fixed inset-0 bg-slate-950/50"
+            className="fixed inset-0 bg-zinc-950/40 backdrop-blur-[1px]"
             onClick={() => setShowFunctionsDrawer(false)}
           />
-          <div className="relative z-10 w-80 max-w-[90vw] bg-white h-full flex flex-col justify-between shadow-2xl border-l-2 border-[#0a2268]">
+          <div className="relative z-10 w-80 max-w-[90vw] bg-white h-full flex flex-col justify-between shadow-2xl border-l border-zinc-200">
             <div>
-              <div className="bg-[#091d4f] text-white px-5 py-4 flex items-center justify-between">
+              <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
                 <div>
-                  <div className="text-base font-extrabold text-cyan-300">{storeTitle}</div>
-                  <div className="text-xs text-slate-300 mt-0.5">Bảng chức năng quản lý</div>
+                  <div className="text-base font-bold text-zinc-950">{storeTitle}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">Bảng chức năng quản lý</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowFunctionsDrawer(false)}
-                  className="p-1.5 text-slate-300 hover:text-white rounded"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-800 rounded-lg"
                   aria-label="Đóng"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-3 space-y-1.5">
+              <div className="p-3 space-y-1">
                 <button
                   type="button"
                   onClick={() => {
                     setShowFunctionsDrawer(false);
                     setViewMode('floor');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg bg-cyan-50 text-cyan-900 font-bold text-sm hover:bg-cyan-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-emerald-50 text-emerald-900 font-semibold text-sm hover:bg-emerald-100/80 transition-colors"
                 >
-                  <Home className="w-4 h-4 text-cyan-700" />
+                  <Home className="w-4 h-4 text-emerald-700" />
                   Khu vực bàn & Bán hàng POS
                 </button>
 
@@ -2037,9 +2104,9 @@ export function PosTerminal({
                     setShowFunctionsDrawer(false);
                     onNavigateTab('tables');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
                 >
-                  <LayoutGrid className="w-4 h-4 text-[#0a2268]" />
+                  <LayoutGrid className="w-4 h-4 text-zinc-500" />
                   Quản lý bàn ({tables.length})
                 </button>
 
@@ -2049,9 +2116,9 @@ export function PosTerminal({
                     setShowFunctionsDrawer(false);
                     onNavigateTab('menu');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
                 >
-                  <UtensilsCrossed className="w-4 h-4 text-[#0a2268]" />
+                  <UtensilsCrossed className="w-4 h-4 text-zinc-500" />
                   Quản lý Thực đơn & Topping
                 </button>
 
@@ -2061,9 +2128,9 @@ export function PosTerminal({
                     setShowFunctionsDrawer(false);
                     onNavigateTab('customers');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
                 >
-                  <UserCheck className="w-4 h-4 text-[#0a2268]" />
+                  <UserCheck className="w-4 h-4 text-zinc-500" />
                   Quản lý Khách hàng ({customers.length})
                 </button>
 
@@ -2073,9 +2140,9 @@ export function PosTerminal({
                     setShowFunctionsDrawer(false);
                     onNavigateTab('orders');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
                 >
-                  <ReceiptText className="w-4 h-4 text-[#0a2268]" />
+                  <ReceiptText className="w-4 h-4 text-zinc-500" />
                   Lịch sử Hóa đơn
                 </button>
 
@@ -2085,9 +2152,9 @@ export function PosTerminal({
                     setShowFunctionsDrawer(false);
                     onNavigateTab('reports');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
                 >
-                  <BarChart3 className="w-4 h-4 text-[#0a2268]" />
+                  <BarChart3 className="w-4 h-4 text-zinc-500" />
                   Báo cáo Doanh thu & Xuất Excel
                 </button>
 
@@ -2097,23 +2164,40 @@ export function PosTerminal({
                     setShowFunctionsDrawer(false);
                     onNavigateTab('settings');
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
                 >
-                  <Settings className="w-4 h-4 text-[#0a2268]" />
+                  <Settings className="w-4 h-4 text-zinc-500" />
                   Cài đặt quán, Khổ in & Mã QR
                 </button>
+
+                <div className="pt-2 mt-2 border-t border-zinc-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFunctionsDrawer(false);
+                      onOpenCreateAccount();
+                    }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-700 font-semibold text-sm hover:bg-zinc-100 transition-colors"
+                  >
+                    <UserPlus className="w-4 h-4 text-emerald-700" />
+                    Tạo tài khoản mới
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-3">
+            <div className="p-4 border-t border-zinc-200 bg-zinc-50 space-y-3">
               <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">{cashierName}</div>
-                <div className="text-[11px] text-slate-500 truncate">{userEmail}</div>
+                <div className="text-xs font-bold text-zinc-900 truncate">{cashierName}</div>
+                <div className="text-[11px] text-zinc-500 truncate">{userEmail}</div>
               </div>
               <button
                 type="button"
-                onClick={onSignOut}
-                className="w-full py-2.5 px-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors"
+                onClick={() => {
+                  setShowFunctionsDrawer(false);
+                  onSignOut();
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 hover:text-rose-700 border border-zinc-200 hover:border-rose-200 text-zinc-700 text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Đăng xuất tài khoản

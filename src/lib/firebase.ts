@@ -1,5 +1,12 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getApps, initializeApp } from 'firebase/app';
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  inMemoryPersistence,
+  setPersistence,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -32,6 +39,31 @@ export function formatAccountId(email?: string | null): string {
   if (!email) return '';
   const suffix = `@${ACCOUNT_DOMAIN}`;
   return email.toLowerCase().endsWith(suffix) ? email.slice(0, -suffix.length) : email;
+}
+
+/**
+ * Creates a new POS login account using an isolated in-memory secondary Firebase Auth
+ * instance so the currently signed-in cashier/owner session is never interrupted.
+ */
+export async function createPosAccount(
+  mappedEmail: string,
+  password: string,
+  displayName?: string,
+): Promise<void> {
+  const secondaryName = 'pos-account-creator';
+  const existingApp = getApps().find((a) => a.name === secondaryName);
+  const secondaryApp = existingApp ?? initializeApp(firebaseConfig, secondaryName);
+  const secondaryAuth = getAuth(secondaryApp);
+  await setPersistence(secondaryAuth, inMemoryPersistence);
+  try {
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, mappedEmail, password);
+    const cleanName = (displayName || '').trim().slice(0, 60) || formatAccountId(mappedEmail);
+    if (cleanName) {
+      await updateProfile(cred.user, { displayName: cleanName }).catch(() => {});
+    }
+  } finally {
+    await signOut(secondaryAuth).catch(() => {});
+  }
 }
 
 export enum OperationType {

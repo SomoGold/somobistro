@@ -3,7 +3,6 @@ import {
   Banknote,
   CreditCard,
   QrCode,
-  RotateCcw,
   Printer,
   Plus,
   ArrowLeft,
@@ -95,7 +94,6 @@ export function KasPaymentPanel({
     !(discountType === 'percent' && (discountValue === 10 || discountValue === 20));
   const isCustomDiscountActive = customDiscountOpen || hasCustomDiscount;
 
-  const uploadedQrUrl = settings?.qrImageUrl || '';
   const quickCashAmounts = [20000, 50000, 100000, 200000, 500000]
     .filter((amt) => amt > total)
     .slice(0, 4);
@@ -369,9 +367,9 @@ export function KasPaymentPanel({
           </div>
         )}
 
-        {/* Middle Payment Methods + LARGE Store QR Preview */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start pt-2 border-t border-slate-200">
-          <div className={paymentMethod === 'transfer' ? 'xl:col-span-5 space-y-2.5' : 'xl:col-span-12 space-y-2.5'}>
+        {/* Middle Payment Methods (Grouped on the right) */}
+        <div className="pt-2 border-t border-slate-200 flex justify-end">
+          <div className="w-full md:w-[min(100%,480px)] xl:w-[calc(50%-16px)] space-y-2.5">
             {(
               [
                 { id: 'cash', label: 'Tiền mặt', hint: 'Thanh toán tiền mặt tại quầy', icon: Banknote },
@@ -403,12 +401,12 @@ export function KasPaymentPanel({
                         active ? 'bg-[#0a2268] text-white' : 'bg-white border border-slate-300 text-slate-500'
                       }`}
                     >
-                      {active ? <Icon className="w-4 h-4" /> : <RotateCcw className="w-4 h-4" />}
+                      <Icon className="w-4 h-4" />
                     </span>
                     <div className="min-w-0">
                       <div
                         className={`text-sm font-bold ${
-                          active ? 'text-[#0a2268] underline underline-offset-2' : 'text-slate-800'
+                          active ? 'text-[#0a2268]' : 'text-slate-800'
                         }`}
                       >
                         {label}

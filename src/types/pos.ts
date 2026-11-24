@@ -53,6 +53,8 @@ export interface StoreSettings {
   updatedAt?: Timestamp | null;
 }
 
+export type ComboSelectionRule = 'all' | 'max' | 'exact';
+
 export interface ComboTopping {
   id: string;
   name: string;
@@ -72,6 +74,7 @@ export interface MenuItem {
   isCombo?: boolean;
   comboToppings?: ComboTopping[];
   comboMaxToppings?: number;
+  comboRule?: ComboSelectionRule;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }

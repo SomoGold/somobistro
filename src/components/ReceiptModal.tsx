@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react';
 import { Printer, X, CheckCircle2, Download } from 'lucide-react';
 import { Order, ReceiptPaperSize, StoreSettings } from '../types/pos';
 import {
+  formatDotNumber,
   formatVND,
   getItemDiscountAmount,
   getItemNetTotal,
@@ -131,25 +132,25 @@ export function ReceiptModal({
                 {/* Store & Invoice Header */}
                 <div className="flex items-start justify-between gap-4 pb-3.5 border-b border-slate-300">
                   <div className="space-y-0.5">
-                    <div className="text-lg font-bold tracking-tight text-slate-900">{storeName}</div>
+                    <div className="text-base font-bold tracking-tight text-slate-900">{storeName}</div>
                     {address && <div className="text-[10.8px] text-slate-600">{address}</div>}
                     {phone && (
                       <div className="text-[10.8px] text-slate-600 tabular-nums">Hotline: {phone}</div>
                     )}
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-bold tracking-tight text-cyan-700">
-                      {isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}
+                  <div className="text-center shrink-0">
+                    <div className="text-xl font-bold tracking-tight leading-tight text-cyan-700">
+                      {isProvisional ? 'PHIẾU TẠM TÍNH' : 'PHIẾU THANH TOÁN'}
                     </div>
-                    <div className="text-[10.8px] font-semibold text-slate-700 tabular-nums mt-0.5">
-                      Số HĐ: {order.orderNumber}
+                    <div className="text-[11.5px] font-bold text-slate-900 tabular-nums mt-0.5">
+                      {order.orderNumber}
                     </div>
                     <div className="text-[10.5px] text-slate-500 tabular-nums">{order.displayTime}</div>
                   </div>
                 </div>
 
                 {/* Order Meta Grid */}
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1 py-3 border-b border-slate-200 text-[10.8px]">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 py-2.5 text-[10.8px]">
                   <div className="flex justify-between gap-2">
                     <span className="text-slate-500">Khách hàng:</span>
                     <span className="font-medium text-slate-900">
@@ -164,11 +165,11 @@ export function ReceiptModal({
                   </div>
                 </div>
 
-                {/* Full A5 Itemized Table (No STT, base price + separate toppings) */}
-                <div className="mt-3.5">
-                  <table className="w-full text-left border-collapse text-[10.8px]">
+                {/* Full A5 Itemized Table (No STT, base price + clean topping sub-lines) */}
+                <div className="mt-2">
+                  <table className="w-full text-left border-collapse text-[11.5px]">
                     <thead>
-                      <tr className="border-y border-slate-300 bg-slate-50 text-slate-700 font-semibold">
+                      <tr className="border-y border-slate-400 bg-slate-50 text-slate-900 font-bold">
                         <th className="py-1.5 px-1.5">Tên món</th>
                         <th className="py-1.5 px-1.5 w-9 text-center">SL</th>
                         <th className="py-1.5 px-1.5 w-20 text-right">Đơn giá</th>
@@ -183,9 +184,16 @@ export function ReceiptModal({
                         const hasToppings = toppings.length > 0;
                         const itemDiscount = getItemDiscountAmount(item);
                         const netTotal = getItemNetTotal(item);
+                        const isLastItem = index === order.items.length - 1;
                         return (
                           <Fragment key={`${item.itemId}_${index}`}>
-                            <tr className={hasToppings ? '' : 'border-b border-slate-200'}>
+                            <tr
+                              className={
+                                !hasToppings && !isLastItem
+                                  ? 'border-b border-dashed border-slate-300'
+                                  : ''
+                              }
+                            >
                               <td className={`${hasToppings ? 'pt-2 pb-0.5' : 'py-2'} px-1.5`}>
                                 <div className="font-medium text-slate-900">{item.name}</div>
                                 {item.note && (
@@ -236,41 +244,59 @@ export function ReceiptModal({
                               return (
                                 <tr
                                   key={`${item.itemId}_${index}_t_${tIdx}`}
-                                  className={isLastSub ? 'border-b border-slate-200' : ''}
+                                  className={
+                                    isLastSub && !isLastItem
+                                      ? 'border-b border-dashed border-slate-300'
+                                      : ''
+                                  }
                                 >
-                                  <td className="py-0.5 px-1.5 pl-4 text-[10px] text-cyan-700">
-                                    + {t.name}
-                                  </td>
-                                  <td className="py-0.5 px-1.5 text-center tabular-nums text-[10px] text-slate-600">
-                                    {item.qty}
-                                  </td>
-                                  <td className="py-0.5 px-1.5 text-right tabular-nums text-[10px] text-slate-600 whitespace-nowrap">
-                                    {isFree ? '—' : `+${formatVND(t.price)}`}
-                                  </td>
-                                  <td className="py-0.5 px-1.5 text-right text-[10px] text-slate-300">
-                                    —
-                                  </td>
-                                  <td className="py-0.5 px-1.5 text-right tabular-nums text-[10px] text-slate-800 whitespace-nowrap">
-                                    {isFree ? '—' : `+${formatVND(t.price * item.qty)}`}
-                                  </td>
+                                  {isFree ? (
+                                    <td
+                                      colSpan={5}
+                                      className={`py-0.5 ${isLastSub ? 'pb-2' : ''} px-1.5 pl-4 text-[10.5px] text-cyan-700`}
+                                    >
+                                      + {t.name}
+                                    </td>
+                                  ) : (
+                                    <>
+                                      <td
+                                        colSpan={4}
+                                        className={`py-0.5 ${isLastSub ? 'pb-2' : ''} px-1.5 pl-4 text-[10.5px] text-cyan-700`}
+                                      >
+                                        + {t.name}
+                                        {item.qty > 1
+                                          ? ` (${item.qty} × ${formatDotNumber(t.price)})`
+                                          : ''}
+                                      </td>
+                                      <td
+                                        className={`py-0.5 ${isLastSub ? 'pb-2' : ''} px-1.5 text-right tabular-nums text-[10.5px] text-slate-800 whitespace-nowrap`}
+                                      >
+                                        +{formatVND(t.price * item.qty)}
+                                      </td>
+                                    </>
+                                  )}
                                 </tr>
                               );
                             })}
                             {hasToppings && itemDiscount > 0 && (
-                              <tr className="border-b border-slate-200">
+                              <tr
+                                className={
+                                  !isLastItem ? 'border-b border-dashed border-slate-300' : ''
+                                }
+                              >
                                 <td
                                   colSpan={3}
-                                  className="py-0.5 pb-1.5 px-1.5 pl-4 text-[10px] text-amber-700 font-medium"
+                                  className="py-0.5 pb-2 px-1.5 pl-4 text-[10px] text-amber-700 font-medium"
                                 >
                                   Chiết khấu món
                                   {item.discountType === 'percent' && (item.discountValue ?? 0) > 0
                                     ? ` (-${item.discountValue}%)`
                                     : ''}
                                 </td>
-                                <td className="py-0.5 pb-1.5 px-1.5 text-right tabular-nums text-[10px] text-amber-700 whitespace-nowrap">
+                                <td className="py-0.5 pb-2 px-1.5 text-right tabular-nums text-[10px] text-amber-700 whitespace-nowrap">
                                   -{formatVND(itemDiscount)}
                                 </td>
-                                <td className="py-0.5 pb-1.5 px-1.5 text-right tabular-nums text-[10px] font-semibold text-amber-700 whitespace-nowrap">
+                                <td className="py-0.5 pb-2 px-1.5 text-right tabular-nums text-[10px] font-semibold text-amber-700 whitespace-nowrap">
                                   -{formatVND(itemDiscount)}
                                 </td>
                               </tr>
@@ -309,9 +335,6 @@ export function ReceiptModal({
                               Chủ TK: <strong>{settings.bankOwner}</strong>
                             </div>
                           )}
-                          <div className="font-bold tabular-nums text-slate-900 pt-0.5">
-                            Số tiền: {formatVND(order.total)}
-                          </div>
                         </div>
                       </div>
                     ) : (
@@ -366,7 +389,7 @@ export function ReceiptModal({
                 </div>
               </div>
 
-              <div className="mt-7 pt-3.5 border-t border-dashed border-slate-300 text-center text-[10.8px] text-slate-600">
+              <div className="mt-7 pt-2 text-center text-[10.8px] text-slate-600">
                 <div className="italic text-slate-800">{footerText}</div>
               </div>
             </div>
@@ -374,19 +397,18 @@ export function ReceiptModal({
             /* -------------------- 80MM THERMAL ROLL PREVIEW (TAHOMA CRISP 203 DPI SCALE) -------------------- */
             <div className="print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-[30px] py-3.5 text-black text-[11.2px] font-normal leading-snug shadow-sm self-start">
               <div className="text-center space-y-0.5">
-                <div className="text-[1.35em] font-bold tracking-tight text-black">{storeName}</div>
+                <div className="text-[1.3em] font-bold tracking-tight text-black">{storeName}</div>
                 {address && <div className="text-[0.9em] font-medium text-black">{address}</div>}
                 {phone && <div className="text-[0.9em] font-medium text-black tabular-nums">ĐT: {phone}</div>}
-                <div className="pt-1.5 mt-1.5 border-t border-dashed border-black text-[1.12em] font-bold text-black">
-                  {isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}
+                <div className="pt-2 text-[1.52em] font-bold leading-tight text-black">
+                  {isProvisional ? 'PHIẾU TẠM TÍNH' : 'PHIẾU THANH TOÁN'}
+                </div>
+                <div className="text-[1em] font-bold tabular-nums text-black pb-1">
+                  {order.orderNumber}
                 </div>
               </div>
 
-              <div className="mt-1.5 mb-2 pb-1.5 border-b border-dashed border-black space-y-0.5 text-[0.95em] font-medium text-black">
-                <div className="flex justify-between gap-2">
-                  <span>Số HĐ:</span>
-                  <span className="font-bold tabular-nums">{order.orderNumber}</span>
-                </div>
+              <div className="mt-1 mb-2 space-y-0.5 text-[0.95em] font-medium text-black">
                 <div className="flex justify-between gap-2">
                   <span>Thời gian:</span>
                   <span className="font-bold tabular-nums">{order.displayTime}</span>
@@ -403,68 +425,165 @@ export function ReceiptModal({
                 </div>
               </div>
 
-              <div className="divide-y divide-dotted divide-black">
-                {order.items.map((item, idx) => {
-                  const baseTotal = item.price * item.qty;
-                  const itemDiscount = getItemDiscountAmount(item);
-                  return (
-                    <div key={`${item.itemId}_${idx}`} className="py-1.5">
-                      <div className="font-bold text-[1.06em] text-black">{item.name}</div>
-                      <div className="flex justify-between gap-2 pl-2.5 mt-0.5 tabular-nums text-[1em] font-medium text-black">
-                        <span>
-                          {item.qty} × {formatVND(item.price)}
-                        </span>
-                        <span className="font-bold whitespace-nowrap">{formatVND(baseTotal)}</span>
-                      </div>
-                      {item.toppings && item.toppings.length > 0 && (
-                        <div className="space-y-0.5 pl-2.5 mt-0.5">
-                          {item.toppings.map((t, tIdx) =>
-                            t.price <= 0 ? (
-                              <div
-                                key={tIdx}
-                                className="text-[0.94em] font-medium text-black"
-                              >
-                                + {t.name}
-                              </div>
-                            ) : (
-                              <div
-                                key={tIdx}
-                                className="flex justify-between gap-2 text-[0.94em] font-medium text-black tabular-nums"
-                              >
-                                <span>
-                                  + {t.name}
-                                  {item.qty > 1 ? ` (${item.qty} × ${formatVND(t.price)})` : ''}
-                                </span>
-                                <span className="whitespace-nowrap">
-                                  +{formatVND(t.price * item.qty)}
-                                </span>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                      {itemDiscount > 0 && (
-                        <div className="flex justify-between gap-2 text-[0.92em] text-black pl-2.5 mt-0.5 tabular-nums font-semibold">
-                          <span>
-                            Chiết khấu món
-                            {item.discountType === 'percent' && (item.discountValue ?? 0) > 0
-                              ? ` (-${item.discountValue}%)`
-                              : ''}
-                          </span>
-                          <span className="whitespace-nowrap">-{formatVND(itemDiscount)}</span>
-                        </div>
-                      )}
-                      {item.note && (
-                        <div className="text-[0.9em] font-medium text-black pl-2.5 mt-0.5 italic">
-                          Ghi chú: {item.note}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <table className="w-full border-collapse table-fixed text-[1.03em] leading-snug text-black tabular-nums">
+                <colgroup>
+                  <col style={{ width: '40%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '23%' }} />
+                  <col style={{ width: '27%' }} />
+                </colgroup>
+                <thead>
+                  <tr className="border-y border-black text-[1em] font-bold">
+                    <th className="py-1 pr-1 text-left whitespace-nowrap">Tên món</th>
+                    <th className="py-1 text-center whitespace-nowrap">SL</th>
+                    <th className="py-1 pl-0.5 text-right whitespace-nowrap">Đơn giá</th>
+                    <th className="py-1 pl-0.5 text-right whitespace-nowrap">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items.map((item, idx) => {
+                    const baseTotal = item.price * item.qty;
+                    const itemDiscount = getItemDiscountAmount(item);
+                    const toppings = item.toppings ?? [];
+                    const isLastItem = idx === order.items.length - 1;
+                    const hasSubRows =
+                      toppings.length > 0 || itemDiscount > 0 || Boolean(item.note);
 
-              <div className="mt-2 pt-1.5 border-t border-dashed border-black space-y-0.5 text-[1em] font-medium text-black">
+                    return (
+                      <Fragment key={`${item.itemId}_${idx}`}>
+                        <tr
+                          className={
+                            !isLastItem && !hasSubRows
+                              ? 'border-b border-dashed border-black'
+                              : ''
+                          }
+                        >
+                          <td
+                            className={`pt-2 ${
+                              hasSubRows ? 'pb-0.5' : 'pb-2'
+                            } pr-1 align-top font-bold break-words`}
+                          >
+                            {item.name}
+                          </td>
+                          <td
+                            className={`pt-2 ${
+                              hasSubRows ? 'pb-0.5' : 'pb-2'
+                            } align-top text-center whitespace-nowrap`}
+                          >
+                            {item.qty}
+                          </td>
+                          <td
+                            className={`pt-2 ${
+                              hasSubRows ? 'pb-0.5' : 'pb-2'
+                            } pl-0.5 align-top text-right whitespace-nowrap`}
+                          >
+                            {formatDotNumber(item.price)}
+                          </td>
+                          <td
+                            className={`pt-2 ${
+                              hasSubRows ? 'pb-0.5' : 'pb-2'
+                            } pl-0.5 align-top text-right font-bold whitespace-nowrap`}
+                          >
+                            {formatDotNumber(baseTotal)}
+                          </td>
+                        </tr>
+                        {toppings.map((t, tIdx) => {
+                          const isLastSub =
+                            tIdx === toppings.length - 1 &&
+                            itemDiscount <= 0 &&
+                            !item.note;
+                          return (
+                            <tr
+                              key={`${item.itemId}_${idx}_t_${tIdx}`}
+                              className={
+                                !isLastItem && isLastSub
+                                  ? 'border-b border-dashed border-black'
+                                  : ''
+                              }
+                            >
+                              {t.price <= 0 ? (
+                                <td
+                                  colSpan={4}
+                                  className={`pl-2 pr-1 ${
+                                    isLastSub ? 'pb-2' : 'pb-0.5'
+                                  } text-[0.93em] align-top break-words`}
+                                >
+                                  + {t.name}
+                                </td>
+                              ) : (
+                                <>
+                                  <td
+                                    colSpan={3}
+                                    className={`pl-2 pr-1 ${
+                                      isLastSub ? 'pb-2' : 'pb-0.5'
+                                    } text-[0.93em] align-top break-words`}
+                                  >
+                                    + {t.name}
+                                    {item.qty > 1
+                                      ? ` (${item.qty}×${formatDotNumber(t.price)})`
+                                      : ''}
+                                  </td>
+                                  <td
+                                    className={`pl-0.5 ${
+                                      isLastSub ? 'pb-2' : 'pb-0.5'
+                                    } text-[0.93em] align-top text-right whitespace-nowrap`}
+                                  >
+                                    +{formatDotNumber(t.price * item.qty)}
+                                  </td>
+                                </>
+                              )}
+                            </tr>
+                          );
+                        })}
+                        {itemDiscount > 0 && (
+                          <tr
+                            className={
+                              !isLastItem && !item.note
+                                ? 'border-b border-dashed border-black'
+                                : ''
+                            }
+                          >
+                            <td
+                              colSpan={3}
+                              className={`pl-2 pr-1 ${
+                                !item.note ? 'pb-2' : 'pb-0.5'
+                              } text-[0.93em] font-bold align-top`}
+                            >
+                              Chiết khấu món
+                              {item.discountType === 'percent' && (item.discountValue ?? 0) > 0
+                                ? ` (-${item.discountValue}%)`
+                                : ''}
+                            </td>
+                            <td
+                              className={`pl-0.5 ${
+                                !item.note ? 'pb-2' : 'pb-0.5'
+                              } text-[0.93em] font-bold align-top text-right whitespace-nowrap`}
+                            >
+                              -{formatDotNumber(itemDiscount)}
+                            </td>
+                          </tr>
+                        )}
+                        {item.note && (
+                          <tr
+                            className={
+                              !isLastItem ? 'border-b border-dashed border-black' : ''
+                            }
+                          >
+                            <td
+                              colSpan={4}
+                              className="pl-2 pr-1 pb-2 text-[0.92em] align-top break-words"
+                            >
+                              Ghi chú: {item.note}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <div className="mt-2.5 pt-2 border-t border-black space-y-0.5 text-[1em] font-medium text-black">
                 <div className="flex justify-between">
                   <span>Tạm tính ({totalQty} món):</span>
                   <span className="font-bold tabular-nums">{formatVND(order.subtotal)}</span>
@@ -500,7 +619,7 @@ export function ReceiptModal({
               )}
 
               {qrDataUrl && hasBankInfo ? (
-                <div className="mt-2.5 pt-2.5 border-t border-dashed border-black space-y-1.5">
+                <div className="mt-3.5 space-y-1.5">
                   <div className="text-center text-[0.95em] font-bold text-black">
                     QUÉT MÃ QR CHUYỂN KHOẢN
                   </div>
@@ -527,27 +646,21 @@ export function ReceiptModal({
                           Chủ TK: <strong>{settings.bankOwner}</strong>
                         </div>
                       )}
-                      <div className="pt-0.5 text-[1em] tabular-nums">
-                        Số tiền: <strong>{formatVND(order.total)}</strong>
-                      </div>
                     </div>
                   </div>
                 </div>
               ) : qrDataUrl ? (
-                <div className="mt-2.5 pt-2.5 border-t border-dashed border-black text-center space-y-1">
-                  <div className="text-[0.95em] font-bold text-black">QUÉT MÃ QR THANH TOÁN</div>
+                <div className="mt-3.5 text-center space-y-1">
+                  <div className="text-[0.95em] font-bold text-black">QUÉT MÃ QR CHUYỂN KHOẢN</div>
                   <img
                     src={qrDataUrl}
                     alt="Mã QR thanh toán"
                     className="w-[82px] h-[82px] object-contain mx-auto bg-white"
                   />
-                  <div className="text-[1.08em] font-bold tabular-nums text-black">
-                    {formatVND(order.total)}
-                  </div>
                 </div>
               ) : (
                 hasBankInfo && (
-                  <div className="mt-2 text-[0.92em] text-left border border-dashed border-black rounded p-2 space-y-0.5 text-black bg-white">
+                  <div className="mt-2.5 text-[0.92em] text-left border border-black rounded p-2 space-y-0.5 text-black bg-white">
                     <div className="font-bold">Thông tin chuyển khoản:</div>
                     {settings?.bankName && (
                       <div>
@@ -568,7 +681,7 @@ export function ReceiptModal({
                 )
               )}
 
-              <div className="mt-2.5 pt-2 border-t border-dashed border-black text-center text-[0.9em] font-normal text-black">
+              <div className="mt-4 text-center text-[0.9em] font-normal text-black">
                 {footerText}
               </div>
             </div>

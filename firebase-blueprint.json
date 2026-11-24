@@ -157,7 +157,12 @@
         },
         "comboMaxToppings": {
           "type": "number",
-          "description": "Maximum number of free toppings selectable from comboToppings (0 = auto-include all; 1..15 = pick up to N)."
+          "description": "Number of free toppings allowed or required from comboToppings (0 = auto-include all; 1..15 = limit or exact count)."
+        },
+        "comboRule": {
+          "type": "string",
+          "enum": ["all", "max", "exact"],
+          "description": "Combo topping selection rule: all (auto-include all), max (pick up to N), or exact (must pick exactly N)."
         },
         "createdAt": {
           "type": "string",

@@ -74,7 +74,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'ownerId', 'sku', 'name', 'category', 'price', 'cost',
           'unit', 'imageUrl', 'available', 'isCombo', 'comboToppings',
-          'comboMaxToppings', 'createdAt', 'updatedAt'
+          'comboMaxToppings', 'comboRule', 'createdAt', 'updatedAt'
         ])
         && data.ownerId == request.auth.uid
         && data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 32
@@ -96,6 +96,7 @@ service cloud.firestore {
           )
         )
         && (!('comboMaxToppings' in data) || (data.comboMaxToppings is number && data.comboMaxToppings >= 0 && data.comboMaxToppings <= 15))
+        && (!('comboRule' in data) || data.comboRule in ['all', 'max', 'exact'])
         && (!('createdAt' in data) || data.createdAt is timestamp)
         && data.updatedAt is timestamp;
     }
@@ -339,7 +340,7 @@ service cloud.firestore {
           // Action: EditMenuItem
           incoming().diff(existing()).affectedKeys().hasOnly([
             'sku', 'name', 'category', 'price', 'cost', 'unit', 'imageUrl',
-            'available', 'isCombo', 'comboToppings', 'comboMaxToppings', 'updatedAt'
+            'available', 'isCombo', 'comboToppings', 'comboMaxToppings', 'comboRule', 'updatedAt'
           ])
         );
 

@@ -1,5 +1,6 @@
 import { Order, StoreSettings } from '../types/pos';
 import {
+  formatDotNumber,
   formatVND,
   getItemDiscountAmount,
   getItemNetTotal,
@@ -28,17 +29,18 @@ export function buildA5InvoiceHtml(
   const footerText = escapeHtml(
     settings?.receiptFooter || 'Cảm ơn quý khách đã ghé thăm Somo Bistro! Hẹn gặp lại.',
   );
-  const title = isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN';
+  const title = isProvisional ? 'PHIẾU TẠM TÍNH' : 'PHIẾU THANH TOÁN';
   const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
 
   const rowsHtml = order.items
-    .map((item) => {
+    .map((item, itemIdx) => {
       const baseTotal = item.price * item.qty;
       const toppings = item.toppings ?? [];
       const hasToppings = toppings.length > 0;
       const itemDiscount = getItemDiscountAmount(item);
       const netTotal = getItemNetTotal(item);
       const hasSubRows = hasToppings;
+      const isLastItem = itemIdx === order.items.length - 1;
       const discountLabel =
         itemDiscount > 0
           ? item.discountType === 'percent' && (item.discountValue ?? 0) > 0
@@ -46,8 +48,9 @@ export function buildA5InvoiceHtml(
             : `-${escapeHtml(formatVND(itemDiscount))}`
           : '—';
 
+      const mainRowClass = hasSubRows ? 'row-no-border' : isLastItem ? 'row-no-border' : 'row-item-end';
       const mainRowHtml = `
-      <tr class="${hasSubRows ? 'row-no-border' : ''}">
+      <tr class="${mainRowClass}">
         <td>
           <div class="item-name">${escapeHtml(item.name)}</div>
           ${item.note ? `<div class="item-note">Ghi chú: ${escapeHtml(item.note)}</div>` : ''}
@@ -63,13 +66,23 @@ export function buildA5InvoiceHtml(
         .map((t, tIdx) => {
           const isLastSub = tIdx === toppings.length - 1 && itemDiscount <= 0;
           const isFree = t.price <= 0;
+          const rowCls = isLastSub
+            ? isLastItem
+              ? 'row-no-border'
+              : 'row-item-end'
+            : 'row-no-border';
+          if (isFree) {
+            return `
+      <tr class="sub-row ${rowCls}">
+        <td colspan="5"><div class="item-topping">+ ${escapeHtml(t.name)}</div></td>
+      </tr>
+    `;
+          }
+          const qtyHint = item.qty > 1 ? ` (${item.qty} × ${escapeHtml(formatDotNumber(t.price))})` : '';
           return `
-      <tr class="sub-row ${isLastSub ? '' : 'row-no-border'}">
-        <td><div class="item-topping">+ ${escapeHtml(t.name)}</div></td>
-        <td class="col-center">${item.qty}</td>
-        <td class="col-right">${isFree ? '—' : `+${escapeHtml(formatVND(t.price))}`}</td>
-        <td class="col-right">—</td>
-        <td class="col-right">${isFree ? '—' : `+${escapeHtml(formatVND(t.price * item.qty))}`}</td>
+      <tr class="sub-row ${rowCls}">
+        <td colspan="4"><div class="item-topping">+ ${escapeHtml(t.name)}${qtyHint}</div></td>
+        <td class="col-right">+${escapeHtml(formatVND(t.price * item.qty))}</td>
       </tr>
     `;
         })
@@ -78,7 +91,7 @@ export function buildA5InvoiceHtml(
       const discountSubRowHtml =
         hasToppings && itemDiscount > 0
           ? `
-      <tr class="sub-row">
+      <tr class="sub-row ${isLastItem ? 'row-no-border' : 'row-item-end'}">
         <td colspan="3"><div class="item-disc-row">Chiết khấu món${
           item.discountType === 'percent' && (item.discountValue ?? 0) > 0
             ? ` (-${item.discountValue}%)`
@@ -118,7 +131,6 @@ export function buildA5InvoiceHtml(
           ${settings?.bankName ? `<div>NH: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
           ${settings?.bankAccount ? `<div>STK: <strong style="font-variant-numeric: tabular-nums;">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
           ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
-          <div class="font-semibold">Số tiền: ${escapeHtml(formatVND(order.total))}</div>
         </div>
       </div>
     `
@@ -167,20 +179,28 @@ export function buildA5InvoiceHtml(
       border-bottom: 1.5px solid #cbd5e1;
     }
     .brand {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       color: #0f172a;
       margin-bottom: 2px;
     }
     .muted { color: #475569; font-size: 10px; }
     .invoice-title {
-      font-size: 13.5px;
+      font-size: 18px;
       font-weight: 700;
       color: #0e7490;
-      text-align: right;
+      text-align: center;
+      line-height: 1.18;
+    }
+    .invoice-order-no {
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 3px;
     }
     .invoice-meta {
-      text-align: right;
+      text-align: center;
       font-size: 10px;
       color: #334155;
       margin-top: 2px;
@@ -190,7 +210,6 @@ export function buildA5InvoiceHtml(
       grid-template-columns: 1fr 1fr;
       gap: 5px 18px;
       padding: 8px 0;
-      border-bottom: 1px solid #e2e8f0;
       font-size: 10.5px;
     }
     .meta-row {
@@ -201,35 +220,43 @@ export function buildA5InvoiceHtml(
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 10.4px;
+      margin-top: 8px;
+      font-size: 11.2px;
     }
     thead th {
       background: #f8fafc;
-      border-top: 1px solid #cbd5e1;
-      border-bottom: 1px solid #cbd5e1;
-      padding: 6px 5px;
+      border-top: 1px solid #94a3b8;
+      border-bottom: 1px solid #94a3b8;
+      padding: 6.5px 5px;
       text-align: left;
-      font-weight: 600;
-      color: #334155;
+      font-size: 11.2px;
+      font-weight: 700;
+      color: #0f172a;
     }
     tbody td {
       padding: 6px 5px;
-      border-bottom: 1px solid #e2e8f0;
       vertical-align: top;
     }
     tbody tr.row-no-border td {
       border-bottom: none;
       padding-bottom: 2px;
     }
+    tbody tr.row-item-end td {
+      border-bottom: 1px dashed #94a3b8;
+      padding-bottom: 6px;
+    }
     tbody tr.sub-row td {
-      padding-top: 2px;
+      padding-top: 1.5px;
       padding-bottom: 5px;
-      font-size: 9.6px;
+      font-size: 10.2px;
       color: #334155;
     }
     tbody tr.sub-row.row-no-border td {
       padding-bottom: 2px;
+    }
+    tbody tr.sub-row.row-item-end td {
+      border-bottom: 1px dashed #94a3b8;
+      padding-bottom: 6px;
     }
     .col-center { text-align: center; }
     .col-right { text-align: right; white-space: nowrap; }
@@ -290,9 +317,8 @@ export function buildA5InvoiceHtml(
     }
     .extra-info { margin-top: 7px; font-size: 10px; color: #475569; }
     .footer {
-      margin-top: 16px;
-      padding-top: 9px;
-      border-top: 1px dashed #cbd5e1;
+      margin-top: 18px;
+      padding-top: 6px;
       text-align: center;
       font-size: 10px;
       color: #475569;
@@ -310,7 +336,7 @@ export function buildA5InvoiceHtml(
       </div>
       <div>
         <div class="invoice-title">${title}</div>
-        <div class="invoice-meta"><strong>Số HĐ:</strong> ${escapeHtml(order.orderNumber)}</div>
+        <div class="invoice-order-no">${escapeHtml(order.orderNumber)}</div>
         <div class="invoice-meta">${escapeHtml(order.displayTime)}</div>
       </div>
     </div>
@@ -378,51 +404,66 @@ export function build80mmReceiptHtml(
   const footerText = escapeHtml(
     settings?.receiptFooter || 'Cảm ơn quý khách đã ghé thăm Somo Bistro! Hẹn gặp lại.',
   );
-  const title = isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN';
+  const title = isProvisional ? 'PHIẾU TẠM TÍNH' : 'PHIẾU THANH TOÁN';
   const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
 
   const itemsHtml = order.items
-    .map((item) => {
+    .map((item, itemIdx) => {
       const baseTotal = item.price * item.qty;
       const itemDiscount = getItemDiscountAmount(item);
-      const toppingsHtml =
-        item.toppings && item.toppings.length > 0
-          ? item.toppings
-              .map((t) =>
-                t.price <= 0
-                  ? `<div class="r80-sub">+ ${escapeHtml(t.name)}</div>`
-                  : `<div class="r80-sub-row"><span>+ ${escapeHtml(t.name)}${
-                      item.qty > 1 ? ` (${item.qty} × ${escapeHtml(formatVND(t.price))})` : ''
-                    }</span><span class="r80-nowrap">+${escapeHtml(
-                      formatVND(t.price * item.qty),
-                    )}</span></div>`,
-              )
-              .join('')
-          : '';
-      const discHtml =
-        itemDiscount > 0
-          ? `<div class="r80-disc-row"><span>Chiết khấu món${
-              item.discountType === 'percent' && (item.discountValue ?? 0) > 0
-                ? ` (-${item.discountValue}%)`
-                : ''
-            }</span><span class="r80-nowrap">-${escapeHtml(formatVND(itemDiscount))}</span></div>`
-          : '';
-      const noteHtml = item.note
-        ? `<div class="r80-sub">Ghi chú: ${escapeHtml(item.note)}</div>`
-        : '';
+      const isLastItem = itemIdx === order.items.length - 1;
+      const toppings = item.toppings ?? [];
 
-      return `
-      <div class="r80-item">
-        <div class="r80-item-name">${escapeHtml(item.name)}</div>
-        <div class="r80-calc">
-          <span>${item.qty} × ${escapeHtml(formatVND(item.price))}</span>
-          <span class="r80-bold r80-nowrap">${escapeHtml(formatVND(baseTotal))}</span>
-        </div>
-        ${toppingsHtml}
-        ${discHtml}
-        ${noteHtml}
-      </div>
-    `;
+      const subRows: string[] = [];
+      toppings.forEach((t) => {
+        if (t.price <= 0) {
+          subRows.push(
+            `<td colspan="4" class="r80-td-sub">+ ${escapeHtml(t.name)}</td>`,
+          );
+        } else {
+          const qtyHint =
+            item.qty > 1 ? ` (${item.qty}×${escapeHtml(formatDotNumber(t.price))})` : '';
+          subRows.push(
+            `<td colspan="3" class="r80-td-sub">+ ${escapeHtml(t.name)}${qtyHint}</td>` +
+              `<td class="r80-td-r r80-sub-num">+${escapeHtml(formatDotNumber(t.price * item.qty))}</td>`,
+          );
+        }
+      });
+
+      if (itemDiscount > 0) {
+        const pctLabel =
+          item.discountType === 'percent' && (item.discountValue ?? 0) > 0
+            ? ` (-${item.discountValue}%)`
+            : '';
+        subRows.push(
+          `<td colspan="3" class="r80-td-sub r80-bold">Chiết khấu món${pctLabel}</td>` +
+            `<td class="r80-td-r r80-sub-num r80-bold">-${escapeHtml(formatDotNumber(itemDiscount))}</td>`,
+        );
+      }
+
+      if (item.note) {
+        subRows.push(
+          `<td colspan="4" class="r80-td-sub">Ghi chú: ${escapeHtml(item.note)}</td>`,
+        );
+      }
+
+      const mainSepClass = !isLastItem && subRows.length === 0 ? ' r80-item-sep' : '';
+      const mainRowHtml = `
+        <tr class="r80-main-tr${mainSepClass}">
+          <td class="r80-td-name">${escapeHtml(item.name)}</td>
+          <td class="r80-td-c">${item.qty}</td>
+          <td class="r80-td-r">${escapeHtml(formatDotNumber(item.price))}</td>
+          <td class="r80-td-r r80-bold">${escapeHtml(formatDotNumber(baseTotal))}</td>
+        </tr>`;
+
+      const subRowsHtml = subRows
+        .map((inner, sIdx) => {
+          const sepClass = !isLastItem && sIdx === subRows.length - 1 ? ' r80-item-sep' : '';
+          return `<tr class="r80-sub-tr${sepClass}">${inner}</tr>`;
+        })
+        .join('');
+
+      return `${mainRowHtml}${subRowsHtml}`;
     })
     .join('');
 
@@ -444,7 +485,6 @@ export function build80mmReceiptHtml(
               ${settings?.bankName ? `<div>NH: <strong>${escapeHtml(settings.bankName)}</strong></div>` : ''}
               ${settings?.bankAccount ? `<div>STK: <strong class="r80-tabular">${escapeHtml(settings.bankAccount)}</strong></div>` : ''}
               ${settings?.bankOwner ? `<div>Chủ TK: <strong>${escapeHtml(settings.bankOwner)}</strong></div>` : ''}
-              <div class="r80-pay-amount">Số tiền: <strong>${escapeHtml(formatVND(order.total))}</strong></div>
             </div>
           </div>
         </div>
@@ -452,9 +492,8 @@ export function build80mmReceiptHtml(
       : qrDataUrl
         ? `
           <div class="r80-pay-section r80-center">
-            <div class="r80-qr-heading">QUÉT MÃ QR THANH TOÁN</div>
+            <div class="r80-qr-heading">QUÉT MÃ QR CHUYỂN KHOẢN</div>
             <img src="${qrDataUrl}" alt="Mã QR thanh toán" class="r80-qr-img r80-qr-center" />
-            <div class="r80-qr-amount">${escapeHtml(formatVND(order.total))}</div>
           </div>
         `
         : hasBankInfo
@@ -557,17 +596,18 @@ export function build80mmReceiptHtml(
       margin-top: calc(var(--u) * 0.3);
     }
     .r80-title {
-      font-size: calc(var(--u) * 3.65);
+      font-size: calc(var(--u) * 5.2);
       font-weight: 700;
-      margin-top: calc(var(--u) * 1.1);
-      margin-bottom: calc(var(--u) * 0.9);
-      padding-top: calc(var(--u) * 1.0);
-      border-top: 1px dashed #000000;
+      line-height: 1.18;
+      margin-top: calc(var(--u) * 1.4);
+      margin-bottom: calc(var(--u) * 0.35);
       color: #000000;
     }
-    .r80-divider {
-      border-top: 1px dashed #000000;
-      margin: calc(var(--u) * 1.1) 0;
+    .r80-order-no {
+      font-size: calc(var(--u) * 3.15);
+      font-weight: 700;
+      margin-bottom: calc(var(--u) * 1.1);
+      color: #000000;
     }
     .r80-meta {
       display: flex;
@@ -585,61 +625,78 @@ export function build80mmReceiptHtml(
       text-align: right;
       font-weight: 700;
     }
-    .r80-item {
-      padding: calc(var(--u) * 0.85) 0;
-      border-bottom: 1px dotted #000000;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .r80-item:last-child { border-bottom: none; }
-    .r80-item-name {
-      font-weight: 700;
-      font-size: calc(var(--u) * 3.4);
-      line-height: 1.25;
+    .r80-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: calc(var(--u) * 1.1);
+      font-size: calc(var(--u) * 3.25);
+      line-height: 1.28;
       color: #000000;
     }
-    .r80-sub {
-      font-size: calc(var(--u) * 2.9);
-      font-weight: 400;
-      color: #000000;
-      padding-left: calc(var(--u) * 1.6);
-      margin-top: calc(var(--u) * 0.25);
-    }
-    .r80-sub-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: calc(var(--u) * 1.4);
-      font-size: calc(var(--u) * 2.95);
-      font-weight: 400;
-      color: #000000;
-      padding-left: calc(var(--u) * 1.6);
-      margin-top: calc(var(--u) * 0.25);
-    }
-    .r80-disc-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: calc(var(--u) * 1.4);
-      font-size: calc(var(--u) * 2.9);
-      font-weight: 700;
-      color: #000000;
-      padding-left: calc(var(--u) * 1.6);
-      margin-top: calc(var(--u) * 0.25);
-    }
-    .r80-calc {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: calc(var(--u) * 1.4);
-      padding-left: calc(var(--u) * 1.6);
-      margin-top: calc(var(--u) * 0.3);
+    .r80-table thead th {
+      padding: calc(var(--u) * 0.65) 0;
+      border-top: 1px solid #000000;
+      border-bottom: 1px solid #000000;
       font-size: calc(var(--u) * 3.15);
-      font-weight: 400;
+      font-weight: 700;
       color: #000000;
+      white-space: nowrap;
+    }
+    .r80-th-l { text-align: left; padding-right: calc(var(--u) * 0.5); }
+    .r80-th-c { text-align: center; }
+    .r80-th-r { text-align: right; padding-left: calc(var(--u) * 0.4); }
+    .r80-main-tr td {
+      padding-top: calc(var(--u) * 0.9);
+      padding-bottom: calc(var(--u) * 0.2);
+      vertical-align: top;
+      color: #000000;
+    }
+    .r80-sub-tr td {
+      padding-top: calc(var(--u) * 0.15);
+      padding-bottom: calc(var(--u) * 0.18);
+      vertical-align: top;
+      color: #000000;
+    }
+    .r80-item-sep td {
+      padding-bottom: calc(var(--u) * 0.8);
+      border-bottom: 1px dashed #000000;
+    }
+    .r80-td-name {
+      text-align: left;
+      font-weight: 700;
+      padding-right: calc(var(--u) * 0.5);
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .r80-td-sub {
+      text-align: left;
+      font-size: calc(var(--u) * 3.0);
+      font-weight: 400;
+      padding-left: calc(var(--u) * 1.1);
+      padding-right: calc(var(--u) * 0.5);
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .r80-td-c {
+      text-align: center;
+      white-space: nowrap;
+    }
+    .r80-td-r {
+      text-align: right;
+      white-space: nowrap;
+      padding-left: calc(var(--u) * 0.4);
+    }
+    .r80-sub-num {
+      font-size: calc(var(--u) * 3.0);
     }
     .r80-nowrap { white-space: nowrap; flex-shrink: 0; }
     .r80-bold { font-weight: 700; }
+    .r80-totals {
+      margin-top: calc(var(--u) * 1.0);
+      padding-top: calc(var(--u) * 0.8);
+      border-top: 1px solid #000000;
+    }
     .r80-tot {
       display: flex;
       justify-content: space-between;
@@ -655,17 +712,15 @@ export function build80mmReceiptHtml(
       justify-content: space-between;
       align-items: baseline;
       gap: calc(var(--u) * 1.8);
-      padding: calc(var(--u) * 1.2) 0 calc(var(--u) * 0.6);
-      margin-top: calc(var(--u) * 0.8);
+      padding: calc(var(--u) * 1.1) 0 calc(var(--u) * 0.4);
+      margin-top: calc(var(--u) * 0.7);
       border-top: 1.5px solid #000000;
       font-size: calc(var(--u) * 4.15);
       font-weight: 700;
       color: #000000;
     }
     .r80-pay-section {
-      margin-top: calc(var(--u) * 1.2);
-      padding-top: calc(var(--u) * 1.1);
-      border-top: 1px dashed #000000;
+      margin-top: calc(var(--u) * 1.8);
       background: #ffffff !important;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -708,22 +763,10 @@ export function build80mmReceiptHtml(
       font-weight: 400;
       color: #000000;
     }
-    .r80-pay-amount {
-      margin-top: calc(var(--u) * 0.35);
-      font-size: calc(var(--u) * 2.95);
-      font-weight: 700;
-      color: #000000;
-    }
-    .r80-qr-amount {
-      font-size: calc(var(--u) * 3.5);
-      font-weight: 700;
-      margin-top: calc(var(--u) * 0.7);
-      color: #000000;
-    }
     .r80-bank {
-      margin-top: calc(var(--u) * 1.1);
+      margin-top: calc(var(--u) * 1.4);
       padding: calc(var(--u) * 1.0) calc(var(--u) * 1.4);
-      border: 1px dashed #000000;
+      border: 1px solid #000000;
       border-radius: 3px;
       background: #ffffff !important;
       font-size: calc(var(--u) * 2.85);
@@ -745,10 +788,8 @@ export function build80mmReceiptHtml(
     }
     .r80-footer {
       text-align: center;
-      margin-top: calc(var(--u) * 1.2);
-      padding-top: calc(var(--u) * 1.0);
+      margin-top: calc(var(--u) * 2.0);
       padding-bottom: calc(var(--u) * 1.2);
-      border-top: 1px dashed #000000;
       font-size: calc(var(--u) * 2.85);
       font-weight: 400;
       font-style: normal;
@@ -765,31 +806,47 @@ export function build80mmReceiptHtml(
       ${address ? `<div class="r80-muted">${address}</div>` : ''}
       ${phone ? `<div class="r80-muted">ĐT: ${phone}</div>` : ''}
       <div class="r80-title">${title}</div>
+      <div class="r80-order-no">${escapeHtml(order.orderNumber)}</div>
     </div>
 
-    <div class="r80-meta"><span>Số HĐ:</span><strong>${escapeHtml(order.orderNumber)}</strong></div>
     <div class="r80-meta"><span>Thời gian:</span><span>${escapeHtml(order.displayTime)}</span></div>
     <div class="r80-meta"><span>Khách hàng:</span><span>${escapeHtml(order.customerName || 'Khách lẻ')}</span></div>
     <div class="r80-meta"><span>Thanh toán:</span><span>${escapeHtml(isProvisional ? 'Chưa thanh toán' : getPaymentMethodLabel(order.paymentMethod))}</span></div>
 
-    <div class="r80-divider"></div>
+    <table class="r80-table">
+      <colgroup>
+        <col style="width: 40%" />
+        <col style="width: 10%" />
+        <col style="width: 23%" />
+        <col style="width: 27%" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="r80-th-l">Tên món</th>
+          <th class="r80-th-c">SL</th>
+          <th class="r80-th-r">Đơn giá</th>
+          <th class="r80-th-r">Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+    </table>
 
-    <div>${itemsHtml}</div>
-
-    <div class="r80-divider"></div>
-
-    <div class="r80-tot"><span>Tạm tính (${totalQty} món):</span><span class="r80-bold">${escapeHtml(formatVND(order.subtotal))}</span></div>
-    ${
-      order.discountAmount > 0
-        ? `<div class="r80-tot"><span>Chiết khấu${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
-        : ''
-    }
-    ${
-      order.vatRate > 0
-        ? `<div class="r80-tot"><span>Thuế VAT (${order.vatRate}%):</span><span>${escapeHtml(formatVND(order.vatAmount))}</span></div>`
-        : ''
-    }
-    <div class="r80-grand"><span>TỔNG CỘNG:</span><span>${escapeHtml(formatVND(order.total))}</span></div>
+    <div class="r80-totals">
+      <div class="r80-tot"><span>Tạm tính (${totalQty} món):</span><span class="r80-bold">${escapeHtml(formatVND(order.subtotal))}</span></div>
+      ${
+        order.discountAmount > 0
+          ? `<div class="r80-tot"><span>Chiết khấu${order.discountType === 'percent' ? ` (${order.discountValue}%)` : ''}:</span><span>-${escapeHtml(formatVND(order.discountAmount))}</span></div>`
+          : ''
+      }
+      ${
+        order.vatRate > 0
+          ? `<div class="r80-tot"><span>Thuế VAT (${order.vatRate}%):</span><span>${escapeHtml(formatVND(order.vatAmount))}</span></div>`
+          : ''
+      }
+      <div class="r80-grand"><span>TỔNG CỘNG:</span><span>${escapeHtml(formatVND(order.total))}</span></div>
+    </div>
 
     ${order.note ? `<div class="r80-note"><strong>Ghi chú:</strong> ${escapeHtml(order.note)}</div>` : ''}
     ${wifiInfo ? `<div class="r80-note">Wi-Fi: ${wifiInfo}</div>` : ''}
