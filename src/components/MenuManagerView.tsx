@@ -2,13 +2,7 @@ import { useMemo, useState } from 'react';
 import { Plus, Minus, Search, Pencil, Trash2, X, Check, Layers, Power } from 'lucide-react';
 import { deleteDoc, doc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db, OperationType, reportFirestoreError } from '../lib/firebase';
-import {
-  formatDotNumber,
-  formatVND,
-  generateDocId,
-  parseDotNumber,
-  resolveAssetUrl,
-} from '../lib/format';
+import { formatDotNumber, formatVND, generateDocId, parseDotNumber, resolveAssetUrl } from '../lib/format';
 import {
   clampNumber,
   ComboSelectionRule,
@@ -227,7 +221,10 @@ export function MenuManagerView({
     }
     setForm((prev) => ({
       ...prev,
-      comboToppings: [...prev.comboToppings, { id: generateDocId('cbt'), name: cleanName }],
+      comboToppings: [
+        ...prev.comboToppings,
+        { id: generateDocId('cbt'), name: cleanName },
+      ],
     }));
     setCustomComboToppingName('');
   };
@@ -464,17 +461,17 @@ export function MenuManagerView({
   };
 
   return (
-    <div className="p-5 sm:p-6 max-w-[1440px] mx-auto space-y-6">
+    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
       {/* Sub-navigation: Món chính vs Topping */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 p-1 bg-zinc-200/75 rounded-xl">
+        <div className="inline-flex items-center gap-1 p-1 bg-slate-200/75 rounded-lg">
           <button
             type="button"
             onClick={() => setActiveSubTab('items')}
-            className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
+            className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors whitespace-nowrap ${
               activeSubTab === 'items'
-                ? 'bg-white text-zinc-950 shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Món chính ({summary.total})
@@ -482,10 +479,10 @@ export function MenuManagerView({
           <button
             type="button"
             onClick={() => setActiveSubTab('toppings')}
-            className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
+            className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors whitespace-nowrap ${
               activeSubTab === 'toppings'
-                ? 'bg-white text-zinc-950 shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Topping ({summary.toppingsTotal})
@@ -503,12 +500,12 @@ export function MenuManagerView({
           }}
           className={`bg-white border rounded-xl p-4 text-left transition-colors ${
             activeSubTab === 'items' && statusFilter === 'all'
-              ? 'border-zinc-400 ring-1 ring-zinc-300'
-              : 'border-zinc-200 hover:border-zinc-300'
+              ? 'border-slate-400 ring-1 ring-slate-300'
+              : 'border-slate-200 hover:border-slate-300'
           }`}
         >
-          <div className="text-xs font-medium text-zinc-500">Tổng số món</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+          <div className="text-xs text-slate-500">Tổng số món</div>
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
             {summary.total}
           </div>
         </button>
@@ -520,12 +517,12 @@ export function MenuManagerView({
           }}
           className={`bg-white border rounded-xl p-4 text-left transition-colors ${
             activeSubTab === 'items' && statusFilter === 'active'
-              ? 'border-emerald-600 ring-1 ring-emerald-500/30'
-              : 'border-zinc-200 hover:border-emerald-300'
+              ? 'border-cyan-500 ring-1 ring-cyan-400'
+              : 'border-slate-200 hover:border-cyan-300'
           }`}
         >
-          <div className="text-xs font-medium text-zinc-500">Đang bật bán</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+          <div className="text-xs text-slate-500">Đang bật bán</div>
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-600">
             {summary.active}
           </div>
         </button>
@@ -537,12 +534,12 @@ export function MenuManagerView({
           }}
           className={`bg-white border rounded-xl p-4 text-left transition-colors ${
             activeSubTab === 'items' && statusFilter === 'inactive'
-              ? 'border-amber-500 ring-1 ring-amber-400/40'
-              : 'border-zinc-200 hover:border-amber-300'
+              ? 'border-amber-500 ring-1 ring-amber-400'
+              : 'border-slate-200 hover:border-amber-300'
           }`}
         >
-          <div className="text-xs font-medium text-zinc-500">Đang tắt món</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-amber-600">
+          <div className="text-xs text-slate-500">Đang tắt món</div>
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-amber-600">
             {summary.outOfStock}
           </div>
         </button>
@@ -551,12 +548,12 @@ export function MenuManagerView({
           onClick={() => setActiveSubTab('toppings')}
           className={`bg-white border rounded-xl p-4 text-left transition-colors ${
             activeSubTab === 'toppings'
-              ? 'border-zinc-400 ring-1 ring-zinc-300'
-              : 'border-zinc-200 hover:border-zinc-300'
+              ? 'border-slate-400 ring-1 ring-slate-300'
+              : 'border-slate-200 hover:border-slate-300'
           }`}
         >
-          <div className="text-xs font-medium text-zinc-500">Danh mục Topping</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+          <div className="text-xs text-slate-500">Danh mục Topping</div>
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
             {summary.toppingsTotal}
           </div>
         </button>
@@ -565,277 +562,274 @@ export function MenuManagerView({
       {activeSubTab === 'items' ? (
         <>
           {/* Controls Toolbar */}
-          <div className="space-y-3">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
-                <div className="relative flex-1 max-w-xs">
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tìm món hoặc mã SKU..."
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-700"
-                  />
-                </div>
-
-                {/* Status filter: All / Enabled / Disabled */}
-                <div className="inline-flex items-center gap-1 p-1 bg-zinc-200/75 rounded-xl shrink-0">
-                  {(
-                    [
-                      { id: 'all', label: 'Tất cả' },
-                      { id: 'active', label: `Đang bật (${summary.active})` },
-                      { id: 'inactive', label: `Đã tắt (${summary.outOfStock})` },
-                    ] as const
-                  ).map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setStatusFilter(opt.id)}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
-                        statusFilter === opt.id
-                          ? 'bg-white text-zinc-950 shadow-xs'
-                          : 'text-zinc-600 hover:text-zinc-900'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                {summary.outOfStock > 0 && (
-                  <button
-                    type="button"
-                    disabled={enablingAll}
-                    onClick={handleEnableAllItems}
-                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap shrink-0"
-                  >
-                    <Power className="w-3.5 h-3.5" />
-                    {enablingAll ? 'Đang bật...' : `Bật lại tất cả (${summary.outOfStock})`}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={openCreateComboModal}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors whitespace-nowrap shrink-0"
-                >
-                  <Layers className="w-4 h-4" />
-                  Tạo Combo
-                </button>
-                <button
-                  type="button"
-                  onClick={openCreateModal}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors whitespace-nowrap shrink-0"
-                >
-                  <Plus className="w-4 h-4" />
-                  Thêm món mới
-                </button>
-              </div>
+      <div className="space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm món hoặc mã SKU..."
+                className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
+              />
             </div>
 
-            <div className="flex items-center gap-1 p-1 bg-zinc-200/75 rounded-xl overflow-x-auto w-fit max-w-full">
-              {(['Tất cả', ...MENU_CATEGORIES] as const).map((cat) => (
+            {/* Status filter: All / Enabled / Disabled */}
+            <div className="inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg shrink-0">
+              {(
+                [
+                  { id: 'all', label: 'Tất cả' },
+                  { id: 'active', label: `Đang bật (${summary.active})` },
+                  { id: 'inactive', label: `Đã tắt (${summary.outOfStock})` },
+                ] as const
+              ).map((opt) => (
                 <button
-                  key={cat}
+                  key={opt.id}
                   type="button"
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
-                    categoryFilter === cat
-                      ? 'bg-white text-zinc-950 shadow-xs'
-                      : 'text-zinc-600 hover:text-zinc-900'
+                  onClick={() => setStatusFilter(opt.id)}
+                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors ${
+                    statusFilter === opt.id
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {cat}
+                  {opt.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Data Table */}
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-600">
-                    <th className="py-3 px-4 w-12 text-center">STT</th>
-                    <th className="py-3 px-4">Món hàng</th>
-                    <th className="py-3 px-4">Mã SKU</th>
-                    <th className="py-3 px-4">Danh mục</th>
-                    <th className="py-3 px-4 text-right">Giá bán</th>
-                    <th className="py-3 px-4">Trạng thái</th>
-                    <th className="py-3 px-4 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 text-sm">
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-sm text-zinc-500">
-                        Chưa có món nào phù hợp. Nhấn "Thêm món mới" để bổ sung thực đơn.
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {summary.outOfStock > 0 && (
+              <button
+                type="button"
+                disabled={enablingAll}
+                onClick={handleEnableAllItems}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap shrink-0"
+              >
+                <Power className="w-3.5 h-3.5" />
+                {enablingAll ? 'Đang bật...' : `Bật lại tất cả (${summary.outOfStock})`}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={openCreateComboModal}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              <Layers className="w-4 h-4" />
+              Tạo Combo
+            </button>
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              Thêm món mới
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg overflow-x-auto w-fit max-w-full">
+          {(['Tất cả', ...MENU_CATEGORIES] as const).map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
+                categoryFilter === cat
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Data Table */}
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-600">
+                <th className="py-3 px-4 w-12 text-center">STT</th>
+                <th className="py-3 px-4">Món hàng</th>
+                <th className="py-3 px-4">Mã SKU</th>
+                <th className="py-3 px-4">Danh mục</th>
+                <th className="py-3 px-4 text-right">Giá bán</th>
+                <th className="py-3 px-4">Trạng thái</th>
+                <th className="py-3 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-sm text-slate-500">
+                    Chưa có món nào phù hợp. Nhấn "Thêm món mới" để bổ sung thực đơn.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((item, idx) => (
+                    <tr
+                      key={item.id}
+                      className={`hover:bg-slate-50/70 transition-colors ${
+                        !item.available ? 'bg-slate-50/80' : ''
+                      }`}
+                    >
+                      <td className="py-2.5 px-4 text-center tabular-nums text-xs text-slate-500">
+                        {idx + 1}
                       </td>
-                    </tr>
-                  ) : (
-                    filtered.map((item, idx) => (
-                      <tr
-                        key={item.id}
-                        className={`hover:bg-zinc-50/80 transition-colors ${
-                          !item.available ? 'bg-zinc-50/70' : ''
-                        }`}
-                      >
-                        <td className="py-2.5 px-4 text-center font-mono tabular-nums text-xs text-zinc-500">
-                          {idx + 1}
-                        </td>
-                        <td className="py-2.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-9 rounded-lg overflow-hidden border border-zinc-200 shrink-0">
-                              <MenuThumbnail
-                                src={item.imageUrl}
-                                alt={item.name}
-                                category={item.category}
-                                className={`w-full h-full ${!item.available ? 'grayscale opacity-50' : ''}`}
-                              />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span
-                                  className={`font-semibold ${
-                                    item.available ? 'text-zinc-950' : 'text-zinc-400 line-through'
-                                  }`}
-                                >
-                                  {item.name}
-                                </span>
-                                {item.isCombo &&
-                                  (() => {
-                                    const rule =
-                                      item.comboRule ??
-                                      ((item.comboMaxToppings ?? 0) > 0 ? 'max' : 'all');
-                                    const limit = item.comboMaxToppings ?? 0;
-                                    const badgeText =
-                                      rule === 'exact' && limit > 0
-                                        ? `Combo · Phải chọn ${limit}`
-                                        : rule === 'max' && limit > 0
-                                          ? `Combo · Tối đa ${limit}`
-                                          : 'Combo';
-                                    return (
-                                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-300 rounded">
-                                        {badgeText}
-                                      </span>
-                                    );
-                                  })()}
-                              </div>
-                              <div className="text-xs text-zinc-500">ĐVT: {item.unit}</div>
-                              {item.isCombo &&
-                                item.comboToppings &&
-                                item.comboToppings.length > 0 && (
-                                  <div className="text-[11px] text-emerald-700 mt-0.5">
-                                    {item.comboToppings.map((ct) => `+ ${ct.name}`).join(' · ')}
-                                  </div>
-                                )}
-                            </div>
+                      <td className="py-2.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-9 rounded-md overflow-hidden border border-slate-200 shrink-0">
+                            <MenuThumbnail
+                              src={item.imageUrl}
+                              alt={item.name}
+                              category={item.category}
+                              className={`w-full h-full ${!item.available ? 'grayscale opacity-50' : ''}`}
+                            />
                           </div>
-                        </td>
-                        <td className="py-2.5 px-4 font-mono tabular-nums text-xs text-zinc-600">
-                          {item.sku}
-                        </td>
-                        <td className="py-2.5 px-4 text-xs text-zinc-600">{item.category}</td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-zinc-950">
-                          {formatVND(item.price)}
-                        </td>
-                        <td className="py-2.5 px-4">
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={item.available}
-                            onClick={() => handleToggleAvailable(item)}
-                            title={item.available ? 'Nhấn để tắt món' : 'Nhấn để bật món'}
-                            className="inline-flex items-center gap-2 whitespace-nowrap group"
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span
+                                className={`font-semibold ${
+                                  item.available ? 'text-slate-900' : 'text-slate-400 line-through'
+                                }`}
+                              >
+                                {item.name}
+                              </span>
+                              {item.isCombo && (() => {
+                                const rule =
+                                  item.comboRule ??
+                                  ((item.comboMaxToppings ?? 0) > 0 ? 'max' : 'all');
+                                const limit = item.comboMaxToppings ?? 0;
+                                const badgeText =
+                                  rule === 'exact' && limit > 0
+                                    ? `Combo · Phải chọn ${limit}`
+                                    : rule === 'max' && limit > 0
+                                      ? `Combo · Tối đa ${limit}`
+                                      : 'Combo';
+                                return (
+                                  <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-200 rounded">
+                                    {badgeText}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            <div className="text-xs text-slate-500">ĐVT: {item.unit}</div>
+                            {item.isCombo && item.comboToppings && item.comboToppings.length > 0 && (
+                              <div className="text-[11px] text-cyan-700 mt-0.5">
+                                {item.comboToppings.map((ct) => `+ ${ct.name}`).join(' · ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-4 tabular-nums text-xs text-slate-600">
+                        {item.sku}
+                      </td>
+                      <td className="py-2.5 px-4 text-xs text-slate-600">{item.category}</td>
+                      <td className="py-2.5 px-4 text-right tabular-nums font-semibold text-slate-900">
+                        {formatVND(item.price)}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={item.available}
+                          onClick={() => handleToggleAvailable(item)}
+                          title={item.available ? 'Nhấn để tắt món' : 'Nhấn để bật món'}
+                          className="inline-flex items-center gap-2 whitespace-nowrap group"
+                        >
+                          <span
+                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                              item.available ? 'bg-cyan-600' : 'bg-slate-300'
+                            }`}
                           >
                             <span
-                              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                                item.available ? 'bg-emerald-600' : 'bg-zinc-300'
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform ${
+                                item.available ? 'translate-x-4.5' : 'translate-x-1'
                               }`}
+                            />
+                          </span>
+                          <span
+                            className={`text-xs font-semibold ${
+                              item.available ? 'text-cyan-700' : 'text-amber-700'
+                            }`}
+                          >
+                            {item.available ? 'Đang bật' : 'Đã tắt'}
+                          </span>
+                        </button>
+                      </td>
+                      <td className="py-2.5 px-4 text-right">
+                        {confirmDeleteId === item.id ? (
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(item)}
+                              className="px-2.5 py-1 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md"
                             >
-                              <span
-                                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform ${
-                                  item.available ? 'translate-x-4.5' : 'translate-x-1'
-                                }`}
-                              />
-                            </span>
-                            <span
-                              className={`text-xs font-semibold ${
-                                item.available ? 'text-emerald-700' : 'text-amber-700'
-                              }`}
+                              Xác nhận xóa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900"
                             >
-                              {item.available ? 'Đang bật' : 'Đã tắt'}
-                            </span>
-                          </button>
-                        </td>
-                        <td className="py-2.5 px-4 text-right">
-                          {confirmDeleteId === item.id ? (
-                            <div className="inline-flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(item)}
-                                className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg whitespace-nowrap"
-                              >
-                                Xác nhận xóa
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDeleteId(null)}
-                                className="px-2 py-1 text-xs font-medium text-zinc-600 hover:text-zinc-900"
-                              >
-                                Hủy
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="inline-flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => openEditModal(item)}
-                                className="p-1.5 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                                title="Chỉnh sửa món"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDeleteId(item.id)}
-                                className="p-1.5 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                title="Xóa món"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                              Hủy
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(item)}
+                              className="p-1.5 text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 rounded-md transition-colors"
+                              title="Chỉnh sửa món"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(item.id)}
+                              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                              title="Xóa món"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
         </>
       ) : (
         <>
           {/* Toppings Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-xs">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={toppingSearch}
                 onChange={(e) => setToppingSearch(e.target.value)}
                 placeholder="Tìm tên topping..."
-                className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-700"
+                className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
               />
             </div>
             <button
               type="button"
               onClick={openCreateToppingModal}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors whitespace-nowrap shrink-0"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
             >
               <Plus className="w-4 h-4" />
               Thêm topping mới
@@ -843,11 +837,11 @@ export function MenuManagerView({
           </div>
 
           {/* Toppings Table */}
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-600">
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-600">
                     <th className="py-3 px-4 w-12 text-center">STT</th>
                     <th className="py-3 px-4">Tên topping</th>
                     <th className="py-3 px-4 text-right">Giá thêm</th>
@@ -855,10 +849,10 @@ export function MenuManagerView({
                     <th className="py-3 px-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 text-sm">
+                <tbody className="divide-y divide-slate-100 text-sm">
                   {filteredToppings.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-sm text-zinc-500">
+                      <td colSpan={5} className="py-12 text-center text-sm text-slate-500">
                         Chưa có topping nào. Nhấn "Thêm topping mới" để tạo danh sách topping (VD:
                         Trân châu trắng, Kem cheese, Thạch dừa, Espresso shot...).
                       </td>
@@ -867,21 +861,21 @@ export function MenuManagerView({
                     filteredToppings.map((tp, idx) => (
                       <tr
                         key={tp.id}
-                        className={`hover:bg-zinc-50/80 transition-colors ${
-                          !tp.available ? 'bg-zinc-50/70' : ''
+                        className={`hover:bg-slate-50/70 transition-colors ${
+                          !tp.available ? 'bg-slate-50/80' : ''
                         }`}
                       >
-                        <td className="py-2.5 px-4 text-center font-mono tabular-nums text-xs text-zinc-500">
+                        <td className="py-2.5 px-4 text-center tabular-nums text-xs text-slate-500">
                           {idx + 1}
                         </td>
                         <td
                           className={`py-2.5 px-4 font-semibold ${
-                            tp.available ? 'text-zinc-950' : 'text-zinc-400 line-through'
+                            tp.available ? 'text-slate-900' : 'text-slate-400 line-through'
                           }`}
                         >
                           {tp.name}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-emerald-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums font-semibold text-cyan-700">
                           +{formatVND(tp.price)}
                         </td>
                         <td className="py-2.5 px-4">
@@ -895,7 +889,7 @@ export function MenuManagerView({
                           >
                             <span
                               className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                                tp.available ? 'bg-emerald-600' : 'bg-zinc-300'
+                                tp.available ? 'bg-cyan-600' : 'bg-slate-300'
                               }`}
                             >
                               <span
@@ -906,7 +900,7 @@ export function MenuManagerView({
                             </span>
                             <span
                               className={`text-xs font-semibold ${
-                                tp.available ? 'text-emerald-700' : 'text-amber-700'
+                                tp.available ? 'text-cyan-700' : 'text-amber-700'
                               }`}
                             >
                               {tp.available ? 'Đang bật' : 'Đã tắt'}
@@ -919,14 +913,14 @@ export function MenuManagerView({
                               <button
                                 type="button"
                                 onClick={() => handleDeleteTopping(tp)}
-                                className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg whitespace-nowrap"
+                                className="px-2.5 py-1 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md"
                               >
                                 Xác nhận xóa
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteToppingId(null)}
-                                className="px-2 py-1 text-xs font-medium text-zinc-600 hover:text-zinc-900"
+                                className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900"
                               >
                                 Hủy
                               </button>
@@ -936,7 +930,7 @@ export function MenuManagerView({
                               <button
                                 type="button"
                                 onClick={() => openEditToppingModal(tp)}
-                                className="p-1.5 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 rounded-md transition-colors"
                                 title="Chỉnh sửa topping"
                               >
                                 <Pencil className="w-4 h-4" />
@@ -944,7 +938,7 @@ export function MenuManagerView({
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteToppingId(tp.id)}
-                                className="p-1.5 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                 title="Xóa topping"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -965,16 +959,16 @@ export function MenuManagerView({
       {/* Add / Edit Menu Item Modal */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-zinc-950/45 backdrop-blur-[1px] flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/45 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
         >
           <form
             onSubmit={handleSave}
-            className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+            className="bg-white border border-slate-200 rounded-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
           >
-            <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-950">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
                 {form.id
                   ? form.isCombo
                     ? 'Chỉnh sửa Combo'
@@ -986,7 +980,7 @@ export function MenuManagerView({
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100"
+                className="p-1 text-slate-400 hover:text-slate-700"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -995,8 +989,8 @@ export function MenuManagerView({
             <div className="p-5 overflow-y-auto pos-scroll space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                    Tên món <span className="text-rose-600">*</span>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Tên món <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -1006,12 +1000,12 @@ export function MenuManagerView({
                       setForm((f) => ({ ...f, name: e.target.value.slice(0, LIMITS.ITEM_NAME_MAX) }))
                     }
                     placeholder="VD: Trà đào cam sả"
-                    className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                    Mã SKU <span className="text-rose-600">*</span>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Mã SKU <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -1024,22 +1018,20 @@ export function MenuManagerView({
                       }))
                     }
                     placeholder="SB13"
-                    className="w-full px-3 py-2 text-sm font-mono bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                    Danh mục
-                  </label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Danh mục</label>
                   <select
                     value={form.category}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, category: e.target.value as MenuCategory }))
                     }
-                    className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-cyan-600"
                   >
                     {MENU_CATEGORIES.map((c) => (
                       <option key={c} value={c}>
@@ -1049,7 +1041,7 @@ export function MenuManagerView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Đơn vị tính
                   </label>
                   <input
@@ -1060,14 +1052,14 @@ export function MenuManagerView({
                       setForm((f) => ({ ...f, unit: e.target.value.slice(0, LIMITS.UNIT_MAX) }))
                     }
                     placeholder="Ly / Trái / Chai / Bình"
-                    className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                  Giá bán (VNĐ) <span className="text-rose-600">*</span>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Giá bán (VNĐ) <span className="text-red-600">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1079,16 +1071,16 @@ export function MenuManagerView({
                       setForm((f) => ({ ...f, price: formatDotNumber(e.target.value) }))
                     }
                     placeholder="35.000"
-                    className="w-full pl-3 pr-9 py-2 text-sm font-bold font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full pl-3 pr-9 py-2 text-sm font-semibold tabular-nums border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 pointer-events-none">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
                     ₫
                   </span>
                 </div>
               </div>
 
               {/* Combo Mode Toggle & Clean Topping Rule Builder */}
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-3.5 space-y-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
                 <label className="flex items-center gap-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -1102,21 +1094,21 @@ export function MenuManagerView({
                         unit: checked && f.unit === 'Ly' ? 'Combo' : f.unit,
                       }));
                     }}
-                    className="w-4 h-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-600 accent-emerald-700"
+                    className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                   />
-                  <span className="text-xs font-bold text-zinc-900">
+                  <span className="text-xs font-bold text-slate-900">
                     Món Combo (kèm topping miễn phí 0 ₫)
                   </span>
                 </label>
 
                 {form.isCombo && (
-                  <div className="space-y-3 pt-3 border-t border-zinc-200">
+                  <div className="space-y-3 pt-3 border-t border-slate-200">
                     {/* 1. Clean 3-Mode Rule Switcher */}
                     <div className="space-y-2">
-                      <div className="text-xs font-semibold text-zinc-700">
+                      <div className="text-xs font-semibold text-slate-700">
                         Quy tắc chọn topping
                       </div>
-                      <div className="grid grid-cols-3 gap-1 p-1 bg-zinc-200/75 rounded-xl">
+                      <div className="grid grid-cols-3 gap-1 p-1 bg-slate-200/75 rounded-lg">
                         {(
                           [
                             { id: 'all', label: 'Chọn sẵn tất cả' },
@@ -1141,10 +1133,10 @@ export function MenuManagerView({
                                         : 2,
                                 }))
                               }
-                              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition-colors text-center ${
+                              className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-colors text-center ${
                                 active
-                                  ? 'bg-white text-zinc-950 shadow-xs'
-                                  : 'text-zinc-600 hover:text-zinc-900'
+                                  ? 'bg-white text-slate-900 shadow-xs'
+                                  : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
                               {opt.label}
@@ -1156,18 +1148,18 @@ export function MenuManagerView({
                       {form.comboRule !== 'all' && (
                         <div className="flex items-center justify-between gap-3 pt-1">
                           <div>
-                            <div className="text-xs font-semibold text-zinc-800">
+                            <div className="text-xs font-medium text-slate-800">
                               {form.comboRule === 'exact'
                                 ? 'Số món kèm bắt buộc chọn'
                                 : 'Số món kèm tối đa được chọn'}
                             </div>
-                            <div className="text-[11px] text-zinc-500">
+                            <div className="text-[11px] text-slate-500">
                               {form.comboRule === 'exact'
                                 ? `Thu ngân phải chọn đúng ${form.comboMaxToppings || 1} món (0 ₫).`
                                 : `Thu ngân được chọn từ 1 đến ${form.comboMaxToppings || 1} món (0 ₫).`}
                             </div>
                           </div>
-                          <div className="inline-flex items-center bg-white border border-zinc-300 rounded-lg overflow-hidden shrink-0">
+                          <div className="inline-flex items-center bg-white border border-slate-300 rounded-md overflow-hidden shrink-0">
                             <button
                               type="button"
                               onClick={() =>
@@ -1176,7 +1168,7 @@ export function MenuManagerView({
                                   comboMaxToppings: Math.max(1, (f.comboMaxToppings || 1) - 1),
                                 }))
                               }
-                              className="w-8 h-8 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors"
+                              className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
                               aria-label="Giảm số lượng"
                             >
                               <Minus className="w-3.5 h-3.5" />
@@ -1197,7 +1189,7 @@ export function MenuManagerView({
                                 }))
                               }
                               aria-label="Số món kèm"
-                              className="w-11 h-8 text-xs font-bold font-mono tabular-nums text-center border-x border-zinc-200 focus:outline-none"
+                              className="w-11 h-8 text-xs font-bold tabular-nums text-center border-x border-slate-200 focus:outline-none"
                             />
                             <button
                               type="button"
@@ -1210,7 +1202,7 @@ export function MenuManagerView({
                                   ),
                                 }))
                               }
-                              className="w-8 h-8 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors"
+                              className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
                               aria-label="Tăng số lượng"
                             >
                               <Plus className="w-3.5 h-3.5" />
@@ -1221,12 +1213,12 @@ export function MenuManagerView({
                     </div>
 
                     {/* 2. Selected Combo Toppings */}
-                    <div className="space-y-2 pt-2 border-t border-zinc-200">
-                      <div className="flex items-center justify-between text-xs font-semibold text-zinc-700">
+                    <div className="space-y-2 pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                         <span>
                           Danh sách món kèm ({form.comboToppings.length}/{LIMITS.MAX_COMBO_TOPPINGS})
                         </span>
-                        <span className="text-[11px] font-mono font-medium text-zinc-500">0 ₫</span>
+                        <span className="text-[11px] font-medium text-slate-500">0 ₫</span>
                       </div>
 
                       {form.comboToppings.length > 0 ? (
@@ -1234,13 +1226,13 @@ export function MenuManagerView({
                           {form.comboToppings.map((ct) => (
                             <span
                               key={ct.id}
-                              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 text-xs font-semibold bg-white text-zinc-900 border border-amber-300 rounded-lg"
+                              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 text-xs font-semibold bg-white text-slate-900 border border-orange-300 rounded-md"
                             >
                               <span>+ {ct.name}</span>
                               <button
                                 type="button"
                                 onClick={() => toggleComboTopping(ct)}
-                                className="p-0.5 text-zinc-400 hover:text-rose-600 rounded"
+                                className="p-0.5 text-slate-400 hover:text-red-600 rounded"
                                 aria-label={`Xóa ${ct.name}`}
                               >
                                 <X className="w-3.5 h-3.5" />
@@ -1249,7 +1241,7 @@ export function MenuManagerView({
                           ))}
                         </div>
                       ) : (
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-xs text-slate-500">
                           Chưa có món kèm. Nhập tên bên dưới hoặc chọn nhanh từ danh sách.
                         </div>
                       )}
@@ -1271,12 +1263,12 @@ export function MenuManagerView({
                             }
                           }}
                           placeholder="Nhập tên món kèm (VD: Cơm sườn, Bì, Chả...)"
-                          className="flex-1 min-w-0 px-2.5 py-1.5 text-xs bg-white border border-zinc-300 rounded-lg focus:outline-none focus:border-emerald-700"
+                          className="flex-1 min-w-0 px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:border-cyan-600"
                         />
                         <button
                           type="button"
                           onClick={handleAddCustomComboTopping}
-                          className="px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg whitespace-nowrap"
+                          className="px-3 py-1.5 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-md whitespace-nowrap"
                         >
                           + Thêm
                         </button>
@@ -1284,14 +1276,14 @@ export function MenuManagerView({
 
                       {/* Source Switcher: Toppings vs Menu Items */}
                       <div className="space-y-1.5 pt-1">
-                        <div className="flex items-center gap-3 text-xs border-b border-zinc-200">
+                        <div className="flex items-center gap-3 text-xs border-b border-slate-200">
                           <button
                             type="button"
                             onClick={() => setComboPickerSource('toppings')}
                             className={`pb-1.5 font-semibold border-b-2 transition-colors ${
                               comboPickerSource === 'toppings'
-                                ? 'border-emerald-700 text-emerald-700'
-                                : 'border-transparent text-zinc-500 hover:text-zinc-900'
+                                ? 'border-orange-500 text-orange-700'
+                                : 'border-transparent text-slate-500 hover:text-slate-800'
                             }`}
                           >
                             Từ Topping ({toppings.length})
@@ -1301,18 +1293,17 @@ export function MenuManagerView({
                             onClick={() => setComboPickerSource('menu')}
                             className={`pb-1.5 font-semibold border-b-2 transition-colors ${
                               comboPickerSource === 'menu'
-                                ? 'border-emerald-700 text-emerald-700'
-                                : 'border-transparent text-zinc-500 hover:text-zinc-900'
+                                ? 'border-orange-500 text-orange-700'
+                                : 'border-transparent text-slate-500 hover:text-slate-800'
                             }`}
                           >
-                            Từ Món có sẵn (
-                            {menuItems.filter((m) => !m.isCombo && m.id !== form.id).length})
+                            Từ Món có sẵn ({menuItems.filter((m) => !m.isCombo && m.id !== form.id).length})
                           </button>
                         </div>
 
                         {comboPickerSource === 'toppings' ? (
                           toppings.length === 0 ? (
-                            <div className="text-[11px] text-zinc-500 py-1">
+                            <div className="text-[11px] text-slate-500 py-1">
                               Chưa có topping nào trong danh mục.
                             </div>
                           ) : (
@@ -1324,16 +1315,14 @@ export function MenuManagerView({
                                     key={tp.id}
                                     type="button"
                                     onClick={() => toggleComboTopping({ id: tp.id, name: tp.name })}
-                                    className={`px-2.5 py-1.5 rounded-lg border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${
+                                    className={`px-2.5 py-1.5 rounded-md border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${
                                       selected
-                                        ? 'bg-amber-50 border-amber-400 text-amber-950 font-semibold'
-                                        : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400'
+                                        ? 'bg-orange-50 border-orange-500 text-orange-950 font-semibold'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:border-slate-400'
                                     }`}
                                   >
                                     <span className="truncate">{tp.name}</span>
-                                    {selected && (
-                                      <Check className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                                    )}
+                                    {selected && <Check className="w-3.5 h-3.5 text-orange-600 shrink-0" />}
                                   </button>
                                 );
                               })}
@@ -1350,19 +1339,15 @@ export function MenuManagerView({
                                   <button
                                     key={mi.id}
                                     type="button"
-                                    onClick={() =>
-                                      toggleComboTopping({ id: comboId, name: mi.name })
-                                    }
-                                    className={`px-2.5 py-1.5 rounded-lg border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${
+                                    onClick={() => toggleComboTopping({ id: comboId, name: mi.name })}
+                                    className={`px-2.5 py-1.5 rounded-md border text-left text-xs font-medium flex items-center justify-between gap-1 transition-colors ${
                                       selected
-                                        ? 'bg-amber-50 border-amber-400 text-amber-950 font-semibold'
-                                        : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400'
+                                        ? 'bg-orange-50 border-orange-500 text-orange-950 font-semibold'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:border-slate-400'
                                     }`}
                                   >
                                     <span className="truncate">{mi.name}</span>
-                                    {selected && (
-                                      <Check className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                                    )}
+                                    {selected && <Check className="w-3.5 h-3.5 text-orange-600 shrink-0" />}
                                   </button>
                                 );
                               })}
@@ -1376,7 +1361,7 @@ export function MenuManagerView({
 
               {/* Studio Image Gallery Picker */}
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
                   Chọn ảnh minh họa có sẵn
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1389,10 +1374,10 @@ export function MenuManagerView({
                         onClick={() =>
                           setForm((f) => ({ ...f, imageUrl: selected ? '' : img.url }))
                         }
-                        className={`relative rounded-xl overflow-hidden border text-left transition-all ${
+                        className={`relative rounded-lg overflow-hidden border text-left transition-all ${
                           selected
-                            ? 'border-emerald-700 ring-2 ring-emerald-700/20'
-                            : 'border-zinc-200 hover:border-zinc-300'
+                            ? 'border-cyan-600 ring-2 ring-cyan-600/20'
+                            : 'border-slate-200 hover:border-slate-300'
                         }`}
                       >
                         <img
@@ -1402,11 +1387,11 @@ export function MenuManagerView({
                           className="w-full aspect-[4/3] object-cover"
                         />
                         {selected && (
-                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center">
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center">
                             <Check className="w-3 h-3" />
                           </div>
                         )}
-                        <div className="px-2 py-1 text-[11px] font-medium text-zinc-700 truncate bg-white">
+                        <div className="px-2 py-1 text-[11px] font-medium text-slate-700 truncate bg-white">
                           {img.label}
                         </div>
                       </button>
@@ -1416,7 +1401,7 @@ export function MenuManagerView({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Hoặc dán đường dẫn ảnh (URL)
                 </label>
                 <input
@@ -1429,7 +1414,7 @@ export function MenuManagerView({
                     }))
                   }
                   placeholder="Để trống để dùng ảnh mặc định theo danh mục"
-                  className="w-full px-3 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                 />
               </div>
 
@@ -1438,26 +1423,26 @@ export function MenuManagerView({
                   type="checkbox"
                   checked={form.available}
                   onChange={(e) => setForm((f) => ({ ...f, available: e.target.checked }))}
-                  className="w-4 h-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-600 accent-emerald-700"
+                  className="w-4 h-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-600"
                 />
-                <span className="text-xs font-medium text-zinc-700">
+                <span className="text-xs font-medium text-slate-700">
                   Mở bán ngay trên màn hình POS
                 </span>
               </label>
             </div>
 
-            <div className="px-5 py-3.5 border-t border-zinc-200 bg-zinc-50 flex justify-end gap-2">
+            <div className="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg"
+                className="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-lg"
               >
                 {saving ? 'Đang lưu...' : form.id ? 'Lưu thay đổi' : 'Thêm vào thực đơn'}
               </button>
@@ -1469,22 +1454,22 @@ export function MenuManagerView({
       {/* Add / Edit Topping Modal */}
       {toppingModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-zinc-950/45 backdrop-blur-[1px] flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/45 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
         >
           <form
             onSubmit={handleSaveTopping}
-            className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-hidden"
           >
-            <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-950">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
                 {toppingForm.id ? 'Chỉnh sửa topping' : 'Thêm topping mới'}
               </h3>
               <button
                 type="button"
                 onClick={() => setToppingModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100"
+                className="p-1 text-slate-400 hover:text-slate-700"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1492,8 +1477,8 @@ export function MenuManagerView({
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                  Tên topping <span className="text-rose-600">*</span>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Tên topping <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -1506,14 +1491,14 @@ export function MenuManagerView({
                     }))
                   }
                   placeholder="VD: Trân châu trắng, Kem cheese, Thạch dừa..."
-                  className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                  Giá bán thêm (VNĐ) <span className="text-rose-600">*</span>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Giá bán thêm (VNĐ) <span className="text-red-600">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1525,9 +1510,9 @@ export function MenuManagerView({
                       setToppingForm((f) => ({ ...f, price: formatDotNumber(e.target.value) }))
                     }
                     placeholder="10.000"
-                    className="w-full pl-3 pr-9 py-2 text-sm font-bold font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full pl-3 pr-9 py-2 text-sm font-semibold tabular-nums border border-slate-200 rounded-lg focus:outline-none focus:border-cyan-600"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 pointer-events-none">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
                     ₫
                   </span>
                 </div>
@@ -1540,26 +1525,26 @@ export function MenuManagerView({
                   onChange={(e) =>
                     setToppingForm((f) => ({ ...f, available: e.target.checked }))
                   }
-                  className="w-4 h-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-600 accent-emerald-700"
+                  className="w-4 h-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-600"
                 />
-                <span className="text-xs font-medium text-zinc-700">
+                <span className="text-xs font-medium text-slate-700">
                   Mở bán topping này tại quầy POS
                 </span>
               </label>
             </div>
 
-            <div className="px-5 py-3.5 border-t border-zinc-200 bg-zinc-50 flex justify-end gap-2">
+            <div className="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setToppingModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg"
+                className="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 disabled={savingTopping}
-                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-lg"
               >
                 {savingTopping ? 'Đang lưu...' : toppingForm.id ? 'Lưu thay đổi' : 'Thêm topping'}
               </button>

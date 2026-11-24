@@ -94,6 +94,7 @@ export function KasPaymentPanel({
     !(discountType === 'percent' && (discountValue === 10 || discountValue === 20));
   const isCustomDiscountActive = customDiscountOpen || hasCustomDiscount;
 
+  const uploadedQrUrl = settings?.qrImageUrl || '';
   const quickCashAmounts = [20000, 50000, 100000, 200000, 500000]
     .filter((amt) => amt > total)
     .slice(0, 4);
@@ -367,9 +368,9 @@ export function KasPaymentPanel({
           </div>
         )}
 
-        {/* Middle Payment Methods (Grouped on the right) */}
-        <div className="pt-2 border-t border-slate-200 flex justify-end">
-          <div className="w-full md:w-[min(100%,480px)] xl:w-[calc(50%-16px)] space-y-2.5">
+        {/* Middle Payment Methods + LARGE Store QR Preview */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start pt-2 border-t border-slate-200">
+          <div className={paymentMethod === 'transfer' ? 'xl:col-span-5 space-y-2.5' : 'xl:col-span-12 space-y-2.5'}>
             {(
               [
                 { id: 'cash', label: 'Tiền mặt', hint: 'Thanh toán tiền mặt tại quầy', icon: Banknote },
@@ -428,6 +429,54 @@ export function KasPaymentPanel({
               );
             })}
           </div>
+
+          {paymentMethod === 'transfer' && (
+            <div className="xl:col-span-7 rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col sm:flex-row items-center gap-4">
+              {uploadedQrUrl ? (
+                <img
+                  src={uploadedQrUrl}
+                  alt="Mã QR chuyển khoản của quán"
+                  className="w-44 h-44 object-contain rounded-lg bg-white border border-slate-200 p-2 shrink-0"
+                />
+              ) : (
+                <div className="w-40 h-40 rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-center p-3 shrink-0 gap-2">
+                  <QrCode className="w-8 h-8 text-slate-300" />
+                  <span className="text-xs text-slate-500">Chưa tải ảnh QR</span>
+                  <button
+                    type="button"
+                    onClick={onOpenSettings}
+                    className="text-xs font-bold text-cyan-700 hover:underline"
+                  >
+                    Cài đặt mã QR
+                  </button>
+                </div>
+              )}
+              <div className="flex-1 min-w-0 space-y-1.5 text-sm text-slate-700 text-center sm:text-left">
+                <div className="text-xs font-bold uppercase tracking-wide text-cyan-700">
+                  Thông tin chuyển khoản
+                </div>
+                {settings?.bankName && (
+                  <div>
+                    Ngân hàng: <strong className="text-slate-900">{settings.bankName}</strong>
+                  </div>
+                )}
+                {settings?.bankAccount && (
+                  <div>
+                    Số tài khoản:{' '}
+                    <strong className="text-slate-900 tabular-nums">{settings.bankAccount}</strong>
+                  </div>
+                )}
+                {settings?.bankOwner && (
+                  <div>
+                    Chủ tài khoản: <strong className="text-slate-900">{settings.bankOwner}</strong>
+                  </div>
+                )}
+                <div className="pt-1 text-base font-extrabold text-[#0a2268] tabular-nums">
+                  Cần thanh toán: {formatVND(total)}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bottom Cashier / Customer Picker / Order Note Strip */}

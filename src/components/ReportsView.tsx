@@ -633,11 +633,11 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
   };
 
   return (
-    <div className="print-report-root p-5 sm:p-6 max-w-[1440px] mx-auto space-y-6">
+    <div className="print-report-root p-6 max-w-[1400px] mx-auto space-y-6">
       {/* Header & Mode Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 p-1 bg-zinc-200/75 rounded-xl no-print">
+          <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg no-print">
             {(
               [
                 { id: 'daily', label: 'Báo cáo ngày' },
@@ -649,10 +649,10 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                 key={tab.id}
                 type="button"
                 onClick={() => setMode(tab.id)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors ${
                   mode === tab.id
-                    ? 'bg-white text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 hover:text-zinc-900'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {tab.label}
@@ -665,7 +665,7 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 text-xs font-mono tabular-nums border border-zinc-200 rounded-lg bg-white focus:outline-none focus:border-emerald-700 no-print"
+              className="px-3 py-1.5 text-xs tabular-nums border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-cyan-600 no-print"
             />
           )}
 
@@ -674,7 +674,7 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-1.5 text-xs font-mono tabular-nums border border-zinc-200 rounded-lg bg-white focus:outline-none focus:border-emerald-700 no-print"
+              className="px-3 py-1.5 text-xs tabular-nums border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-cyan-600 no-print"
             />
           )}
         </div>
@@ -683,16 +683,16 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
           <button
             type="button"
             onClick={handleExportExcel}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-lg transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-700" />
             Xuất Excel
           </button>
           <button
             type="button"
             onClick={handlePrintReport}
             disabled={printing}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 rounded-lg transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 rounded-lg transition-colors whitespace-nowrap"
           >
             <Printer className="w-3.5 h-3.5" />
             {printing ? 'Đang mở cửa sổ in...' : 'In báo cáo'}
@@ -701,7 +701,7 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
       </div>
 
       {printFallbackHint && (
-        <div className="no-print bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-950">
+        <div className="no-print bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-cyan-900">
           <span>
             Trình duyệt đang chặn cửa sổ in trong khung xem trước. Bạn có thể tải nhanh file báo cáo
             về và mở để hộp thoại in bật tự động.
@@ -709,7 +709,7 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
           <button
             type="button"
             onClick={handleDownloadPrintableReport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5" />
             Tải file in (.html)
@@ -718,9 +718,9 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
       )}
 
       {/* Print-only Header */}
-      <div className="hidden print:block pb-3 border-b border-zinc-300">
+      <div className="hidden print:block pb-3 border-b border-slate-300">
         <div className="text-lg font-bold">{storeName}</div>
-        <div className="text-sm text-zinc-600">
+        <div className="text-sm text-slate-600">
           {mode === 'daily' && `Báo cáo doanh thu ngày ${formatDateVN(selectedDate)}`}
           {mode === 'monthly' && `Báo cáo doanh thu ${formatMonthVN(selectedMonth)}`}
           {mode === 'summary' && 'Báo cáo tổng hợp kinh doanh'}
@@ -731,29 +731,29 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
       {mode === 'daily' && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">
                 Doanh thu ngày {formatDateVN(selectedDate)}
               </div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-700">
                 {formatVND(dailyData.revenue)}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Số hóa đơn hoàn thành</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Số hóa đơn hoàn thành</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
                 {dailyData.orders.length}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Giá trị TB / hóa đơn</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Giá trị TB / hóa đơn</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
                 {formatVND(dailyData.avgOrder)}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Tổng số món đã bán</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Tổng số món đã bán</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-600">
                 {dailyData.totalItemsSold}
               </div>
             </div>
@@ -761,26 +761,26 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Hourly Revenue Chart */}
-            <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-xl p-5">
+            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-zinc-950">
+                <h3 className="text-sm font-semibold text-slate-900">
                   Doanh thu theo khung giờ ({formatDateVN(selectedDate)})
                 </h3>
-                <span className="text-xs text-zinc-500">Đơn vị: VNĐ</span>
+                <span className="text-xs text-slate-500">Đơn vị: VNĐ</span>
               </div>
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dailyData.hourly} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                     <XAxis
                       dataKey="hour"
-                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatShortVND}
-                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       axisLine={false}
                       tickLine={false}
                       width={48}
@@ -788,41 +788,33 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     <Tooltip
                       formatter={(val) => [formatVND(Number(val ?? 0)), 'Doanh thu']}
                       contentStyle={{
-                        borderRadius: '10px',
-                        border: '1px solid #e4e4e7',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
                         fontSize: '12px',
                       }}
                     />
-                    <Bar dataKey="revenue" fill="#047857" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                    <Bar dataKey="revenue" fill="#0891b2" radius={[4, 4, 0, 0]} maxBarSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Payment Split & Top Items Today */}
-            <div className="bg-white border border-zinc-200 rounded-xl p-5 flex flex-col justify-between gap-5">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between gap-5">
               <div>
-                <h3 className="text-sm font-bold text-zinc-950 mb-3">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">
                   Phân bổ phương thức thanh toán
                 </h3>
                 <div className="space-y-2.5 text-xs">
                   {(
                     [
-                      {
-                        label: 'Tiền mặt',
-                        val: dailyData.paymentSplit.cash,
-                        bar: 'bg-emerald-700',
-                      },
+                      { label: 'Tiền mặt', val: dailyData.paymentSplit.cash, bar: 'bg-cyan-600' },
                       {
                         label: 'Chuyển khoản QR',
                         val: dailyData.paymentSplit.transfer,
-                        bar: 'bg-zinc-900',
+                        bar: 'bg-slate-800',
                       },
-                      {
-                        label: 'Thẻ ngân hàng',
-                        val: dailyData.paymentSplit.card,
-                        bar: 'bg-amber-600',
-                      },
+                      { label: 'Thẻ ngân hàng', val: dailyData.paymentSplit.card, bar: 'bg-amber-600' },
                     ] as const
                   ).map((row) => {
                     const pct =
@@ -830,12 +822,12 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     return (
                       <div key={row.label} className="space-y-1">
                         <div className="flex justify-between">
-                          <span className="text-zinc-600">{row.label}</span>
-                          <span className="font-mono tabular-nums font-semibold text-zinc-950">
+                          <span className="text-slate-600">{row.label}</span>
+                          <span className="tabular-nums font-medium text-slate-900">
                             {formatVND(row.val)} ({pct}%)
                           </span>
                         </div>
-                        <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${row.bar} rounded-full`}
                             style={{ width: `${pct}%` }}
@@ -847,19 +839,19 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-zinc-100">
-                <h3 className="text-sm font-bold text-zinc-950 mb-2.5">Món bán chạy trong ngày</h3>
+              <div className="pt-4 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-900 mb-2.5">Món bán chạy trong ngày</h3>
                 {dailyData.topItems.length === 0 ? (
-                  <p className="text-xs text-zinc-400">Chưa có giao dịch trong ngày này.</p>
+                  <p className="text-xs text-slate-400">Chưa có giao dịch trong ngày này.</p>
                 ) : (
                   <div className="space-y-2">
                     {dailyData.topItems.map((it) => (
                       <div key={it.name} className="flex items-center justify-between text-xs gap-2">
-                        <span className="text-zinc-700 truncate">
+                        <span className="text-slate-700 truncate">
                           {it.name}{' '}
-                          <span className="font-mono tabular-nums text-zinc-400">×{it.qty}</span>
+                          <span className="tabular-nums text-slate-400">×{it.qty}</span>
                         </span>
-                        <span className="font-mono tabular-nums font-semibold text-zinc-950 shrink-0">
+                        <span className="tabular-nums font-semibold text-slate-900 shrink-0">
                           {formatVND(it.revenue)}
                         </span>
                       </div>
@@ -871,19 +863,19 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
           </div>
 
           {/* Daily Bill Ledger */}
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-950">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
                 Bảng kê hóa đơn ngày {formatDateVN(selectedDate)}
               </h3>
-              <span className="text-xs text-zinc-500 font-mono tabular-nums">
+              <span className="text-xs text-slate-500 tabular-nums">
                 {dailyData.orders.length} hóa đơn
               </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 font-semibold">
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold">
                     <th className="py-2.5 px-4">Mã HĐ</th>
                     <th className="py-2.5 px-4">Giờ</th>
                     <th className="py-2.5 px-4">Khu vực</th>
@@ -894,36 +886,36 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     <th className="py-2.5 px-4 text-right">Tổng tiền</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-slate-100">
                   {dailyData.orders.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-10 text-center text-zinc-500">
+                      <td colSpan={8} className="py-10 text-center text-slate-500">
                         Chưa có hóa đơn thanh toán trong ngày {formatDateVN(selectedDate)}.
                       </td>
                     </tr>
                   ) : (
                     dailyData.orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-zinc-50/80 transition-colors">
-                        <td className="py-2.5 px-4 font-mono tabular-nums font-semibold text-zinc-950">
+                      <tr key={o.id} className="hover:bg-slate-50/70">
+                        <td className="py-2.5 px-4 tabular-nums font-semibold text-slate-900">
                           {o.orderNumber}
                         </td>
-                        <td className="py-2.5 px-4 font-mono tabular-nums text-zinc-600">
+                        <td className="py-2.5 px-4 tabular-nums text-slate-600">
                           {o.displayTime}
                         </td>
-                        <td className="py-2.5 px-4 text-zinc-700">{o.tableName}</td>
-                        <td className="py-2.5 px-4 text-zinc-700">
+                        <td className="py-2.5 px-4 text-slate-700">{o.tableName}</td>
+                        <td className="py-2.5 px-4 text-slate-700">
                           {o.customerName?.trim() || 'Khách lẻ'}
                         </td>
-                        <td className="py-2.5 px-4 text-zinc-600">
+                        <td className="py-2.5 px-4 text-slate-600">
                           {getPaymentMethodLabel(o.paymentMethod)}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums text-amber-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums text-amber-700">
                           {o.discountAmount > 0 ? `-${formatVND(o.discountAmount)}` : '—'}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums text-zinc-600">
+                        <td className="py-2.5 px-4 text-right tabular-nums text-slate-600">
                           {formatVND(o.vatAmount)}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-zinc-950">
+                        <td className="py-2.5 px-4 text-right tabular-nums font-semibold text-slate-900">
                           {formatVND(o.total)}
                         </td>
                       </tr>
@@ -940,33 +932,33 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
       {mode === 'monthly' && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">
                 Doanh thu {formatMonthVN(selectedMonth)}
               </div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-700">
                 {formatVND(monthlyData.revenue)}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Tổng hóa đơn trong tháng</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Tổng hóa đơn trong tháng</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
                 {monthlyData.ordersCount}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Giá trị TB / hóa đơn</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Giá trị TB / hóa đơn</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-600">
                 {formatVND(monthlyData.avgOrder)}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Ngày doanh thu cao nhất</div>
-              <div className="mt-1.5 text-xl font-bold font-mono tabular-nums text-zinc-950">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Ngày doanh thu cao nhất</div>
+              <div className="mt-1.5 text-xl font-bold tabular-nums text-slate-900">
                 {monthlyData.bestDay.revenue > 0 ? formatVND(monthlyData.bestDay.revenue) : '—'}
               </div>
               {monthlyData.bestDay.dateKey && (
-                <div className="text-[11px] text-zinc-500 mt-0.5 font-mono tabular-nums">
+                <div className="text-[11px] text-slate-500 mt-0.5 tabular-nums">
                   {formatDateVN(monthlyData.bestDay.dateKey)}
                 </div>
               )}
@@ -974,12 +966,12 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-xl p-5">
+            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-zinc-950">
+                <h3 className="text-sm font-semibold text-slate-900">
                   Biểu đồ doanh thu từng ngày — {formatMonthVN(selectedMonth)}
                 </h3>
-                <span className="text-xs text-zinc-500">Đơn vị: VNĐ</span>
+                <span className="text-xs text-slate-500">Đơn vị: VNĐ</span>
               </div>
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -988,21 +980,21 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     margin={{ top: 6, right: 8, left: 0, bottom: 0 }}
                   >
                     <defs>
-                      <linearGradient id="emeraldRevenueGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.28} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                      <linearGradient id="jadeRevenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.01} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatShortVND}
-                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       axisLine={false}
                       tickLine={false}
                       width={48}
@@ -1011,27 +1003,29 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                       formatter={(val) => [formatVND(Number(val ?? 0)), 'Doanh thu']}
                       labelFormatter={(label) => `Ngày ${label}/${selectedMonth.split('-')[1]}`}
                       contentStyle={{
-                        borderRadius: '10px',
-                        border: '1px solid #e4e4e7',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
                         fontSize: '12px',
                       }}
                     />
                     <Area
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#047857"
+                      stroke="#0891b2"
                       strokeWidth={2}
-                      fill="url(#emeraldRevenueGrad)"
+                      fill="url(#jadeRevenueGrad)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="bg-white border border-zinc-200 rounded-xl p-5">
-              <h3 className="text-sm font-bold text-zinc-950 mb-3.5">Doanh thu theo nhóm món</h3>
+            <div className="bg-white border border-slate-200 rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3.5">
+                Doanh thu theo nhóm món
+              </h3>
               {monthlyData.categories.length === 0 ? (
-                <p className="text-xs text-zinc-400">Chưa có dữ liệu bán hàng trong tháng này.</p>
+                <p className="text-xs text-slate-400">Chưa có dữ liệu bán hàng trong tháng này.</p>
               ) : (
                 <div className="space-y-3 text-xs">
                   {monthlyData.categories.map((cat) => {
@@ -1040,19 +1034,17 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     return (
                       <div key={cat.category} className="space-y-1">
                         <div className="flex justify-between">
-                          <span className="font-semibold text-zinc-800">
+                          <span className="font-medium text-slate-800">
                             {cat.category}{' '}
-                            <span className="font-mono tabular-nums text-zinc-400">
-                              ({cat.qty})
-                            </span>
+                            <span className="tabular-nums text-slate-400">({cat.qty})</span>
                           </span>
-                          <span className="font-mono tabular-nums font-semibold text-zinc-950">
+                          <span className="tabular-nums font-semibold text-slate-900">
                             {formatVND(cat.revenue)}
                           </span>
                         </div>
-                        <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-emerald-700 rounded-full"
+                            className="h-full bg-cyan-600 rounded-full"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -1065,19 +1057,19 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
           </div>
 
           {/* Daily Summary Table for the Month */}
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-950">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
                 Tổng hợp doanh thu theo ngày — {formatMonthVN(selectedMonth)}
               </h3>
-              <span className="text-xs text-zinc-500 font-mono tabular-nums">
+              <span className="text-xs text-slate-500 tabular-nums">
                 {monthlyData.activeDays.length} ngày có doanh thu
               </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 font-semibold">
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold">
                     <th className="py-2.5 px-4">Ngày</th>
                     <th className="py-2.5 px-4 text-right">Số hóa đơn</th>
                     <th className="py-2.5 px-4 text-right">Giảm giá</th>
@@ -1085,29 +1077,29 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     <th className="py-2.5 px-4 text-right">Doanh thu</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-slate-100">
                   {monthlyData.activeDays.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-zinc-500">
+                      <td colSpan={5} className="py-10 text-center text-slate-500">
                         Chưa có dữ liệu phát sinh trong {formatMonthVN(selectedMonth)}.
                       </td>
                     </tr>
                   ) : (
                     monthlyData.activeDays.map((d) => (
-                      <tr key={d.dateKey} className="hover:bg-zinc-50/80 transition-colors">
-                        <td className="py-2.5 px-4 font-mono tabular-nums font-semibold text-zinc-950">
+                      <tr key={d.dateKey} className="hover:bg-slate-50/70">
+                        <td className="py-2.5 px-4 tabular-nums font-medium text-slate-900">
                           {formatDateVN(d.dateKey)}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums text-zinc-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums text-slate-700">
                           {d.ordersCount}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums text-amber-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums text-amber-700">
                           {d.discount > 0 ? formatVND(d.discount) : '—'}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums text-zinc-600">
+                        <td className="py-2.5 px-4 text-right tabular-nums text-slate-600">
                           {formatVND(d.vat)}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-emerald-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums font-semibold text-cyan-700">
                           {formatVND(d.revenue)}
                         </td>
                       </tr>
@@ -1124,27 +1116,27 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
       {mode === 'summary' && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Tổng doanh thu lũy kế</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Tổng doanh thu lũy kế</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-700">
                 {formatVND(summaryData.totalRevenue)}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Tổng hóa đơn đã thu</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Tổng hóa đơn đã thu</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
                 {summaryData.totalOrders}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Giá trị TB / hóa đơn</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Giá trị TB / hóa đơn</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-cyan-600">
                 {formatVND(summaryData.avgOrder)}
               </div>
             </div>
-            <div className="bg-white border border-zinc-200 rounded-xl p-4">
-              <div className="text-xs font-medium text-zinc-500">Tổng số lượng món bán ra</div>
-              <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+            <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="text-xs text-slate-500">Tổng số lượng món bán ra</div>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900">
                 {summaryData.totalItemsSold}
               </div>
             </div>
@@ -1152,10 +1144,12 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Multi-month Revenue Chart */}
-            <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-xl p-5">
+            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-zinc-950">Biểu đồ doanh thu theo tháng</h3>
-                <span className="text-xs text-zinc-500">Đơn vị: VNĐ</span>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Biểu đồ doanh thu theo tháng
+                </h3>
+                <span className="text-xs text-slate-500">Đơn vị: VNĐ</span>
               </div>
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -1163,16 +1157,16 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     data={summaryData.monthlyTrend}
                     margin={{ top: 6, right: 8, left: 0, bottom: 0 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={formatShortVND}
-                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       axisLine={false}
                       tickLine={false}
                       width={48}
@@ -1180,20 +1174,20 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     <Tooltip
                       formatter={(val) => [formatVND(Number(val ?? 0)), 'Doanh thu']}
                       contentStyle={{
-                        borderRadius: '10px',
-                        border: '1px solid #e4e4e7',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
                         fontSize: '12px',
                       }}
                     />
-                    <Bar dataKey="revenue" fill="#047857" radius={[4, 4, 0, 0]} maxBarSize={42} />
+                    <Bar dataKey="revenue" fill="#0891b2" radius={[4, 4, 0, 0]} maxBarSize={42} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Payment Mix All-time */}
-            <div className="bg-white border border-zinc-200 rounded-xl p-5 space-y-4">
-              <h3 className="text-sm font-bold text-zinc-950">Cơ cấu dòng tiền thanh toán</h3>
+            <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900">Cơ cấu dòng tiền thanh toán</h3>
               <div className="space-y-3.5 text-xs">
                 {summaryData.payments.map((p) => {
                   const pct =
@@ -1203,14 +1197,14 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                   return (
                     <div key={p.label} className="space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-zinc-600">{p.label}</span>
-                        <span className="font-mono tabular-nums font-semibold text-zinc-950">
+                        <span className="text-slate-600">{p.label}</span>
+                        <span className="tabular-nums font-semibold text-slate-900">
                           {formatVND(p.amount)} ({pct}%)
                         </span>
                       </div>
-                      <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-emerald-700 rounded-full"
+                          className="h-full bg-cyan-600 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -1222,17 +1216,17 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
           </div>
 
           {/* Top 10 Best-Selling Items Table */}
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-950">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
                 Top 10 món đóng góp doanh thu cao nhất
               </h3>
-              <span className="text-xs text-zinc-500">Toàn thời gian</span>
+              <span className="text-xs text-slate-500">Toàn thời gian</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 font-semibold">
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold">
                     <th className="py-2.5 px-4 w-12">Hạng</th>
                     <th className="py-2.5 px-4">Tên món</th>
                     <th className="py-2.5 px-4">Danh mục</th>
@@ -1240,25 +1234,25 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
                     <th className="py-2.5 px-4 text-right">Doanh thu</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-slate-100">
                   {summaryData.topItems.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-zinc-500">
+                      <td colSpan={5} className="py-10 text-center text-slate-500">
                         Chưa có dữ liệu thống kê món bán chạy.
                       </td>
                     </tr>
                   ) : (
                     summaryData.topItems.map((it, idx) => (
-                      <tr key={it.name} className="hover:bg-zinc-50/80 transition-colors">
-                        <td className="py-2.5 px-4 font-mono tabular-nums font-semibold text-zinc-500">
+                      <tr key={it.name} className="hover:bg-slate-50/70">
+                        <td className="py-2.5 px-4 tabular-nums font-semibold text-slate-500">
                           {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-2.5 px-4 font-semibold text-zinc-950">{it.name}</td>
-                        <td className="py-2.5 px-4 text-zinc-600">{it.category}</td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums text-zinc-800">
+                        <td className="py-2.5 px-4 font-semibold text-slate-900">{it.name}</td>
+                        <td className="py-2.5 px-4 text-slate-600">{it.category}</td>
+                        <td className="py-2.5 px-4 text-right tabular-nums text-slate-800">
                           {it.qty}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-emerald-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums font-semibold text-cyan-700">
                           {formatVND(it.revenue)}
                         </td>
                       </tr>
@@ -1273,3 +1267,4 @@ export function ReportsView({ orders, storeName, onNotify }: ReportsViewProps) {
     </div>
   );
 }
+

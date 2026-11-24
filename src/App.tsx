@@ -431,15 +431,8 @@ export default function App() {
   // ---------------- LOADING AUTH ----------------
   if (!authReady) {
     return (
-      <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-extrabold text-base tracking-tight">
-            SB
-          </div>
-          <div className="text-sm font-semibold text-zinc-600">
-            Đang khởi động Somo Bistro POS...
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#071a42] flex items-center justify-center">
+        <div className="text-sm font-semibold text-cyan-200">Đang khởi động Somo Bistro POS...</div>
       </div>
     );
   }
@@ -447,48 +440,38 @@ export default function App() {
   // ---------------- SIGN-IN GATE (ID & PASSWORD) ----------------
   if (!user) {
     return (
-      <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 sm:p-8">
-        <div className="max-w-5xl w-full bg-white border border-zinc-200 rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-sm">
-          <div className="lg:col-span-7 p-7 sm:p-11 flex flex-col justify-between gap-8">
-            <div className="space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center text-sm font-extrabold tracking-tight shrink-0">
-                  SB
-                </div>
-                <div>
-                  <div className="text-base font-bold tracking-tight text-zinc-900 leading-none">
-                    Somo Bistro
-                  </div>
-                  <div className="text-xs text-zinc-500 mt-1">Điểm bán hàng & Quản lý quầy</div>
-                </div>
-              </div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 sm:p-8">
+        <div className="max-w-5xl w-full bg-white border-2 border-[#0a2268] rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-xl">
+          <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between gap-6">
+            <div className="space-y-4">
+              <div className="text-lg font-extrabold tracking-tight text-cyan-700">Somo Bistro</div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <h1
-                  className="text-2xl sm:text-[32px] font-bold tracking-tight text-zinc-950 leading-[1.18]"
+                  className="text-2xl sm:text-3xl font-bold tracking-tight text-[#091d4f] leading-tight"
                   style={{ textWrap: 'balance' }}
                 >
-                  Quầy thu ngân tinh gọn cho vận hành hàng ngày
+                  Hệ thống máy POS thu ngân chuyên nghiệp cho Somo Bistro
                 </h1>
-                <p className="text-sm text-zinc-500 leading-relaxed max-w-lg">
-                  Đăng nhập bằng tài khoản ID của quán để mở sơ đồ bàn, gọi món cảm ứng, in hóa đơn A5 / 80mm và theo dõi doanh thu trực tiếp.
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
+                  Đăng nhập trực tiếp bằng ID và mật khẩu để mở quầy thu ngân, quản lý bàn, in hóa đơn A5 / 80mm và đồng bộ dữ liệu quán.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4 pt-6 border-t border-zinc-200/80">
-              <div className="text-sm font-semibold text-zinc-900">Đăng nhập tài khoản</div>
+            <div className="space-y-4 pt-2 border-t border-slate-200">
+              <div className="text-sm font-bold text-[#091d4f]">Đăng nhập tài khoản</div>
 
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
+              <form onSubmit={handleAuthSubmit} className="space-y-3.5">
                 <div>
                   <label
                     htmlFor="auth-login-id"
-                    className="block text-xs font-semibold text-zinc-700 mb-1.5"
+                    className="block text-xs font-semibold text-slate-700 mb-1"
                   >
-                    ID đăng nhập <span className="text-rose-600">*</span>
+                    ID đăng nhập <span className="text-red-600">*</span>
                   </label>
                   <div className="relative">
-                    <UserIcon className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       id="auth-login-id"
                       type="text"
@@ -498,7 +481,7 @@ export default function App() {
                       value={loginId}
                       onChange={(e) => setLoginId(e.target.value.slice(0, 120))}
                       placeholder="VD: somobistro hoặc admin"
-                      className="w-full h-11 pl-10 pr-3.5 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15 transition-all"
+                      className="w-full h-10 pl-9 pr-3 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600 bg-white"
                     />
                   </div>
                 </div>
@@ -506,12 +489,12 @@ export default function App() {
                 <div>
                   <label
                     htmlFor="auth-password"
-                    className="block text-xs font-semibold text-zinc-700 mb-1.5"
+                    className="block text-xs font-semibold text-slate-700 mb-1"
                   >
-                    Mật khẩu <span className="text-rose-600">*</span>
+                    Mật khẩu <span className="text-red-600">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       id="auth-password"
                       type={showPassword ? 'text' : 'password'}
@@ -521,12 +504,12 @@ export default function App() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Tối thiểu 6 ký tự"
-                      className="w-full h-11 pl-10 pr-11 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15 transition-all"
+                      className="w-full h-10 pl-9 pr-10 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600 bg-white"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
                       aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -537,7 +520,7 @@ export default function App() {
                 {authError && (
                   <div
                     role="alert"
-                    className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700 leading-relaxed"
+                    className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs font-medium text-red-700 leading-relaxed"
                   >
                     {authError}
                   </div>
@@ -546,35 +529,30 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={signingIn}
-                  className="w-full h-12 inline-flex items-center justify-center gap-2 px-6 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 rounded-xl transition-colors"
+                  className="w-full h-11 inline-flex items-center justify-center gap-2 px-6 text-sm font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 rounded-lg transition-colors"
                 >
                   {signingIn ? 'Đang đăng nhập...' : 'Đăng nhập vào quầy POS'}
                 </button>
               </form>
 
-              <p className="text-xs text-zinc-400">
-                Dữ liệu thực đơn, sơ đồ bàn, hóa đơn và báo cáo được đồng bộ riêng theo từng tài khoản ID.
+              <p className="text-xs text-slate-400">
+                Dữ liệu thực đơn, bàn, hóa đơn và báo cáo được bảo mật riêng theo từng tài khoản ID.
               </p>
             </div>
           </div>
 
-          <div className="lg:col-span-5 relative min-h-[240px] lg:min-h-full bg-zinc-900">
+          <div className="lg:col-span-5 relative min-h-[240px] lg:min-h-full bg-slate-100">
             <img
               src={resolveAssetUrl('/src/assets/images/menu_ca_phe_sua_da_1795166207066.jpg')}
               alt="Quầy pha chế Somo Bistro"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent flex items-end p-7">
-              <div className="text-white space-y-1.5">
-                <div className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
-                  Somo Bistro Workspace
-                </div>
-                <div className="text-base font-bold leading-snug">
-                  Sẵn sàng phục vụ tại quầy & quản lý toàn diện
-                </div>
-                <div className="text-xs text-zinc-300 leading-relaxed">
-                  Gọi món nhanh, quản lý bàn trực quan, báo cáo tức thì và in hóa đơn 80mm / A5 sắc nét.
+            <div className="absolute inset-0 bg-gradient-to-t from-[#091d4f]/90 via-[#091d4f]/25 to-transparent flex items-end p-6">
+              <div className="text-white space-y-1">
+                <div className="text-sm font-bold">Sẵn sàng vận hành ngay</div>
+                <div className="text-xs text-slate-200 leading-relaxed">
+                  Tối ưu thao tác thu ngân cảm ứng, sơ đồ bàn trực quan và in hóa đơn khổ 80mm / A5 sắc nét.
                 </div>
               </div>
             </div>
@@ -587,12 +565,9 @@ export default function App() {
   // ---------------- LOADING STORE DATA ----------------
   if (dataLoading || seeding) {
     return (
-      <div className="min-h-screen bg-zinc-100 flex flex-col items-center justify-center p-6 text-center space-y-3">
-        <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-extrabold text-sm">
-          SB
-        </div>
-        <div className="text-base font-bold text-zinc-900">{settings?.storeName || 'Somo Bistro'}</div>
-        <div className="text-sm text-zinc-500">
+      <div className="min-h-screen bg-[#071a42] flex flex-col items-center justify-center p-6 text-center space-y-3">
+        <div className="text-base font-bold text-cyan-300">{settings?.storeName || 'Somo Bistro'}</div>
+        <div className="text-sm text-slate-200">
           {seeding
             ? 'Đang khởi tạo thực đơn Somo Bistro và sơ đồ bàn...'
             : 'Đang tải dữ liệu cửa hàng...'}
@@ -609,7 +584,7 @@ export default function App() {
       <OfflineIndicator />
       <div className={receiptState ? 'no-print' : undefined}>
         {isPosScreen ? (
-        /* ================= FULL-SCREEN POS TERMINAL ================= */
+        /* ================= FULL-SCREEN KAS POS TERMINAL ================= */
         <PosTerminal
           ownerId={user.uid}
           cashierName={user.displayName || accountLabel || 'Thu ngân'}
@@ -631,26 +606,24 @@ export default function App() {
           onNotify={notify}
         />
       ) : (
-        /* ================= MANAGEMENT SCREENS WITH MODERN LIGHT TOP BAR ================= */
-        <div className="min-h-screen bg-zinc-100 flex flex-col">
-          <header className="h-14 bg-white text-zinc-900 border-b border-zinc-200 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shrink-0">
+        /* ================= MANAGEMENT SCREENS WITH COHESIVE KAS TOP BAR ================= */
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+          <header className="h-14 bg-[#091d4f] text-white border-b border-blue-950 px-4 sm:px-5 flex items-center justify-between gap-4 sticky top-0 z-30 shrink-0">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => setActiveTab('pos')}
-                className="h-9 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-extrabold transition-colors whitespace-nowrap shrink-0"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Quầy POS
+                <ArrowLeft className="w-4 h-4" />
+                Quay về quầy POS
               </button>
 
-              <span className="h-5 w-px bg-zinc-200 hidden md:inline-block shrink-0" />
-
-              <span className="text-sm font-bold tracking-tight text-zinc-900 hidden md:inline whitespace-nowrap truncate">
+              <span className="text-sm font-extrabold text-cyan-200 hidden md:inline whitespace-nowrap truncate">
                 {settings?.storeName || 'Somo Bistro'}
               </span>
 
-              {/* Desktop Management Navigation */}
+              {/* Desktop Management Tabs */}
               <nav className="hidden lg:flex items-center gap-1 ml-2" aria-label="Quản lý cửa hàng">
                 {MANAGEMENT_NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
@@ -660,13 +633,13 @@ export default function App() {
                       key={item.id}
                       type="button"
                       onClick={() => setActiveTab(item.id)}
-                      className={`h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-bold transition-colors whitespace-nowrap ${
                         active
-                          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200'
-                          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                          ? 'bg-orange-500 text-white'
+                          : 'text-slate-200 hover:bg-[#132f7a] hover:text-white'
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-700' : 'text-zinc-400'}`} />
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
                       {item.label}
                     </button>
                   );
@@ -676,9 +649,9 @@ export default function App() {
 
             <div className="flex items-center gap-3 shrink-0">
               <div className="hidden sm:block text-right leading-tight">
-                <div className="text-[11px] text-zinc-500">Hôm nay · {todayStats.count} đơn</div>
-                <div className="text-xs font-bold font-mono tabular-nums text-emerald-700">
-                  {formatVND(todayStats.revenue)}
+                <div className="text-[11px] text-slate-300">Doanh thu hôm nay</div>
+                <div className="text-xs font-extrabold tabular-nums text-amber-300">
+                  {formatVND(todayStats.revenue)} ({todayStats.count} đơn)
                 </div>
               </div>
 
@@ -687,13 +660,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setAccountMenuOpen((prev) => !prev)}
-                  className="h-9 inline-flex items-center gap-2 px-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-xs font-semibold text-zinc-800 transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#132f7a] hover:bg-[#193d99] text-xs font-semibold text-slate-100 transition-colors whitespace-nowrap"
                   aria-expanded={accountMenuOpen}
                   aria-haspopup="menu"
                 >
-                  <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
+                  <UserIcon className="w-3.5 h-3.5 text-cyan-300" />
                   <span className="max-w-[110px] truncate">{accountLabel || 'Tài khoản'}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-300" />
                 </button>
 
                 {accountMenuOpen && (
@@ -704,29 +677,29 @@ export default function App() {
                     />
                     <div
                       role="menu"
-                      className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white text-zinc-800 shadow-lg border border-zinc-200 py-1.5 z-50"
+                      className="absolute right-0 mt-1.5 w-56 rounded-lg bg-white text-slate-800 shadow-xl border border-slate-200 py-1.5 z-50"
                     >
-                      <div className="px-3.5 py-2 border-b border-zinc-100">
-                        <div className="text-xs font-bold text-zinc-900 truncate">
+                      <div className="px-3.5 py-2 border-b border-slate-100">
+                        <div className="text-xs font-bold text-slate-900 truncate">
                           {user.displayName || accountLabel || 'Thu ngân'}
                         </div>
-                        <div className="text-[11px] text-zinc-500 truncate">{accountLabel}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{accountLabel}</div>
                       </div>
                       <button
                         type="button"
                         role="menuitem"
                         onClick={openCreateAccountModal}
-                        className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-zinc-700 hover:bg-zinc-50 flex items-center gap-2 transition-colors"
+                        className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
                       >
-                        <UserPlus className="w-3.5 h-3.5 text-emerald-700" />
+                        <UserPlus className="w-3.5 h-3.5 text-cyan-700" />
                         Tạo tài khoản mới
                       </button>
-                      <div className="my-1 border-t border-zinc-100" />
+                      <div className="my-1 border-t border-slate-100" />
                       <button
                         type="button"
                         role="menuitem"
                         onClick={requestSignOut}
-                        className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                        className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         Đăng xuất tài khoản
@@ -739,7 +712,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
-                className="lg:hidden h-9 w-9 inline-flex items-center justify-center rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors"
+                className="lg:hidden p-2 rounded-md bg-[#132f7a] text-cyan-200"
                 aria-label="Mở menu quản lý"
               >
                 <Menu className="w-4 h-4" />
@@ -751,19 +724,19 @@ export default function App() {
           {mobileNavOpen && (
             <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
               <div
-                className="fixed inset-0 bg-zinc-950/40 backdrop-blur-[1px]"
+                className="fixed inset-0 bg-slate-950/50"
                 onClick={() => setMobileNavOpen(false)}
               />
-              <div className="relative z-10 w-72 bg-white h-full flex flex-col justify-between shadow-2xl border-l border-zinc-200">
+              <div className="relative z-10 w-72 bg-white h-full flex flex-col justify-between shadow-2xl border-l-2 border-[#0a2268]">
                 <div>
-                  <div className="h-14 px-4 border-b border-zinc-200 flex items-center justify-between">
-                    <span className="font-bold text-sm text-zinc-900">
+                  <div className="h-14 px-4 bg-[#091d4f] text-white flex items-center justify-between">
+                    <span className="font-bold text-sm text-cyan-200">
                       {settings?.storeName || 'Somo Bistro'}
                     </span>
                     <button
                       type="button"
                       onClick={() => setMobileNavOpen(false)}
-                      className="p-1.5 text-zinc-500 hover:text-zinc-900 rounded-lg"
+                      className="p-1.5 text-slate-300"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -775,53 +748,49 @@ export default function App() {
                         setActiveTab('pos');
                         setMobileNavOpen(false);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-semibold"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md bg-cyan-50 text-cyan-800 text-sm font-bold"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       Quay về quầy POS
                     </button>
-                    <div className="pt-2 space-y-1">
-                      {MANAGEMENT_NAV_ITEMS.map((item) => {
-                        const Icon = item.icon;
-                        const active = activeTab === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => {
-                              setActiveTab(item.id);
-                              setMobileNavOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                              active
-                                ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200'
-                                : 'text-zinc-700 hover:bg-zinc-100'
-                            }`}
-                          >
-                            <Icon className="w-4 h-4" />
-                            {item.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="pt-2 mt-2 border-t border-zinc-100">
+                    {MANAGEMENT_NAV_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      const active = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setMobileNavOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-semibold ${
+                            active ? 'bg-orange-500 text-white' : 'text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                    <div className="pt-1.5 mt-1.5 border-t border-slate-100">
                       <button
                         type="button"
                         onClick={openCreateAccountModal}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-zinc-700 hover:bg-zinc-100"
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-semibold text-slate-700 hover:bg-slate-100"
                       >
-                        <UserPlus className="w-4 h-4 text-emerald-700" />
+                        <UserPlus className="w-4 h-4 text-cyan-700" />
                         Tạo tài khoản mới
                       </button>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-zinc-600 truncate">{accountLabel}</span>
+                <div className="p-4 border-t border-slate-200 flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-600 truncate">{accountLabel}</span>
                   <button
                     type="button"
                     onClick={requestSignOut}
-                    className="px-3 py-1.5 rounded-lg border border-rose-200 bg-white hover:bg-rose-50 text-xs font-semibold text-rose-600 whitespace-nowrap transition-colors"
+                    className="px-2.5 py-1.5 rounded-md border border-red-200 bg-red-50 text-xs font-bold text-red-600 whitespace-nowrap"
                   >
                     Đăng xuất
                   </button>
@@ -910,26 +879,24 @@ export default function App() {
       {/* Create New Account Modal (inside Functions menu, preserves active session) */}
       {showCreateAccountModal && (
         <div
-          className="no-print fixed inset-0 z-50 bg-zinc-950/45 backdrop-blur-[1px] flex items-center justify-center p-4"
+          className="no-print fixed inset-0 z-50 bg-slate-950/55 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Tạo tài khoản mới"
         >
           <form
             onSubmit={handleCreateAccountSubmit}
-            className="bg-white border border-zinc-200 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl"
+            className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-hidden shadow-2xl"
           >
-            <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
-                  <UserPlus className="w-4 h-4" />
-                </span>
-                <h3 className="text-sm font-bold text-zinc-900">Tạo tài khoản mới</h3>
+            <div className="px-5 py-4 bg-[#091d4f] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-cyan-300" />
+                <h3 className="text-sm font-bold">Tạo tài khoản mới</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateAccountModal(false)}
-                className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg"
+                className="p-1 text-slate-300 hover:text-white rounded"
                 aria-label="Đóng"
               >
                 <X className="w-4 h-4" />
@@ -937,12 +904,12 @@ export default function App() {
             </div>
 
             <div className="p-5 space-y-3.5">
-              <p className="text-xs text-zinc-500 leading-relaxed">
+              <p className="text-xs text-slate-500">
                 Tạo thêm tài khoản ID đăng nhập mới cho quán hoặc thu ngân. Phiên làm việc hiện tại của bạn vẫn giữ nguyên.
               </p>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Tên hiển thị (Quán / Thu ngân)
                 </label>
                 <input
@@ -950,13 +917,13 @@ export default function App() {
                   value={newAccName}
                   onChange={(e) => setNewAccName(e.target.value.slice(0, 60))}
                   placeholder="VD: Thu ngân ca chiều"
-                  className="w-full h-10 px-3 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                  className="w-full h-10 px-3 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  ID đăng nhập <span className="text-rose-600">*</span>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  ID đăng nhập <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -965,13 +932,13 @@ export default function App() {
                   value={newAccId}
                   onChange={(e) => setNewAccId(e.target.value.slice(0, 120))}
                   placeholder="VD: thungan02 hoặc chi_nhanh_2"
-                  className="w-full h-10 px-3 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                  className="w-full h-10 px-3 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  Mật khẩu <span className="text-rose-600">*</span>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Mật khẩu <span className="text-red-600">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -981,12 +948,12 @@ export default function App() {
                     value={newAccPassword}
                     onChange={(e) => setNewAccPassword(e.target.value)}
                     placeholder="Tối thiểu 6 ký tự"
-                    className="w-full h-10 pl-3 pr-10 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full h-10 pl-3 pr-10 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewAccPassword((prev) => !prev)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
                     aria-label={showNewAccPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
                     {showNewAccPassword ? (
@@ -999,8 +966,8 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  Nhập lại mật khẩu <span className="text-rose-600">*</span>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nhập lại mật khẩu <span className="text-red-600">*</span>
                 </label>
                 <input
                   type={showNewAccPassword ? 'text' : 'password'}
@@ -1009,32 +976,32 @@ export default function App() {
                   value={newAccConfirm}
                   onChange={(e) => setNewAccConfirm(e.target.value)}
                   placeholder="Nhập lại mật khẩu giống ở trên"
-                  className="w-full h-10 px-3 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                  className="w-full h-10 px-3 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-600"
                 />
               </div>
 
               {createAccError && (
                 <div
                   role="alert"
-                  className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700"
+                  className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs font-medium text-red-700"
                 >
                   {createAccError}
                 </div>
               )}
             </div>
 
-            <div className="px-5 py-3.5 bg-zinc-50 border-t border-zinc-200 flex justify-end gap-2">
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowCreateAccountModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 disabled={creatingAccount}
-                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg"
+                className="px-4 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-lg"
               >
                 {creatingAccount ? 'Đang tạo...' : 'Tạo tài khoản'}
               </button>
@@ -1046,37 +1013,37 @@ export default function App() {
       {/* Safe Sign-Out Confirmation Modal */}
       {confirmSignOutOpen && (
         <div
-          className="no-print fixed inset-0 z-50 bg-zinc-950/45 backdrop-blur-[1px] flex items-center justify-center p-4"
+          className="no-print fixed inset-0 z-50 bg-slate-950/55 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Xác nhận đăng xuất"
         >
-          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-hidden shadow-2xl">
             <div className="p-5 space-y-3">
               <div className="flex items-start gap-3">
-                <span className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-lg bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shrink-0">
                   <AlertTriangle className="w-5 h-5" />
                 </span>
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900">Xác nhận đăng xuất?</h3>
-                  <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
+                  <h3 className="text-sm font-bold text-slate-900">Xác nhận đăng xuất?</h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                     Bạn sắp đăng xuất khỏi tài khoản <strong>{accountLabel}</strong>. Các đơn hàng đã lưu vẫn được giữ an toàn.
                   </p>
                 </div>
               </div>
             </div>
-            <div className="px-5 py-3.5 bg-zinc-50 border-t border-zinc-200 flex justify-end gap-2">
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmSignOutOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg"
               >
                 Ở lại quầy
               </button>
               <button
                 type="button"
                 onClick={handleConfirmSignOut}
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
+                className="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg"
               >
                 Đăng xuất
               </button>
@@ -1089,10 +1056,10 @@ export default function App() {
       {toast && (
         <div
           role="status"
-          className={`no-print fixed bottom-10 right-5 z-50 px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg border transition-all ${
+          className={`no-print fixed bottom-10 right-5 z-50 px-4 py-2.5 rounded-lg text-xs font-semibold shadow-lg border transition-all ${
             toast.tone === 'error'
-              ? 'bg-rose-600 text-white border-rose-700'
-              : 'bg-zinc-900 text-white border-zinc-800'
+              ? 'bg-red-600 text-white border-red-700'
+              : 'bg-[#091d4f] text-white border-cyan-500/60'
           }`}
         >
           {toast.message}
