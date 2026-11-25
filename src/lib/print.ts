@@ -23,6 +23,8 @@ export function buildA5InvoiceHtml(
   qrDataUrl: string,
 ): string {
   const storeName = escapeHtml(settings?.storeName || 'Somo Bistro');
+  const rawLogo = settings?.logoImageUrl || '';
+  const logoUrl = /^data:image\/|^https?:\/\//i.test(rawLogo) ? rawLogo : '';
   const address = escapeHtml(settings?.address || '');
   const phone = escapeHtml(settings?.phone || '');
   const wifiInfo = escapeHtml(settings?.wifiInfo || '');
@@ -184,6 +186,15 @@ export function buildA5InvoiceHtml(
       color: #0f172a;
       margin-bottom: 2px;
     }
+    .brand-logo {
+      display: block;
+      max-width: 140px;
+      max-height: 44px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      margin-bottom: 3px;
+    }
     .muted { color: #475569; font-size: 10px; }
     .invoice-title {
       font-size: 18px;
@@ -330,7 +341,11 @@ export function buildA5InvoiceHtml(
   <div class="sheet">
     <div class="header">
       <div>
-        <div class="brand">${storeName}</div>
+        ${
+          logoUrl
+            ? `<div class="brand"><img src="${escapeHtml(logoUrl)}" alt="${storeName}" class="brand-logo" /></div>`
+            : `<div class="brand">${storeName}</div>`
+        }
         ${address ? `<div class="muted">${address}</div>` : ''}
         ${phone ? `<div class="muted">Hotline: ${phone}</div>` : ''}
       </div>
@@ -398,6 +413,8 @@ export function build80mmReceiptHtml(
   qrDataUrl: string,
 ): string {
   const storeName = escapeHtml(settings?.storeName || 'Somo Bistro');
+  const rawLogo = settings?.logoImageUrl || '';
+  const logoUrl = /^data:image\/|^https?:\/\//i.test(rawLogo) ? rawLogo : '';
   const address = escapeHtml(settings?.address || '');
   const phone = escapeHtml(settings?.phone || '');
   const wifiInfo = escapeHtml(settings?.wifiInfo || '');
@@ -579,6 +596,11 @@ export function build80mmReceiptHtml(
         height: 72px;
         padding: 2px;
       }
+      .r80-logo-img {
+        max-width: 140px;
+        max-height: 46px;
+        margin: 0 auto 3px;
+      }
     }
     .r80-tabular { font-variant-numeric: tabular-nums; }
     .r80-center { text-align: center; }
@@ -588,6 +610,16 @@ export function build80mmReceiptHtml(
       letter-spacing: -0.01em;
       line-height: 1.18;
       color: #000000;
+    }
+    .r80-logo-img {
+      display: block;
+      margin: 0 auto calc(var(--u) * 0.5);
+      max-width: 46vw;
+      max-height: calc(var(--u) * 14);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      background: #ffffff !important;
     }
     .r80-muted {
       font-size: calc(var(--u) * 2.85);
@@ -802,7 +834,11 @@ export function build80mmReceiptHtml(
 <body style="margin:0;padding:0;background:#ffffff;color:#000000;color-scheme:light;">
   <div class="r80-sheet">
     <div class="r80-center">
-      <div class="r80-brand">${storeName}</div>
+      ${
+        logoUrl
+          ? `<div class="r80-brand"><img src="${escapeHtml(logoUrl)}" alt="${storeName}" class="r80-logo-img" /></div>`
+          : `<div class="r80-brand">${storeName}</div>`
+      }
       ${address ? `<div class="r80-muted">${address}</div>` : ''}
       ${phone ? `<div class="r80-muted">ĐT: ${phone}</div>` : ''}
       <div class="r80-title">${title}</div>

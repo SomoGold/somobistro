@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { Minus, Plus, X, Percent, Check } from 'lucide-react';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db, OperationType, reportFirestoreError } from '../lib/firebase';
 import {
   formatDotNumber,
   formatVND,
-  generateDocId,
   getItemDiscountAmount,
   getItemGrossTotal,
   getItemNetTotal,
@@ -13,14 +10,12 @@ import {
   parseDotNumber,
 } from '../lib/format';
 import {
-  clampNumber,
   ComboSelectionRule,
   ComboTopping,
   DiscountType,
   LIMITS,
   OrderItem,
   OrderItemTopping,
-  sanitizeText,
   Topping,
 } from '../types/pos';
 
@@ -50,7 +45,6 @@ const QUICK_NOTES = [
 ];
 
 export function KasItemModal({
-  ownerId,
   item,
   isCombo = false,
   comboToppings = [],
@@ -83,9 +77,6 @@ export function KasItemModal({
   );
   const [comboTab, setComboTab] = useState<'combo' | 'extra'>(hasComboPool ? 'combo' : 'extra');
   const [comboFreeMode, setComboFreeMode] = useState(isCombo && !hasComboLimit);
-  const [quickToppingName, setQuickToppingName] = useState('');
-  const [quickToppingPrice, setQuickToppingPrice] = useState('');
-  const [creatingTopping, setCreatingTopping] = useState(false);
 
   const availableToppings = toppings
     .filter((t) => t.available)
@@ -181,42 +172,6 @@ export function KasItemModal({
     });
   };
 
-  const handleQuickCreateTopping = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanName = sanitizeText(quickToppingName, LIMITS.TOPPING_NAME_MAX);
-    const price = clampNumber(parseDotNumber(quickToppingPrice), 0, LIMITS.MAX_PRICE);
-    if (!cleanName) {
-      onNotify('Vui lòng nhập tên topping.', 'error');
-      return;
-    }
-
-    setCreatingTopping(true);
-    try {
-      const newId = generateDocId('top');
-      await setDoc(doc(db, 'toppings', newId), {
-        ownerId,
-        name: cleanName,
-        price,
-        available: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      toggleTopping({
-        id: newId,
-        name: cleanName,
-        price: isCombo && !hasComboLimit && comboFreeMode ? 0 : price,
-      });
-      setQuickToppingName('');
-      setQuickToppingPrice('');
-      onNotify(`Đã tạo và thêm topping "${cleanName}".`);
-    } catch (error) {
-      const msg = reportFirestoreError(error, OperationType.CREATE, 'toppings/new');
-      onNotify(msg, 'error');
-    } finally {
-      setCreatingTopping(false);
-    }
-  };
-
   const handleConfirm = () => {
     if (hasComboLimit) {
       if (isExactCombo && selectedComboCount !== comboMaxToppings) {
@@ -254,22 +209,22 @@ export function KasItemModal({
       aria-modal="true"
       aria-label={`Tùy chỉnh món ${draft.name}`}
     >
-      <div className="bg-zinc-100 border border-zinc-200 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
-        {/* Clean White Modal Header */}
-        <div className="bg-white border-b border-zinc-200 px-5 py-4 flex items-center justify-between gap-4 shrink-0">
+      <div className="bg-slate-100 border border-slate-200 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+        {/* System Primary Deep-Navy Modal Header */}
+        <div className="bg-[#091d4f] border-b border-blue-950 px-5 py-4 flex items-center justify-between gap-4 shrink-0">
           <div className="min-w-0">
-            <h3 className="text-lg font-bold text-zinc-950 leading-snug truncate">{draft.name}</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs font-mono tabular-nums text-zinc-500">
+            <h3 className="text-lg font-bold text-white leading-snug truncate">{draft.name}</h3>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs tabular-nums text-slate-300">
               <span>
-                Đơn giá: <strong className="text-zinc-900">{formatVND(unitPrice)}</strong>
+                Đơn giá: <strong className="text-white">{formatVND(unitPrice)}</strong>
               </span>
               {lineDiscount > 0 && (
-                <span className="text-amber-700">
+                <span className="text-amber-300">
                   Giảm: <strong>-{formatVND(lineDiscount)}</strong>
                 </span>
               )}
               <span>
-                Thành tiền: <strong className="text-emerald-700">{formatVND(lineNet)}</strong>
+                Thành tiền: <strong className="text-cyan-300">{formatVND(lineNet)}</strong>
               </span>
             </div>
           </div>
@@ -277,7 +232,7 @@ export function KasItemModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 rounded-xl transition-colors shrink-0"
+            className="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors shrink-0"
             aria-label="Đóng"
           >
             <X className="w-5 h-5" />
@@ -301,13 +256,13 @@ export function KasItemModal({
                 >
                   <Minus className="w-4 h-4 stroke-[2.5]" />
                 </button>
-                <span className="w-16 text-center text-lg font-bold font-mono tabular-nums text-zinc-950">
+                <span className="w-16 text-center text-lg font-bold tabular-nums text-zinc-950">
                   {draft.qty}
                 </span>
                 <button
                   type="button"
                   onClick={() => updateQty(1)}
-                  className="w-11 h-10 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-colors border-l border-zinc-200"
+                  className="w-11 h-10 flex items-center justify-center text-[#0a2268] hover:bg-blue-50 transition-colors border-l border-zinc-200"
                   aria-label="Tăng số lượng"
                 >
                   <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -316,7 +271,7 @@ export function KasItemModal({
             </div>
 
             {lineGross !== lineNet && (
-              <div className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-mono tabular-nums">
+              <div className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg tabular-nums">
                 Trước giảm {formatVND(lineGross)} → Còn {formatVND(lineNet)}
               </div>
             )}
@@ -337,8 +292,8 @@ export function KasItemModal({
                         <div className="leading-tight">
                           <div className="text-xs font-semibold text-zinc-900">{tp.name}</div>
                           <div
-                            className={`text-[11px] font-mono tabular-nums ${
-                              tp.price === 0 ? 'text-amber-700 font-semibold' : 'text-emerald-700 font-semibold'
+                            className={`text-[11px] tabular-nums ${
+                              tp.price === 0 ? 'text-amber-700 font-semibold' : 'text-[#0a2268] font-semibold'
                             }`}
                           >
                             {tp.price === 0 ? 'Kèm combo (0 ₫)' : `+${formatVND(tp.price)}`}
@@ -379,7 +334,7 @@ export function KasItemModal({
                           onClick={() => toggleDiscountType('percent')}
                           className={`px-3 py-1 text-xs font-semibold transition-colors ${
                             discType === 'percent'
-                              ? 'bg-zinc-900 text-white'
+                              ? 'bg-[#091d4f] text-white'
                               : 'text-zinc-700 hover:bg-zinc-50'
                           }`}
                         >
@@ -390,7 +345,7 @@ export function KasItemModal({
                           onClick={() => toggleDiscountType('fixed')}
                           className={`px-3 py-1 text-xs font-semibold transition-colors border-l border-amber-200 ${
                             discType === 'fixed'
-                              ? 'bg-zinc-900 text-white'
+                              ? 'bg-[#091d4f] text-white'
                               : 'text-zinc-700 hover:bg-zinc-50'
                           }`}
                         >
@@ -413,7 +368,7 @@ export function KasItemModal({
                           }
                           onChange={(e) => updateDiscountValue(e.target.value)}
                           placeholder={discType === 'percent' ? 'Nhập % (VD: 10)' : 'Nhập số tiền...'}
-                          className="w-full h-9 px-3 pr-8 text-sm font-bold font-mono tabular-nums text-right bg-white border border-amber-300 rounded-lg focus:outline-none focus:border-emerald-700"
+                          className="w-full h-9 px-3 pr-8 text-sm font-bold tabular-nums text-right bg-white border border-amber-300 rounded-lg focus:outline-none focus:border-[#0a2268]"
                         />
                         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-zinc-500">
                           {discType === 'percent' ? '%' : '₫'}
@@ -427,9 +382,9 @@ export function KasItemModal({
                               key={pct}
                               type="button"
                               onClick={() => updateDiscountValue(String(pct))}
-                              className={`h-9 px-2.5 text-xs font-semibold font-mono tabular-nums rounded-lg border transition-colors ${
+                              className={`h-9 px-2.5 text-xs font-semibold tabular-nums rounded-lg border transition-colors ${
                                 discVal === pct
-                                  ? 'bg-zinc-900 text-white border-zinc-900'
+                                  ? 'bg-[#091d4f] text-white border-[#091d4f]'
                                   : 'bg-white text-zinc-700 border-amber-200 hover:border-amber-400'
                               }`}
                             >
@@ -465,7 +420,7 @@ export function KasItemModal({
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="w-full h-11 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold transition-colors"
+                className="w-full h-11 px-3 rounded-xl bg-[#091d4f] hover:bg-[#132f7a] text-white text-sm font-semibold transition-colors shadow-xs"
               >
                 Xác nhận
               </button>
@@ -474,8 +429,8 @@ export function KasItemModal({
                 onClick={() => setShowDiscountEditor((prev) => !prev)}
                 className={`w-full h-11 px-3 rounded-xl text-xs font-semibold border transition-colors ${
                   showDiscountEditor || lineDiscount > 0
-                    ? 'bg-amber-50 border-amber-400 text-amber-900'
-                    : 'bg-white border-zinc-200 hover:border-zinc-400 text-zinc-800'
+                    ? 'bg-sky-200 border-sky-500 text-sky-950 ring-1 ring-sky-400/40'
+                    : 'bg-sky-100 hover:bg-sky-200 border-sky-300 text-sky-900'
                 }`}
               >
                 Chiết khấu món
@@ -483,7 +438,7 @@ export function KasItemModal({
               <button
                 type="button"
                 onClick={onDelete}
-                className="w-full h-11 px-3 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold transition-colors"
+                className="w-full h-11 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors shadow-xs"
               >
                 Hủy món
               </button>
@@ -537,9 +492,9 @@ export function KasItemModal({
 
                 {hasComboLimit && comboTab === 'combo' ? (
                   <span
-                    className={`text-xs font-semibold font-mono tabular-nums ${
+                    className={`text-xs font-semibold tabular-nums ${
                       selectedComboCount >= comboMaxToppings
-                        ? 'text-emerald-700'
+                        ? 'text-cyan-700'
                         : 'text-amber-700'
                     }`}
                   >
@@ -611,7 +566,7 @@ export function KasItemModal({
                             <div className="text-xs font-semibold text-zinc-900 leading-snug pr-5 line-clamp-2">
                               {ct.name}
                             </div>
-                            <div className="text-[11px] font-mono font-semibold tabular-nums text-amber-700 text-right mt-1">
+                            <div className="text-[11px] font-semibold tabular-nums text-amber-700 text-right mt-1">
                               0 ₫ · Combo
                             </div>
                             {isSelected && (
@@ -624,7 +579,7 @@ export function KasItemModal({
                       })}
                     </div>
                     {hasComboLimit && selectedComboCount >= comboMaxToppings && (
-                      <div className="text-[11px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                      <div className="text-[11px] font-medium text-[#0a2268] bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2">
                         Đã chọn đủ {comboMaxToppings}/{comboMaxToppings} món kèm trong Combo. Bỏ chọn 1 món nếu muốn đổi, hoặc chuyển tab <strong>Topping gọi thêm</strong> để mua thêm.
                       </div>
                     )}
@@ -632,11 +587,11 @@ export function KasItemModal({
                 ) : (
                   <>
                     {availableToppings.length === 0 ? (
-                      <div className="text-xs text-zinc-500 py-4 text-center">
-                        Chưa có topping nào. Tạo nhanh topping ngay bên dưới.
+                      <div className="text-xs text-slate-500 py-6 text-center">
+                        Chưa có topping nào.
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[155px] overflow-y-auto pos-scroll pr-0.5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[210px] overflow-y-auto pos-scroll pr-0.5">
                         {availableToppings.map((tp) => {
                           const effectivePrice =
                             isCombo && !hasComboLimit && comboFreeMode ? 0 : tp.price;
@@ -652,22 +607,22 @@ export function KasItemModal({
                               }
                               className={`relative text-left p-2.5 rounded-xl border transition-all flex flex-col justify-between min-h-[62px] ${
                                 isSelected
-                                  ? 'bg-emerald-50/80 border-emerald-600 ring-1 ring-emerald-600/20'
-                                  : 'bg-zinc-50/70 border-zinc-200 hover:border-zinc-400 hover:bg-white'
+                                  ? 'bg-cyan-50/80 border-[#0a2268] ring-1 ring-[#0a2268]/20'
+                                  : 'bg-slate-50/70 border-slate-200 hover:border-cyan-500 hover:bg-white'
                               }`}
                             >
-                              <div className="text-xs font-semibold text-zinc-900 leading-snug pr-5 line-clamp-2">
+                              <div className="text-xs font-semibold text-slate-900 leading-snug pr-5 line-clamp-2">
                                 {tp.name}
                               </div>
                               <div
-                                className={`text-[11px] font-mono font-semibold tabular-nums text-right mt-1 ${
-                                  effectivePrice === 0 ? 'text-amber-700' : 'text-emerald-700'
+                                className={`text-[11px] font-semibold tabular-nums text-right mt-1 ${
+                                  effectivePrice === 0 ? 'text-amber-700' : 'text-[#0a2268]'
                                 }`}
                               >
                                 {effectivePrice === 0 ? '0 ₫ · Combo' : `${formatDotNumber(tp.price)} ₫`}
                               </div>
                               {isSelected && (
-                                <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-emerald-700 text-white flex items-center justify-center">
+                                <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#091d4f] text-white flex items-center justify-center">
                                   <Check className="w-2.5 h-2.5 stroke-[3]" />
                                 </span>
                               )}
@@ -676,37 +631,6 @@ export function KasItemModal({
                         })}
                       </div>
                     )}
-
-                    {/* Quick Create Topping Bar */}
-                    <form
-                      onSubmit={handleQuickCreateTopping}
-                      className="pt-2.5 border-t border-zinc-100 flex items-center gap-2"
-                    >
-                      <input
-                        type="text"
-                        value={quickToppingName}
-                        onChange={(e) =>
-                          setQuickToppingName(e.target.value.slice(0, LIMITS.TOPPING_NAME_MAX))
-                        }
-                        placeholder="Tạo nhanh topping mới..."
-                        className="flex-1 min-w-0 h-8 px-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
-                      />
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={quickToppingPrice}
-                        onChange={(e) => setQuickToppingPrice(formatDotNumber(e.target.value))}
-                        placeholder="Giá (10.000)"
-                        className="w-24 h-8 px-2 text-xs font-semibold font-mono tabular-nums text-right bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
-                      />
-                      <button
-                        type="submit"
-                        disabled={creatingTopping}
-                        className="h-8 px-3 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 rounded-lg whitespace-nowrap"
-                      >
-                        + Tạo
-                      </button>
-                    </form>
                   </>
                 )}
               </div>
@@ -725,10 +649,10 @@ export function KasItemModal({
                   }))
                 }
                 placeholder="Nhập ghi chú món (VD: Ít đá, 50% đường)..."
-                className="w-full h-9 px-3 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-emerald-700"
+                className="w-full h-9 px-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#0a2268]"
               />
 
-              <div className="bg-white border border-zinc-200 rounded-xl p-3 flex-1">
+              <div className="bg-white border border-slate-200 rounded-xl p-3 flex-1">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {QUICK_NOTES.map((preset) => {
                     const active = draft.note
@@ -743,8 +667,8 @@ export function KasItemModal({
                         onClick={() => appendQuickNote(preset)}
                         className={`px-2.5 py-2.5 text-xs font-semibold rounded-lg border transition-colors text-center ${
                           active
-                            ? 'bg-zinc-900 border-zinc-900 text-white'
-                            : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-white'
+                            ? 'bg-[#091d4f] border-[#091d4f] text-white shadow-xs'
+                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-cyan-500 hover:bg-white'
                         }`}
                       >
                         {preset}

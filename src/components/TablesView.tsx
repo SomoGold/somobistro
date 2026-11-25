@@ -120,25 +120,25 @@ export function TablesView({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Tổng số bàn</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-zinc-950">
             {stats.total}
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Đang treo bill</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-amber-600">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-amber-600">
             {stats.occupied}
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Bàn trống</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-emerald-700">
             {stats.available}
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Tạm tính chưa thu</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-emerald-700">
             {formatVND(stats.provisionalRevenue)}
           </div>
         </div>
@@ -211,7 +211,7 @@ export function TablesView({
                       >
                         <span>{tbl.zone}</span>
                         <span aria-hidden="true">·</span>
-                        <span className="inline-flex items-center gap-1 font-mono tabular-nums">
+                        <span className="inline-flex items-center gap-1 tabular-nums">
                           <Users className="w-3 h-3" />
                           {tbl.seats} chỗ
                         </span>
@@ -231,7 +231,7 @@ export function TablesView({
                     <div className="pt-2.5 border-t border-amber-200/80 space-y-1 text-xs">
                       <div className="flex justify-between text-amber-900/80">
                         <span>Mã đơn</span>
-                        <span className="font-mono tabular-nums font-semibold text-amber-950">
+                        <span className="tabular-nums font-semibold text-amber-950">
                           {openOrd.orderNumber}
                         </span>
                       </div>
@@ -245,13 +245,13 @@ export function TablesView({
                       )}
                       <div className="flex justify-between text-amber-900/80">
                         <span>Số món</span>
-                        <span className="font-mono tabular-nums font-semibold text-amber-950">
+                        <span className="tabular-nums font-semibold text-amber-950">
                           {openOrd.items.reduce((s, i) => s + i.qty, 0)} món
                         </span>
                       </div>
                       <div className="flex justify-between items-baseline pt-1">
                         <span className="text-amber-900/80">Tạm tính</span>
-                        <span className="font-mono tabular-nums text-base font-bold text-amber-700">
+                        <span className="tabular-nums text-base font-bold text-amber-700">
                           {formatVND(openOrd.total)}
                         </span>
                       </div>
@@ -379,7 +379,7 @@ export function TablesView({
                     max={30}
                     value={newSeats}
                     onChange={(e) => setNewSeats(Number(e.target.value) || 2)}
-                    className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full px-3 py-2 text-sm tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                   />
                 </div>
               </div>

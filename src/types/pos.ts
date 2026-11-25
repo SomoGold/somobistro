@@ -47,6 +47,7 @@ export interface StoreSettings {
   bankOwner: string;
   pinCode?: string;
   qrImageUrl?: string;
+  logoImageUrl?: string;
   defaultPrintSize?: ReceiptPaperSize;
   seeded: boolean;
   createdAt?: Timestamp | null;
@@ -176,6 +177,7 @@ export const LIMITS = {
   BANK_ACCOUNT_MAX: 50,
   BANK_OWNER_MAX: 100,
   QR_IMAGE_MAX: 300000,
+  LOGO_IMAGE_MAX: 300000,
   SKU_MAX: 32,
   ITEM_NAME_MAX: 120,
   TOPPING_NAME_MAX: 80,

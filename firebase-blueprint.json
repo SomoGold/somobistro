@@ -66,6 +66,11 @@
           "maxLength": 300000,
           "description": "Owner-uploaded payment QR code image (compressed data URL)."
         },
+        "logoImageUrl": {
+          "type": "string",
+          "maxLength": 300000,
+          "description": "Owner-uploaded store brand logo image (compressed data URL) used on the startup splash screen and receipts."
+        },
         "defaultPrintSize": {
           "type": "string",
           "enum": ["a5", "80mm"],

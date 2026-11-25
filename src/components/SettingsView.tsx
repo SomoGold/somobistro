@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { QrCode, Save, Trash2, Upload, X } from 'lucide-react';
+import { Image as ImageIcon, QrCode, Save, Trash2, Upload, X } from 'lucide-react';
 import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { db, OperationType, reportFirestoreError } from '../lib/firebase';
 import { purgeAllOrdersAndResetTables } from '../lib/seedData';
@@ -69,6 +69,66 @@ function compressQrImage(file: File): Promise<string> {
   });
 }
 
+function compressLogoImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Không thể đọc tệp ảnh logo.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Tệp tải lên không phải ảnh hợp lệ.'));
+      img.onload = () => {
+        const renderAtSize = (maxSide: number, mime: 'image/png' | 'image/jpeg', quality?: number) => {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+          if (width > maxSide || height > maxSide) {
+            const ratio = Math.min(maxSide / width, maxSide / height);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            throw new Error('Trình duyệt không hỗ trợ xử lý ảnh.');
+          }
+          if (mime === 'image/jpeg') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+          } else {
+            ctx.clearRect(0, 0, width, height);
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          return canvas.toDataURL(mime, quality);
+        };
+
+        try {
+          // Prefer transparent PNG first so logos look sharp on both splash screen and receipts
+          let dataUrl = renderAtSize(480, 'image/png');
+          if (dataUrl.length > LIMITS.LOGO_IMAGE_MAX) {
+            dataUrl = renderAtSize(320, 'image/png');
+          }
+          if (dataUrl.length > LIMITS.LOGO_IMAGE_MAX) {
+            dataUrl = renderAtSize(480, 'image/jpeg', 0.88);
+          }
+          if (dataUrl.length > LIMITS.LOGO_IMAGE_MAX) {
+            dataUrl = renderAtSize(360, 'image/jpeg', 0.72);
+          }
+          if (dataUrl.length > LIMITS.LOGO_IMAGE_MAX) {
+            reject(new Error('Ảnh logo quá lớn. Vui lòng chọn ảnh gọn hơn.'));
+            return;
+          }
+          resolve(dataUrl);
+        } catch (err) {
+          reject(err instanceof Error ? err : new Error('Không thể xử lý ảnh logo.'));
+        }
+      };
+      img.src = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export function SettingsView({ ownerId, settings, orders, tables, onNotify }: SettingsViewProps) {
   const [storeName, setStoreName] = useState('Somo Bistro');
   const [address, setAddress] = useState('');
@@ -80,12 +140,15 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
   const [bankName, setBankName] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [bankOwner, setBankOwner] = useState('');
+  const [logoImageUrl, setLogoImageUrl] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [qrImageUrl, setQrImageUrl] = useState('');
   const [uploadingQr, setUploadingQr] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -100,8 +163,31 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
     setBankName(settings.bankName || '');
     setBankAccount(settings.bankAccount || '');
     setBankOwner(settings.bankOwner || '');
+    setLogoImageUrl(settings.logoImageUrl || '');
     setQrImageUrl(settings.qrImageUrl || '');
   }, [settings]);
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      onNotify('Vui lòng chọn tệp hình ảnh (PNG, JPG, WebP...).', 'error');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const compressed = await compressLogoImage(file);
+      setLogoImageUrl(compressed);
+      onNotify('Đã tải logo lên. Nhấn "Lưu cài đặt" để áp dụng lên màn hình khởi động và hóa đơn.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Không thể xử lý ảnh logo.';
+      onNotify(msg, 'error');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleQrFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,6 +231,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
       bankName: sanitizeText(bankName, LIMITS.BANK_NAME_MAX),
       bankAccount: sanitizeText(bankAccount, LIMITS.BANK_ACCOUNT_MAX),
       bankOwner: sanitizeText(bankOwner, LIMITS.BANK_OWNER_MAX),
+      logoImageUrl: logoImageUrl.slice(0, LIMITS.LOGO_IMAGE_MAX),
       qrImageUrl: qrImageUrl.slice(0, LIMITS.QR_IMAGE_MAX),
       defaultPrintSize,
       updatedAt: serverTimestamp(),
@@ -161,7 +248,16 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
           createdAt: serverTimestamp(),
         });
       }
-      onNotify('Đã lưu cấu hình Somo Bistro, ảnh mã QR và khổ giấy in hóa đơn.');
+      try {
+        if (fields.logoImageUrl) {
+          window.localStorage.setItem('somo_pos_store_logo', fields.logoImageUrl);
+        } else {
+          window.localStorage.removeItem('somo_pos_store_logo');
+        }
+      } catch {
+        // Ignore storage errors in restricted environments
+      }
+      onNotify('Đã lưu cấu hình Somo Bistro, logo quán, ảnh mã QR và khổ giấy in hóa đơn.');
     } catch (error) {
       const msg = reportFirestoreError(
         error,
@@ -228,7 +324,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.slice(0, LIMITS.PHONE_MAX))}
                 placeholder="0908 456 789"
-                className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                className="w-full px-3 py-2 text-sm tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
           </div>
@@ -262,7 +358,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
                 value={bankAccount}
                 onChange={(e) => setBankAccount(e.target.value.slice(0, LIMITS.BANK_ACCOUNT_MAX))}
                 placeholder="VD: 1903xxxxxxxxxx"
-                className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                className="w-full px-3 py-2 text-sm tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
             <div>
@@ -285,7 +381,7 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
               <select
                 value={defaultVatRate}
                 onChange={(e) => setDefaultVatRate(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                className="w-full px-3 py-2 text-sm tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               >
                 <option value={0}>0% (Không VAT)</option>
                 <option value={8}>8% (Giảm thuế VAT)</option>
@@ -354,6 +450,85 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
               placeholder="Cảm ơn quý khách đã ghé thăm Somo Bistro! Hẹn gặp lại."
               className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
             />
+          </div>
+
+          {/* Store Logo Upload (Startup Splash & Receipts) */}
+          <div className="pt-4 border-t border-zinc-200 space-y-3">
+            <div>
+              <h3 className="text-sm font-bold text-zinc-950">
+                Logo Somo Bistro (Màn hình khởi động & Hóa đơn)
+              </h3>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Tải lên ảnh logo của quán (khuyên dùng PNG nền trong hoặc nền trắng). Logo sẽ hiển
+                thị trên màn hình khởi động và thay thế chữ tên quán ở đầu hóa đơn in.
+              </p>
+            </div>
+
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleLogoFileChange}
+              className="hidden"
+            />
+
+            {logoImageUrl ? (
+              <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="w-36 h-24 rounded-xl bg-white border border-zinc-200 p-2.5 flex items-center justify-center shrink-0">
+                  <img
+                    src={logoImageUrl}
+                    alt="Logo quán đã tải lên"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                <div className="space-y-2.5 flex-1">
+                  <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0a2268]">
+                    <ImageIcon className="w-4 h-4" />
+                    Đã sẵn sàng ảnh logo quán
+                  </div>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Nhấn <strong>Lưu cài đặt</strong> bên dưới để áp dụng logo lên màn hình khởi
+                    động và mẫu in hóa đơn.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={uploadingLogo}
+                      onClick={() => logoInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-300 hover:bg-zinc-100 rounded-lg transition-colors"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {uploadingLogo ? 'Đang xử lý...' : 'Đổi ảnh logo khác'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLogoImageUrl('')}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      Gỡ logo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={uploadingLogo}
+                onClick={() => logoInputRef.current?.click()}
+                className="w-full p-6 border-2 border-dashed border-zinc-300 hover:border-[#0a2268] hover:bg-blue-50/40 rounded-xl flex flex-col items-center justify-center gap-2 text-center transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0a2268] flex items-center justify-center">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <div className="text-sm font-semibold text-zinc-900">
+                  {uploadingLogo ? 'Đang xử lý ảnh logo...' : 'Nhấn để tải ảnh Logo Somo Bistro lên'}
+                </div>
+                <div className="text-xs text-zinc-500">
+                  Hỗ trợ PNG, JPG, WebP (giữ nguyên nền trong suốt và tự động tối ưu cho in hóa đơn)
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Custom Payment QR Upload */}
@@ -439,8 +614,8 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
         <div className="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex justify-end">
           <button
             type="submit"
-            disabled={saving || uploadingQr}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg transition-colors"
+            disabled={saving || uploadingQr || uploadingLogo}
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#091d4f] hover:bg-[#132f7a] disabled:opacity-50 rounded-lg transition-colors"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Đang lưu...' : 'Lưu cài đặt'}
@@ -459,8 +634,8 @@ export function SettingsView({ ownerId, settings, orders, tables, onNotify }: Se
         </div>
         <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="text-xs text-zinc-600">
-            Hiện có <span className="font-mono tabular-nums font-bold text-zinc-950">{orders.length}</span> đơn hàng
-            và <span className="font-mono tabular-nums font-bold text-zinc-950">{openTablesCount}</span> bàn đang treo
+            Hiện có <span className="tabular-nums font-bold text-zinc-950">{orders.length}</span> đơn hàng
+            và <span className="tabular-nums font-bold text-zinc-950">{openTablesCount}</span> bàn đang treo
             bill.
           </div>
 

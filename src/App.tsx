@@ -104,6 +104,13 @@ export default function App() {
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [cachedLogoUrl, setCachedLogoUrl] = useState<string>(() => {
+    try {
+      return window.localStorage.getItem('somo_pos_store_logo') || '';
+    } catch {
+      return '';
+    }
+  });
 
   // Receipt modal state
   const [receiptState, setReceiptState] = useState<{
@@ -160,6 +167,17 @@ export default function App() {
         if (snap.exists()) {
           const data = snap.data() as Omit<StoreSettings, 'id'>;
           setSettings({ id: snap.id, ...data });
+          const nextLogo = data.logoImageUrl || '';
+          setCachedLogoUrl(nextLogo);
+          try {
+            if (nextLogo) {
+              window.localStorage.setItem('somo_pos_store_logo', nextLogo);
+            } else {
+              window.localStorage.removeItem('somo_pos_store_logo');
+            }
+          } catch {
+            // Ignore localStorage restrictions
+          }
           if (!data.seeded && seededAttemptRef.current !== uid) {
             seededAttemptRef.current = uid;
             setSeeding(true);
@@ -428,15 +446,25 @@ export default function App() {
     };
   }, [orders, tables]);
 
+  const displayLogoUrl = settings?.logoImageUrl || cachedLogoUrl;
+
   // ---------------- LOADING AUTH ----------------
   if (!authReady) {
     return (
-      <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-extrabold text-base tracking-tight">
-            SB
-          </div>
-          <div className="text-sm font-semibold text-zinc-600">
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          {displayLogoUrl ? (
+            <img
+              src={displayLogoUrl}
+              alt="Logo Somo Bistro"
+              className="max-h-28 max-w-[240px] w-auto h-auto object-contain"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-[#091d4f] text-white flex items-center justify-center font-extrabold text-xl tracking-tight shadow-sm">
+              SB
+            </div>
+          )}
+          <div className="text-sm font-semibold text-[#091d4f]">
             Đang khởi động Somo Bistro POS...
           </div>
         </div>
@@ -452,9 +480,17 @@ export default function App() {
           <div className="lg:col-span-7 p-7 sm:p-11 flex flex-col justify-between gap-8">
             <div className="space-y-5">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center text-sm font-extrabold tracking-tight shrink-0">
-                  SB
-                </div>
+                {displayLogoUrl ? (
+                  <img
+                    src={displayLogoUrl}
+                    alt="Logo Somo Bistro"
+                    className="h-10 max-w-[140px] w-auto object-contain shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-[#091d4f] text-white flex items-center justify-center text-sm font-extrabold tracking-tight shrink-0">
+                    SB
+                  </div>
+                )}
                 <div>
                   <div className="text-base font-bold tracking-tight text-zinc-900 leading-none">
                     Somo Bistro
@@ -587,15 +623,22 @@ export default function App() {
   // ---------------- LOADING STORE DATA ----------------
   if (dataLoading || seeding) {
     return (
-      <div className="min-h-screen bg-zinc-100 flex flex-col items-center justify-center p-6 text-center space-y-3">
-        <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-extrabold text-sm">
-          SB
-        </div>
-        <div className="text-base font-bold text-zinc-900">{settings?.storeName || 'Somo Bistro'}</div>
-        <div className="text-sm text-zinc-500">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center space-y-4">
+        {displayLogoUrl ? (
+          <img
+            src={displayLogoUrl}
+            alt="Logo Somo Bistro"
+            className="max-h-28 max-w-[240px] w-auto h-auto object-contain"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-2xl bg-[#091d4f] text-white flex items-center justify-center font-extrabold text-xl tracking-tight shadow-sm">
+            SB
+          </div>
+        )}
+        <div className="text-sm font-semibold text-[#091d4f]">
           {seeding
             ? 'Đang khởi tạo thực đơn Somo Bistro và sơ đồ bàn...'
-            : 'Đang tải dữ liệu cửa hàng...'}
+            : 'Đang khởi động Somo Bistro POS...'}
         </div>
       </div>
     );
@@ -631,22 +674,22 @@ export default function App() {
           onNotify={notify}
         />
       ) : (
-        /* ================= MANAGEMENT SCREENS WITH MODERN LIGHT TOP BAR ================= */
-        <div className="min-h-screen bg-zinc-100 flex flex-col">
-          <header className="h-14 bg-white text-zinc-900 border-b border-zinc-200 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shrink-0">
+        /* ================= MANAGEMENT SCREENS WITH SYSTEM DEEP-NAVY TOP BAR ================= */
+        <div className="min-h-screen bg-slate-100 flex flex-col">
+          <header className="h-14 bg-[#091d4f] text-white border-b border-blue-950 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shrink-0">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => setActiveTab('pos')}
-                className="h-9 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
+                className="h-9 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors whitespace-nowrap shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Quầy POS
               </button>
 
-              <span className="h-5 w-px bg-zinc-200 hidden md:inline-block shrink-0" />
+              <span className="h-5 w-px bg-blue-800 hidden md:inline-block shrink-0" />
 
-              <span className="text-sm font-bold tracking-tight text-zinc-900 hidden md:inline whitespace-nowrap truncate">
+              <span className="text-sm font-extrabold tracking-tight text-cyan-200 hidden md:inline whitespace-nowrap truncate">
                 {settings?.storeName || 'Somo Bistro'}
               </span>
 
@@ -662,11 +705,11 @@ export default function App() {
                       onClick={() => setActiveTab(item.id)}
                       className={`h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                         active
-                          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200'
-                          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                          ? 'bg-[#193d99] text-white ring-1 ring-inset ring-cyan-400/60 shadow-xs'
+                          : 'text-slate-200 hover:bg-[#132f7a] hover:text-white'
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-700' : 'text-zinc-400'}`} />
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-cyan-300' : 'text-cyan-200/75'}`} />
                       {item.label}
                     </button>
                   );
@@ -676,8 +719,8 @@ export default function App() {
 
             <div className="flex items-center gap-3 shrink-0">
               <div className="hidden sm:block text-right leading-tight">
-                <div className="text-[11px] text-zinc-500">Hôm nay · {todayStats.count} đơn</div>
-                <div className="text-xs font-bold font-mono tabular-nums text-emerald-700">
+                <div className="text-[11px] text-slate-300">Hôm nay · {todayStats.count} đơn</div>
+                <div className="text-xs font-bold tabular-nums text-amber-300">
                   {formatVND(todayStats.revenue)}
                 </div>
               </div>
@@ -687,13 +730,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setAccountMenuOpen((prev) => !prev)}
-                  className="h-9 inline-flex items-center gap-2 px-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-xs font-semibold text-zinc-800 transition-colors whitespace-nowrap"
+                  className="h-9 inline-flex items-center gap-2 px-3 rounded-lg bg-[#132f7a] hover:bg-[#1c40a3] border border-blue-800/80 text-xs font-semibold text-white transition-colors whitespace-nowrap"
                   aria-expanded={accountMenuOpen}
                   aria-haspopup="menu"
                 >
-                  <UserIcon className="w-3.5 h-3.5 text-zinc-500" />
+                  <UserIcon className="w-3.5 h-3.5 text-cyan-200" />
                   <span className="max-w-[110px] truncate">{accountLabel || 'Tài khoản'}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-cyan-200/80" />
                 </button>
 
                 {accountMenuOpen && (
@@ -718,7 +761,7 @@ export default function App() {
                         onClick={openCreateAccountModal}
                         className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-zinc-700 hover:bg-zinc-50 flex items-center gap-2 transition-colors"
                       >
-                        <UserPlus className="w-3.5 h-3.5 text-emerald-700" />
+                        <UserPlus className="w-3.5 h-3.5 text-[#0a2268]" />
                         Tạo tài khoản mới
                       </button>
                       <div className="my-1 border-t border-zinc-100" />
@@ -739,7 +782,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
-                className="lg:hidden h-9 w-9 inline-flex items-center justify-center rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors"
+                className="lg:hidden h-9 w-9 inline-flex items-center justify-center rounded-lg bg-[#132f7a] hover:bg-[#1c40a3] text-white transition-colors"
                 aria-label="Mở menu quản lý"
               >
                 <Menu className="w-4 h-4" />
@@ -751,19 +794,19 @@ export default function App() {
           {mobileNavOpen && (
             <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
               <div
-                className="fixed inset-0 bg-zinc-950/40 backdrop-blur-[1px]"
+                className="fixed inset-0 bg-slate-950/50 backdrop-blur-[1px]"
                 onClick={() => setMobileNavOpen(false)}
               />
-              <div className="relative z-10 w-72 bg-white h-full flex flex-col justify-between shadow-2xl border-l border-zinc-200">
+              <div className="relative z-10 w-72 bg-white h-full flex flex-col justify-between shadow-2xl border-l-2 border-[#0a2268]">
                 <div>
-                  <div className="h-14 px-4 border-b border-zinc-200 flex items-center justify-between">
-                    <span className="font-bold text-sm text-zinc-900">
+                  <div className="h-14 px-4 bg-[#091d4f] text-white border-b border-blue-950 flex items-center justify-between">
+                    <span className="font-extrabold text-sm text-cyan-300">
                       {settings?.storeName || 'Somo Bistro'}
                     </span>
                     <button
                       type="button"
                       onClick={() => setMobileNavOpen(false)}
-                      className="p-1.5 text-zinc-500 hover:text-zinc-900 rounded-lg"
+                      className="p-1.5 text-slate-300 hover:text-white rounded-lg"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -775,7 +818,7 @@ export default function App() {
                         setActiveTab('pos');
                         setMobileNavOpen(false);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-semibold"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[#091d4f] hover:bg-[#132f7a] text-white text-sm font-semibold transition-colors"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       Quay về quầy POS
@@ -794,8 +837,8 @@ export default function App() {
                             }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                               active
-                                ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200'
-                                : 'text-zinc-700 hover:bg-zinc-100'
+                                ? 'bg-cyan-50 text-[#0a2268] ring-1 ring-inset ring-cyan-200'
+                                : 'text-slate-700 hover:bg-slate-100'
                             }`}
                           >
                             <Icon className="w-4 h-4" />
@@ -804,20 +847,20 @@ export default function App() {
                         );
                       })}
                     </div>
-                    <div className="pt-2 mt-2 border-t border-zinc-100">
+                    <div className="pt-2 mt-2 border-t border-slate-100">
                       <button
                         type="button"
                         onClick={openCreateAccountModal}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-zinc-700 hover:bg-zinc-100"
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100"
                       >
-                        <UserPlus className="w-4 h-4 text-emerald-700" />
+                        <UserPlus className="w-4 h-4 text-[#0a2268]" />
                         Tạo tài khoản mới
                       </button>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-zinc-600 truncate">{accountLabel}</span>
+                <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-600 truncate">{accountLabel}</span>
                   <button
                     type="button"
                     onClick={requestSignOut}

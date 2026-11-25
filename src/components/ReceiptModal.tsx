@@ -40,6 +40,7 @@ export function ReceiptModal({
   const wifiInfo = settings?.wifiInfo || '';
   const footerText =
     settings?.receiptFooter || 'Cảm ơn quý khách đã ghé thăm Somo Bistro! Hẹn gặp lại.';
+  const logoDataUrl = settings?.logoImageUrl || '';
   const qrDataUrl = settings?.qrImageUrl || '';
   const hasBankInfo = Boolean(
     settings?.bankName || settings?.bankAccount || settings?.bankOwner,
@@ -132,7 +133,15 @@ export function ReceiptModal({
                 {/* Store & Invoice Header */}
                 <div className="flex items-start justify-between gap-4 pb-3.5 border-b border-slate-300">
                   <div className="space-y-0.5">
-                    <div className="text-base font-bold tracking-tight text-slate-900">{storeName}</div>
+                    {logoDataUrl ? (
+                      <img
+                        src={logoDataUrl}
+                        alt={storeName}
+                        className="max-w-[140px] max-h-[44px] w-auto h-auto object-contain mb-0.5"
+                      />
+                    ) : (
+                      <div className="text-base font-bold tracking-tight text-slate-900">{storeName}</div>
+                    )}
                     {address && <div className="text-[10.8px] text-slate-600">{address}</div>}
                     {phone && (
                       <div className="text-[10.8px] text-slate-600 tabular-nums">Hotline: {phone}</div>
@@ -397,7 +406,15 @@ export function ReceiptModal({
             /* -------------------- 80MM THERMAL ROLL PREVIEW (TAHOMA CRISP 203 DPI SCALE) -------------------- */
             <div className="print-receipt-root print-receipt-80mm w-[304px] bg-white border border-slate-300 px-[30px] py-3.5 text-black text-[11.2px] font-normal leading-snug shadow-sm self-start">
               <div className="text-center space-y-0.5">
-                <div className="text-[1.3em] font-bold tracking-tight text-black">{storeName}</div>
+                {logoDataUrl ? (
+                  <img
+                    src={logoDataUrl}
+                    alt={storeName}
+                    className="max-w-[140px] max-h-[46px] w-auto h-auto object-contain mx-auto mb-0.5"
+                  />
+                ) : (
+                  <div className="text-[1.3em] font-bold tracking-tight text-black">{storeName}</div>
+                )}
                 {address && <div className="text-[0.9em] font-medium text-black">{address}</div>}
                 {phone && <div className="text-[0.9em] font-medium text-black tabular-nums">ĐT: {phone}</div>}
                 <div className="pt-2 text-[1.52em] font-bold leading-tight text-black">

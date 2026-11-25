@@ -41,7 +41,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'ownerId', 'storeName', 'address', 'phone', 'wifiInfo',
           'receiptFooter', 'defaultVatRate', 'bankName', 'bankAccount',
-          'bankOwner', 'pinCode', 'qrImageUrl', 'defaultPrintSize',
+          'bankOwner', 'pinCode', 'qrImageUrl', 'logoImageUrl', 'defaultPrintSize',
           'seeded', 'createdAt', 'updatedAt'
         ])
         && data.ownerId == request.auth.uid
@@ -57,6 +57,7 @@ service cloud.firestore {
         && data.bankOwner is string && data.bankOwner.size() <= 100
         && (!('pinCode' in data) || (data.pinCode is string && data.pinCode.size() <= 10))
         && (!('qrImageUrl' in data) || (data.qrImageUrl is string && data.qrImageUrl.size() <= 300000))
+        && (!('logoImageUrl' in data) || (data.logoImageUrl is string && data.logoImageUrl.size() <= 300000))
         && (!('defaultPrintSize' in data) || data.defaultPrintSize in ['a5', '80mm'])
         && data.seeded is bool
         && (!('createdAt' in data) || data.createdAt is timestamp)
@@ -308,7 +309,7 @@ service cloud.firestore {
           incoming().diff(existing()).affectedKeys().hasOnly([
             'storeName', 'address', 'phone', 'wifiInfo', 'receiptFooter',
             'defaultVatRate', 'bankName', 'bankAccount', 'bankOwner',
-            'pinCode', 'qrImageUrl', 'defaultPrintSize', 'updatedAt'
+            'pinCode', 'qrImageUrl', 'logoImageUrl', 'defaultPrintSize', 'updatedAt'
           ]) ||
           // Action: MarkSeeded
           incoming().diff(existing()).affectedKeys().hasOnly(['seeded', 'updatedAt'])

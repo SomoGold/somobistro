@@ -309,25 +309,25 @@ export function CustomersView({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Khách hàng đã lưu</div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-zinc-950 mt-1">
+          <div className="text-2xl font-bold tabular-nums text-zinc-950 mt-1">
             {overallSummary.totalCustomers}
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Có chiết khấu mặc định</div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-amber-700 mt-1">
+          <div className="text-2xl font-bold tabular-nums text-amber-700 mt-1">
             {overallSummary.withDiscount}
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Tổng chi tiêu khách quen</div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-emerald-700 mt-1">
+          <div className="text-2xl font-bold tabular-nums text-emerald-700 mt-1">
             {formatVND(overallSummary.totalSpent)}
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <div className="text-xs font-medium text-zinc-500">Tổng lượt mua</div>
-          <div className="text-2xl font-bold font-mono tabular-nums text-zinc-950 mt-1">
+          <div className="text-2xl font-bold tabular-nums text-zinc-950 mt-1">
             {overallSummary.totalOrders}
           </div>
         </div>
@@ -396,13 +396,13 @@ export function CustomersView({
                         <div className="text-sm font-bold text-zinc-950 truncate">{cust.name}</div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-zinc-500">
                           {cust.phone && (
-                            <span className="inline-flex items-center gap-1 font-mono tabular-nums">
+                            <span className="inline-flex items-center gap-1 tabular-nums">
                               <Phone className="w-3 h-3" />
                               {cust.phone}
                             </span>
                           )}
                           {cust.defaultDiscountValue > 0 && (
-                            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 font-mono tabular-nums">
+                            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 tabular-nums">
                               <Percent className="w-3 h-3" />
                               CK mặc định:{' '}
                               {formatDiscountBadge(
@@ -415,10 +415,10 @@ export function CustomersView({
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className="text-sm font-bold font-mono tabular-nums text-emerald-700">
+                        <div className="text-sm font-bold tabular-nums text-emerald-700">
                           {formatVND(stats?.totalSpent ?? 0)}
                         </div>
-                        <div className="text-[11px] text-zinc-500 font-mono tabular-nums">
+                        <div className="text-[11px] text-zinc-500 tabular-nums">
                           {stats?.orders.length ?? 0} hóa đơn
                         </div>
                       </div>
@@ -443,7 +443,7 @@ export function CustomersView({
                   >
                     <div className="min-w-0">
                       <div className="font-semibold text-zinc-900 truncate">{walkIn.name}</div>
-                      <div className="text-[11px] text-zinc-500 font-mono tabular-nums">
+                      <div className="text-[11px] text-zinc-500 tabular-nums">
                         {walkIn.orderCount} đơn · {formatVND(walkIn.totalSpent)}
                       </div>
                     </div>
@@ -478,13 +478,13 @@ export function CustomersView({
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-600">
                       <span>
                         SĐT:{' '}
-                        <strong className="font-mono tabular-nums text-zinc-900">
+                        <strong className="tabular-nums text-zinc-900">
                           {selectedCustomer.phone || 'Chưa cập nhật'}
                         </strong>
                       </span>
                       <span>
                         Chiết khấu mặc định:{' '}
-                        <strong className="font-mono tabular-nums text-amber-700">
+                        <strong className="tabular-nums text-amber-700">
                           {formatDiscountBadge(
                             selectedCustomer.defaultDiscountType,
                             selectedCustomer.defaultDiscountValue,
@@ -493,7 +493,7 @@ export function CustomersView({
                       </span>
                       <span>
                         Mua gần nhất:{' '}
-                        <strong className="font-mono tabular-nums text-zinc-900">
+                        <strong className="tabular-nums text-zinc-900">
                           {selectedStats?.lastOrderTime || 'Chưa có đơn'}
                         </strong>
                       </span>
@@ -550,19 +550,19 @@ export function CustomersView({
                     <div className="text-[11px] font-medium text-emerald-900/75">
                       Tổng tiền đã mua
                     </div>
-                    <div className="text-base font-bold font-mono tabular-nums text-emerald-800 mt-0.5">
+                    <div className="text-base font-bold tabular-nums text-emerald-800 mt-0.5">
                       {formatVND(selectedStats?.totalSpent ?? 0)}
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80">
                     <div className="text-[11px] font-medium text-zinc-500">Số hóa đơn</div>
-                    <div className="text-base font-bold font-mono tabular-nums text-zinc-950 mt-0.5">
+                    <div className="text-base font-bold tabular-nums text-zinc-950 mt-0.5">
                       {selectedStats?.orders.length ?? 0}
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80">
                     <div className="text-[11px] font-medium text-zinc-500">Trung bình / đơn</div>
-                    <div className="text-base font-bold font-mono tabular-nums text-zinc-950 mt-0.5">
+                    <div className="text-base font-bold tabular-nums text-zinc-950 mt-0.5">
                       {formatVND(
                         selectedStats && selectedStats.orders.length > 0
                           ? Math.round(selectedStats.totalSpent / selectedStats.orders.length)
@@ -587,7 +587,7 @@ export function CustomersView({
                         className="px-3 py-2 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-between gap-2 text-xs"
                       >
                         <span className="font-semibold text-zinc-900 truncate">{it.name}</span>
-                        <span className="font-mono tabular-nums text-zinc-600 whitespace-nowrap">
+                        <span className="tabular-nums text-zinc-600 whitespace-nowrap">
                           <strong className="text-emerald-700">{it.qty}</strong> lần ·{' '}
                           {formatVND(it.revenue)}
                         </span>
@@ -616,10 +616,10 @@ export function CustomersView({
                       <div key={ord.id} className="p-4 hover:bg-zinc-50/80 space-y-2 transition-colors">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-                            <span className="font-bold font-mono tabular-nums text-zinc-950">
+                            <span className="font-bold tabular-nums text-zinc-950">
                               {ord.orderNumber}
                             </span>
-                            <span className="text-zinc-500 font-mono tabular-nums">
+                            <span className="text-zinc-500 tabular-nums">
                               {ord.displayTime}
                             </span>
                             <span className="text-zinc-700 font-medium">{ord.tableName}</span>
@@ -628,7 +628,7 @@ export function CustomersView({
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold font-mono tabular-nums text-emerald-700">
+                            <span className="text-sm font-bold tabular-nums text-emerald-700">
                               {formatVND(ord.total)}
                             </span>
                             <button
@@ -655,7 +655,7 @@ export function CustomersView({
                         </div>
 
                         {ord.discountAmount > 0 && (
-                          <div className="text-[11px] font-medium text-amber-700 font-mono tabular-nums">
+                          <div className="text-[11px] font-medium text-amber-700 tabular-nums">
                             Chiết khấu: -{formatVND(ord.discountAmount)}
                             {ord.discountType === 'percent' ? ` (${ord.discountValue}%)` : ''}
                           </div>
@@ -731,7 +731,7 @@ export function CustomersView({
                     }))
                   }
                   placeholder="090x xxx xxx"
-                  className="w-full h-10 px-3 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                  className="w-full h-10 px-3 text-sm tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                 />
               </div>
 
@@ -763,7 +763,7 @@ export function CustomersView({
                       placeholder={
                         form.defaultDiscountType === 'percent' ? '0 - 100' : 'VD: 10.000'
                       }
-                      className="w-full h-10 px-3 pr-8 text-sm font-bold font-mono tabular-nums text-right bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                      className="w-full h-10 px-3 pr-8 text-sm font-bold tabular-nums text-right bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">
                       {form.defaultDiscountType === 'percent' ? '%' : '₫'}

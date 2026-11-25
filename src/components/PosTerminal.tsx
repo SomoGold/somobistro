@@ -1425,7 +1425,7 @@ export function PosTerminal({
               {/* Far-Left Vertical Category Rail + Product Cards Grid */}
               <div className="flex-1 flex min-h-0 overflow-hidden">
                 {/* Far-Left Vertical Category Rail + Pinned Khu vực bàn Button */}
-                <div className="w-[120px] sm:w-[144px] bg-slate-100 border-r border-slate-200 p-2 flex flex-col justify-between gap-2 shrink-0">
+                <div className="w-[120px] sm:w-[144px] bg-[#091d4f] border-r border-blue-950 p-2 flex flex-col justify-between gap-2 shrink-0">
                   <div className="flex-1 overflow-y-auto pos-scroll flex flex-col gap-1.5">
                     {(['Tất cả', ...MENU_CATEGORIES] as const).map((category) => {
                       const active = activeCategory === category;
@@ -1435,18 +1435,18 @@ export function PosTerminal({
                           key={category}
                           type="button"
                           onClick={() => setActiveCategory(category)}
-                          className={`w-full py-2.5 px-2.5 rounded-lg text-xs font-bold text-left leading-tight transition-all flex items-center justify-between gap-1.5 ${
+                          className={`w-full py-2.5 px-2.5 rounded-lg text-xs font-bold text-left leading-tight transition-all flex items-center justify-between gap-1.5 border ${
                             active
-                              ? 'bg-[#091d4f] text-white shadow-sm ring-1 ring-orange-400/70'
-                              : 'bg-white hover:bg-cyan-50 text-slate-700 border border-slate-200/90 hover:border-cyan-300'
+                              ? 'bg-orange-500 text-white border-orange-300 shadow-sm'
+                              : 'bg-[#132f7a] hover:bg-[#1c40a3] text-slate-100 border-blue-800/80'
                           }`}
                         >
                           <span className="leading-snug">{category}</span>
                           <span
                             className={`text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums shrink-0 ${
                               active
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-slate-100 text-slate-500'
+                                ? 'bg-white/20 text-white'
+                                : 'bg-[#071a42]/80 text-cyan-200'
                             }`}
                           >
                             {count}

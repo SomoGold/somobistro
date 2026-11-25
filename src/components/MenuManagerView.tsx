@@ -508,7 +508,7 @@ export function MenuManagerView({
           }`}
         >
           <div className="text-xs font-medium text-zinc-500">Tổng số món</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-zinc-950">
             {summary.total}
           </div>
         </button>
@@ -525,7 +525,7 @@ export function MenuManagerView({
           }`}
         >
           <div className="text-xs font-medium text-zinc-500">Đang bật bán</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-emerald-700">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-emerald-700">
             {summary.active}
           </div>
         </button>
@@ -542,7 +542,7 @@ export function MenuManagerView({
           }`}
         >
           <div className="text-xs font-medium text-zinc-500">Đang tắt món</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-amber-600">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-amber-600">
             {summary.outOfStock}
           </div>
         </button>
@@ -556,7 +556,7 @@ export function MenuManagerView({
           }`}
         >
           <div className="text-xs font-medium text-zinc-500">Danh mục Topping</div>
-          <div className="mt-1.5 text-2xl font-bold font-mono tabular-nums text-zinc-950">
+          <div className="mt-1.5 text-2xl font-bold tabular-nums text-zinc-950">
             {summary.toppingsTotal}
           </div>
         </button>
@@ -683,7 +683,7 @@ export function MenuManagerView({
                           !item.available ? 'bg-zinc-50/70' : ''
                         }`}
                       >
-                        <td className="py-2.5 px-4 text-center font-mono tabular-nums text-xs text-zinc-500">
+                        <td className="py-2.5 px-4 text-center tabular-nums text-xs text-zinc-500">
                           {idx + 1}
                         </td>
                         <td className="py-2.5 px-4">
@@ -735,11 +735,11 @@ export function MenuManagerView({
                             </div>
                           </div>
                         </td>
-                        <td className="py-2.5 px-4 font-mono tabular-nums text-xs text-zinc-600">
+                        <td className="py-2.5 px-4 tabular-nums text-xs text-zinc-600">
                           {item.sku}
                         </td>
                         <td className="py-2.5 px-4 text-xs text-zinc-600">{item.category}</td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-zinc-950">
+                        <td className="py-2.5 px-4 text-right tabular-nums font-bold text-zinc-950">
                           {formatVND(item.price)}
                         </td>
                         <td className="py-2.5 px-4">
@@ -871,7 +871,7 @@ export function MenuManagerView({
                           !tp.available ? 'bg-zinc-50/70' : ''
                         }`}
                       >
-                        <td className="py-2.5 px-4 text-center font-mono tabular-nums text-xs text-zinc-500">
+                        <td className="py-2.5 px-4 text-center tabular-nums text-xs text-zinc-500">
                           {idx + 1}
                         </td>
                         <td
@@ -881,7 +881,7 @@ export function MenuManagerView({
                         >
                           {tp.name}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-emerald-700">
+                        <td className="py-2.5 px-4 text-right tabular-nums font-bold text-emerald-700">
                           +{formatVND(tp.price)}
                         </td>
                         <td className="py-2.5 px-4">
@@ -1024,7 +1024,7 @@ export function MenuManagerView({
                       }))
                     }
                     placeholder="SB13"
-                    className="w-full px-3 py-2 text-sm font-mono bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full px-3 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                   />
                 </div>
               </div>
@@ -1079,7 +1079,7 @@ export function MenuManagerView({
                       setForm((f) => ({ ...f, price: formatDotNumber(e.target.value) }))
                     }
                     placeholder="35.000"
-                    className="w-full pl-3 pr-9 py-2 text-sm font-bold font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full pl-3 pr-9 py-2 text-sm font-bold tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 pointer-events-none">
                     ₫
@@ -1197,7 +1197,7 @@ export function MenuManagerView({
                                 }))
                               }
                               aria-label="Số món kèm"
-                              className="w-11 h-8 text-xs font-bold font-mono tabular-nums text-center border-x border-zinc-200 focus:outline-none"
+                              className="w-11 h-8 text-xs font-bold tabular-nums text-center border-x border-zinc-200 focus:outline-none"
                             />
                             <button
                               type="button"
@@ -1226,7 +1226,7 @@ export function MenuManagerView({
                         <span>
                           Danh sách món kèm ({form.comboToppings.length}/{LIMITS.MAX_COMBO_TOPPINGS})
                         </span>
-                        <span className="text-[11px] font-mono font-medium text-zinc-500">0 ₫</span>
+                        <span className="text-[11px] font-medium text-zinc-500">0 ₫</span>
                       </div>
 
                       {form.comboToppings.length > 0 ? (
@@ -1525,7 +1525,7 @@ export function MenuManagerView({
                       setToppingForm((f) => ({ ...f, price: formatDotNumber(e.target.value) }))
                     }
                     placeholder="10.000"
-                    className="w-full pl-3 pr-9 py-2 text-sm font-bold font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                    className="w-full pl-3 pr-9 py-2 text-sm font-bold tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 pointer-events-none">
                     ₫

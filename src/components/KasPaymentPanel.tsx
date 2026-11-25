@@ -349,39 +349,52 @@ export function KasPaymentPanel({
           </div>
         </div>
 
-        {/* Quick Cash Tender Strip when Cash is active */}
-        {paymentMethod === 'cash' && total > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs font-bold text-slate-500 mr-1">Gợi ý tiền mặt:</span>
-            <button
-              type="button"
-              onClick={() => onChangeCashReceived('')}
-              className={`h-9 px-3.5 text-xs font-bold rounded-md border transition-colors ${
-                parsedCashReceived === total
-                  ? 'bg-cyan-600 text-white border-cyan-700'
-                  : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              Đủ tiền ({formatDotNumber(total)})
-            </button>
-            {quickCashAmounts.map((amt) => {
-              const formatted = formatDotNumber(amt);
-              const isActive = parsedCashReceived === amt;
-              return (
+        {/* Fixed-Height Quick Cash / Payment Hint Strip (Zero Layout Shift when switching methods) */}
+        {total > 0 && (
+          <div className="min-h-[42px] flex items-center pt-1">
+            {paymentMethod === 'cash' ? (
+              <div className="flex items-center gap-2 overflow-x-auto pos-scroll py-0.5 w-full">
+                <span className="text-xs font-bold text-slate-500 mr-1 whitespace-nowrap shrink-0">
+                  Gợi ý tiền mặt:
+                </span>
                 <button
-                  key={amt}
                   type="button"
-                  onClick={() => onChangeCashReceived(formatted)}
-                  className={`h-9 px-3.5 text-xs font-bold tabular-nums rounded-md border transition-colors ${
-                    isActive
+                  onClick={() => onChangeCashReceived('')}
+                  className={`h-9 px-3.5 text-xs font-bold rounded-md border transition-colors whitespace-nowrap shrink-0 ${
+                    parsedCashReceived === total
                       ? 'bg-cyan-600 text-white border-cyan-700'
                       : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  {formatDotNumber(amt)} ₫
+                  Đủ tiền ({formatDotNumber(total)})
                 </button>
-              );
-            })}
+                {quickCashAmounts.map((amt) => {
+                  const formatted = formatDotNumber(amt);
+                  const isActive = parsedCashReceived === amt;
+                  return (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => onChangeCashReceived(formatted)}
+                      className={`h-9 px-3.5 text-xs font-bold tabular-nums rounded-md border transition-colors whitespace-nowrap shrink-0 ${
+                        isActive
+                          ? 'bg-cyan-600 text-white border-cyan-700'
+                          : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      {formatDotNumber(amt)} ₫
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-9 px-3.5 rounded-md bg-slate-50 border border-slate-200 inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                <span>
+                  {paymentMethod === 'transfer' ? 'Chuyển khoản QR' : 'Thẻ ngân hàng / VISA'} — Thu đủ:
+                </span>
+                <strong className="text-emerald-700 tabular-nums">{formatVND(total)}</strong>
+              </div>
+            )}
           </div>
         )}
 

@@ -124,7 +124,7 @@ export function OrdersHistoryView({
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="px-3 py-2 text-xs font-mono tabular-nums border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:bg-white focus:border-emerald-700"
+            className="px-3 py-2 text-xs tabular-nums border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:bg-white focus:border-emerald-700"
           />
           {dateFilter && (
             <button
@@ -202,10 +202,10 @@ export function OrdersHistoryView({
                   const totalQty = ord.items.reduce((s, i) => s + i.qty, 0);
                   return (
                     <tr key={ord.id} className="hover:bg-zinc-50/80 transition-colors">
-                      <td className="py-3 px-4 font-mono tabular-nums text-xs font-semibold text-zinc-950">
+                      <td className="py-3 px-4 tabular-nums text-xs font-semibold text-zinc-950">
                         {ord.orderNumber}
                       </td>
-                      <td className="py-3 px-4 font-mono tabular-nums text-xs text-zinc-600 whitespace-nowrap">
+                      <td className="py-3 px-4 tabular-nums text-xs text-zinc-600 whitespace-nowrap">
                         {ord.displayTime || formatDateVN(ord.dateKey)}
                       </td>
                       <td className="py-3 px-4 text-xs text-zinc-800 whitespace-nowrap">
@@ -220,7 +220,7 @@ export function OrdersHistoryView({
                       <td className="py-3 px-4 text-xs text-zinc-600 whitespace-nowrap">
                         {getPaymentMethodLabel(ord.paymentMethod)}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono tabular-nums font-bold text-zinc-950 whitespace-nowrap">
+                      <td className="py-3 px-4 text-right tabular-nums font-bold text-zinc-950 whitespace-nowrap">
                         {formatVND(ord.total)}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
@@ -278,7 +278,7 @@ export function OrdersHistoryView({
           <div className="bg-white border border-zinc-200 rounded-2xl shadow-2xl w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-zinc-950 font-mono tabular-nums">
+                <h3 className="text-sm font-bold text-zinc-950 tabular-nums">
                   Chi tiết hóa đơn {selectedOrder.orderNumber}
                 </h3>
                 <div className="text-xs text-zinc-500 mt-0.5 tabular-nums">
@@ -323,7 +323,7 @@ export function OrdersHistoryView({
                               .join(', ')}
                           </div>
                         )}
-                        <div className="text-zinc-500 font-mono tabular-nums mt-0.5">
+                        <div className="text-zinc-500 tabular-nums mt-0.5">
                           {formatVND(unitPrice)} × {item.qty}
                           {itemDiscount > 0 && (
                             <span className="text-amber-700 font-semibold ml-1.5">
@@ -336,7 +336,7 @@ export function OrdersHistoryView({
                           {item.note && <span className="ml-1.5 font-sans">· {item.note}</span>}
                         </div>
                       </div>
-                      <div className="font-mono tabular-nums font-bold text-zinc-950 shrink-0">
+                      <div className="tabular-nums font-bold text-zinc-950 shrink-0">
                         {formatVND(netTotal)}
                       </div>
                     </div>
@@ -347,23 +347,23 @@ export function OrdersHistoryView({
               <div className="space-y-1.5 text-xs pt-2 border-t border-zinc-200">
                 <div className="flex justify-between text-zinc-600">
                   <span>Tạm tính</span>
-                  <span className="font-mono tabular-nums">{formatVND(selectedOrder.subtotal)}</span>
+                  <span className="tabular-nums">{formatVND(selectedOrder.subtotal)}</span>
                 </div>
                 {selectedOrder.discountAmount > 0 && (
                   <div className="flex justify-between text-amber-700">
                     <span>Chiết khấu</span>
-                    <span className="font-mono tabular-nums">-{formatVND(selectedOrder.discountAmount)}</span>
+                    <span className="tabular-nums">-{formatVND(selectedOrder.discountAmount)}</span>
                   </div>
                 )}
                 {selectedOrder.vatRate > 0 && (
                   <div className="flex justify-between text-zinc-600">
                     <span>VAT ({selectedOrder.vatRate}%)</span>
-                    <span className="font-mono tabular-nums">{formatVND(selectedOrder.vatAmount)}</span>
+                    <span className="tabular-nums">{formatVND(selectedOrder.vatAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm font-bold text-zinc-950 pt-2 border-t border-zinc-200">
                   <span>Tổng cộng</span>
-                  <span className="font-mono tabular-nums text-emerald-700">
+                  <span className="tabular-nums text-emerald-700">
                     {formatVND(selectedOrder.total)}
                   </span>
                 </div>
@@ -414,7 +414,7 @@ export function OrdersHistoryView({
           >
             <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-950">
-                Xác nhận hủy hóa đơn <span className="font-mono">{voidTarget.orderNumber}</span>
+                Xác nhận hủy hóa đơn <span className="tabular-nums">{voidTarget.orderNumber}</span>
               </h3>
               <button
                 type="button"

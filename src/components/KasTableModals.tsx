@@ -122,7 +122,7 @@ export function KasAddTableModal({ ownerId, onClose, onNotify }: AddTableModalPr
                 max={30}
                 value={seats}
                 onChange={(e) => setSeats(Number(e.target.value) || 2)}
-                className="w-full h-10 px-3 text-sm font-mono tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
+                className="w-full h-10 px-3 text-sm tabular-nums bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
           </div>
@@ -329,7 +329,7 @@ export function KasTransferMergeModal({
             <span>
               Đơn nguồn: <strong>{sourceTable.name}</strong> ({sourceOrder.orderNumber})
             </span>
-            <strong className="font-mono tabular-nums text-amber-800">{formatVND(sourceOrder.total)}</strong>
+            <strong className="tabular-nums text-amber-800">{formatVND(sourceOrder.total)}</strong>
           </div>
 
           {candidates.length === 0 ? (
@@ -360,7 +360,7 @@ export function KasTransferMergeModal({
                     >
                       <div className="text-sm font-bold">{tbl.name}</div>
                       <div
-                        className={`text-xs mt-0.5 font-mono tabular-nums ${
+                        className={`text-xs mt-0.5 tabular-nums ${
                           selected ? 'text-emerald-300' : 'text-zinc-500'
                         }`}
                       >
@@ -457,7 +457,7 @@ export function KasCancelBillModal({
         <div className="p-5 space-y-4">
           <div className="text-sm text-zinc-700 leading-relaxed">
             Hủy hóa đơn <strong>{orderNumber}</strong> tại <strong>{tableName}</strong> (tạm tính{' '}
-            <strong className="font-mono tabular-nums text-rose-600">{formatVND(total)}</strong>) và trả bàn về
+            <strong className="tabular-nums text-rose-600">{formatVND(total)}</strong>) và trả bàn về
             trạng thái trống?
           </div>
           <div>
