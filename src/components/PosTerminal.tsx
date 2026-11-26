@@ -17,14 +17,12 @@ import {
   Users,
   Clock,
   CheckCircle2,
-  Save,
   CreditCard,
   UserCheck,
   UserPlus,
   LayoutGrid,
-  Power,
 } from 'lucide-react';
-import { doc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { db, OperationType, reportFirestoreError } from '../lib/firebase';
 import {
   calculateOrderTotals,
@@ -136,8 +134,6 @@ export function PosTerminal({
   const [tableSearch, setTableSearch] = useState('');
   const [menuSearch, setMenuSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<'Tất cả' | MenuCategory>('Tất cả');
-  const [toggleStockMode, setToggleStockMode] = useState(false);
-  const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
 
   // Active ticket state
   const [cartItems, setCartItems] = useState<OrderItem[]>([]);
@@ -151,6 +147,7 @@ export function PosTerminal({
   const [orderNote, setOrderNote] = useState<string>('');
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [autoSaving, setAutoSaving] = useState<boolean>(false);
 
   // Modals & drawers
   const [modalItemState, setModalItemState] = useState<ModalItemState | null>(null);
@@ -167,8 +164,17 @@ export function PosTerminal({
     return () => window.clearInterval(id);
   }, []);
 
-  // Track last loaded table/order signature
+  // Track last loaded table/order signature & auto-save sequencing
   const loadedContextRef = useRef<string>('');
+  const lastTableKeyRef = useRef<string>(selectedTableId || 'takeaway');
+  const cartItemsRef = useRef<OrderItem[]>(cartItems);
+  const pendingOpenOrderRef = useRef<{
+    tableId: string;
+    orderId: string;
+    orderNumber: string;
+  } | null>(null);
+  const autoSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const inFlightSavesRef = useRef<number>(0);
 
   const openOrdersByTable = useMemo(() => {
     const map = new Map<string, Order>();
@@ -198,22 +204,43 @@ export function PosTerminal({
 
   // Synchronize ticket state when switching tables or when the remote open order updates
   useEffect(() => {
-    const remoteSig = `${selectedTableId || 'takeaway'}::${activeOpenOrder?.id ?? 'none'}::${
+    const tableKey = selectedTableId || 'takeaway';
+    const tableChanged = lastTableKeyRef.current !== tableKey;
+    if (tableChanged) {
+      lastTableKeyRef.current = tableKey;
+      pendingOpenOrderRef.current = null;
+    }
+
+    if (
+      activeOpenOrder &&
+      pendingOpenOrderRef.current &&
+      pendingOpenOrderRef.current.orderId === activeOpenOrder.id
+    ) {
+      pendingOpenOrderRef.current = null;
+    }
+
+    const remoteSig = `${tableKey}::${activeOpenOrder?.id ?? 'none'}::${
       activeOpenOrder?.updatedAt?.toMillis?.() ?? activeOpenOrder?.items.length ?? 0
     }`;
+
+    if (!tableChanged && inFlightSavesRef.current > 0) {
+      loadedContextRef.current = remoteSig;
+      return;
+    }
+
     if (loadedContextRef.current === remoteSig) return;
     loadedContextRef.current = remoteSig;
 
     if (activeOpenOrder) {
-      setCartItems(
-        activeOpenOrder.items.map((item) => ({
-          ...item,
-          toppings: item.toppings ? item.toppings.map((t) => ({ ...t })) : [],
-          discountType: item.discountType ?? 'percent',
-          discountValue: item.discountValue ?? 0,
-          discountAmount: item.discountAmount ?? 0,
-        })),
-      );
+      const nextItems = activeOpenOrder.items.map((item) => ({
+        ...item,
+        toppings: item.toppings ? item.toppings.map((t) => ({ ...t })) : [],
+        discountType: item.discountType ?? 'percent',
+        discountValue: item.discountValue ?? 0,
+        discountAmount: item.discountAmount ?? 0,
+      }));
+      cartItemsRef.current = nextItems;
+      setCartItems(nextItems);
       setDiscountType(activeOpenOrder.discountType);
       setDiscountValue(activeOpenOrder.discountValue);
       setVatRate(activeOpenOrder.vatRate);
@@ -223,6 +250,7 @@ export function PosTerminal({
       setCashReceivedInput('');
       setIsDirty(false);
     } else {
+      cartItemsRef.current = [];
       setCartItems([]);
       setDiscountType('percent');
       setDiscountValue(0);
@@ -318,16 +346,9 @@ export function PosTerminal({
     [menuItems],
   );
 
-  const outOfStockCount = useMemo(
-    () => menuItems.filter((m) => !m.available).length,
-    [menuItems],
-  );
-
-  const displayedBaseMenuItems = toggleStockMode ? menuItems : availableMenuItems;
-
   const filteredMenuItems = useMemo(() => {
     const kw = menuSearch.trim().toLowerCase();
-    return displayedBaseMenuItems.filter((item) => {
+    return availableMenuItems.filter((item) => {
       if (activeCategory !== 'Tất cả' && item.category !== activeCategory) return false;
       if (
         kw &&
@@ -339,67 +360,18 @@ export function PosTerminal({
       }
       return true;
     });
-  }, [displayedBaseMenuItems, activeCategory, menuSearch]);
+  }, [availableMenuItems, activeCategory, menuSearch]);
 
   const categoryCounts = useMemo(() => {
-    const map: Record<string, number> = { 'Tất cả': displayedBaseMenuItems.length };
+    const map: Record<string, number> = { 'Tất cả': availableMenuItems.length };
     MENU_CATEGORIES.forEach((c) => {
       map[c] = 0;
     });
-    displayedBaseMenuItems.forEach((m) => {
+    availableMenuItems.forEach((m) => {
       map[m.category] = (map[m.category] || 0) + 1;
     });
     return map;
-  }, [displayedBaseMenuItems]);
-
-  const handleToggleMenuItemAvailable = useCallback(
-    async (menuItem: MenuItem) => {
-      if (togglingItemId === menuItem.id) return;
-      setTogglingItemId(menuItem.id);
-      const nextAvailable = !menuItem.available;
-      try {
-        await updateDoc(doc(db, 'menuItems', menuItem.id), {
-          available: nextAvailable,
-          updatedAt: serverTimestamp(),
-        });
-        onNotify(
-          nextAvailable
-            ? `Đã bật món "${menuItem.name}" để bán lại.`
-            : `Đã tắt món "${menuItem.name}" (tạm hết).`,
-        );
-      } catch (error) {
-        reportFirestoreError(error, OperationType.UPDATE, `menuItems/${menuItem.id}`);
-        onNotify('Không thể cập nhật trạng thái món. Vui lòng thử lại.', 'error');
-      } finally {
-        setTogglingItemId(null);
-      }
-    },
-    [togglingItemId, onNotify],
-  );
-
-  const handleEnableAllMenuItems = useCallback(async () => {
-    const disabledItems = menuItems.filter((m) => !m.available);
-    if (disabledItems.length === 0 || togglingItemId === '__all__') return;
-    setTogglingItemId('__all__');
-    try {
-      for (let i = 0; i < disabledItems.length; i += 450) {
-        const batch = writeBatch(db);
-        disabledItems.slice(i, i + 450).forEach((item) => {
-          batch.update(doc(db, 'menuItems', item.id), {
-            available: true,
-            updatedAt: serverTimestamp(),
-          });
-        });
-        await batch.commit();
-      }
-      onNotify(`Đã bật bán lại toàn bộ ${disabledItems.length} món.`);
-    } catch (error) {
-      reportFirestoreError(error, OperationType.UPDATE, 'menuItems/batch-enable');
-      onNotify('Không thể bật lại tất cả món. Vui lòng thử lại.', 'error');
-    } finally {
-      setTogglingItemId(null);
-    }
-  }, [menuItems, togglingItemId, onNotify]);
+  }, [availableMenuItems]);
 
   const cartQtyByItemId = useMemo(() => {
     const map = new Map<string, number>();
@@ -442,75 +414,290 @@ export function PosTerminal({
     setModalItemState({ mode: 'new', item: freshItem });
   }, []);
 
-  const removeCartItem = useCallback((idx: number) => {
-    setIsDirty(true);
-    setCartItems((prev) => prev.filter((_, i) => i !== idx));
-    setModalItemState((curr) => {
-      if (!curr || curr.mode !== 'edit') return curr;
-      if (curr.index === idx) return null;
-      return curr.index > idx ? { ...curr, index: curr.index - 1 } : curr;
-    });
-  }, []);
+  // Automatically persists dine-in table orders to Firestore in strict sequence
+  const persistOpenTableOrder = useCallback(
+    (nextItems: OrderItem[]) => {
+      if (!selectedTable) return;
 
-  const adjustCartItemQty = useCallback((idx: number, delta: number) => {
-    setIsDirty(true);
-    setCartItems((prev) =>
-      prev.map((it, i) => {
+      const table = selectedTable;
+      const existingOrderId =
+        activeOpenOrder?.status === 'open'
+          ? activeOpenOrder.id
+          : pendingOpenOrderRef.current?.tableId === table.id
+            ? pendingOpenOrderRef.current.orderId
+            : null;
+
+      if (nextItems.length === 0) {
+        if (!existingOrderId) {
+          setIsDirty(false);
+          return;
+        }
+        if (pendingOpenOrderRef.current?.orderId === existingOrderId) {
+          pendingOpenOrderRef.current = null;
+        }
+        const targetPath = `orders/${existingOrderId} + diningTables/${table.id}`;
+        inFlightSavesRef.current += 1;
+        setAutoSaving(true);
+        autoSaveQueueRef.current = autoSaveQueueRef.current
+          .then(async () => {
+            const batch = writeBatch(db);
+            batch.update(doc(db, 'orders', existingOrderId), {
+              status: 'cancelled',
+              cancelReason: 'Xóa hết món',
+              updatedAt: serverTimestamp(),
+            });
+            batch.update(doc(db, 'diningTables', table.id), {
+              status: 'available',
+              activeOrderId: '',
+              updatedAt: serverTimestamp(),
+            });
+            await batch.commit();
+          })
+          .catch((error) => {
+            const msg = reportFirestoreError(error, OperationType.WRITE, targetPath);
+            onNotify(msg, 'error');
+          })
+          .finally(() => {
+            inFlightSavesRef.current = Math.max(0, inFlightSavesRef.current - 1);
+            if (inFlightSavesRef.current === 0) {
+              setAutoSaving(false);
+              setIsDirty(false);
+            }
+          });
+        return;
+      }
+
+      const nowDate = new Date();
+      const normalizedItems = nextItems
+        .slice(0, LIMITS.MAX_ORDER_ITEMS)
+        .map(normalizeOrderItemForSave);
+      const safeDiscountType: DiscountType = discountType === 'fixed' ? 'fixed' : 'percent';
+      const safeDiscountValue = clampNumber(
+        discountValue,
+        0,
+        safeDiscountType === 'percent' ? 100 : 1_000_000_000,
+      );
+      const safeVatRate = clampNumber(vatRate, 0, 30);
+      const nextTotals = calculateOrderTotals(
+        normalizedItems,
+        safeDiscountType,
+        safeDiscountValue,
+        safeVatRate,
+      );
+      const safeCustomerId = sanitizeText(selectedCustomerId, 128);
+      const safeCustomerName = sanitizeText(customerName, LIMITS.CUSTOMER_NAME_MAX);
+      const safeOrderNote = sanitizeText(orderNote, LIMITS.ORDER_NOTE_MAX);
+      const safeCashier =
+        sanitizeText(cashierName || 'Thu ngân', LIMITS.CUSTOMER_NAME_MAX) || 'Thu ngân';
+      const safeTableName = sanitizeText(table.name, LIMITS.TABLE_NAME_MAX) || 'Bàn';
+      const safeHourOfDay = clampNumber(nowDate.getHours(), 0, 23);
+
+      let orderIdToWrite = existingOrderId;
+      let newOrderNumber = '';
+      let isCreating = false;
+      if (!orderIdToWrite) {
+        isCreating = true;
+        orderIdToWrite = generateDocId('ord');
+        newOrderNumber = generateOrderNumber(nowDate, orders);
+        pendingOpenOrderRef.current = {
+          tableId: table.id,
+          orderId: orderIdToWrite,
+          orderNumber: newOrderNumber,
+        };
+      }
+
+      const targetOrderId = orderIdToWrite;
+      const targetPath = `orders/${targetOrderId} + diningTables/${table.id}`;
+
+      inFlightSavesRef.current += 1;
+      setAutoSaving(true);
+      autoSaveQueueRef.current = autoSaveQueueRef.current
+        .then(async () => {
+          const batch = writeBatch(db);
+          if (isCreating) {
+            batch.set(doc(db, 'orders', targetOrderId), {
+              ownerId,
+              orderNumber: newOrderNumber,
+              orderType: 'dine_in',
+              tableId: table.id,
+              tableName: safeTableName,
+              status: 'open',
+              items: normalizedItems,
+              subtotal: nextTotals.subtotal,
+              costTotal: nextTotals.costTotal,
+              discountType: safeDiscountType,
+              discountValue: safeDiscountValue,
+              discountAmount: nextTotals.discountAmount,
+              vatRate: safeVatRate,
+              vatAmount: nextTotals.vatAmount,
+              total: nextTotals.total,
+              paymentMethod: 'unpaid',
+              cashReceived: 0,
+              changeAmount: 0,
+              customerId: safeCustomerId,
+              customerName: safeCustomerName,
+              note: safeOrderNote,
+              cancelReason: '',
+              dateKey: getDateKey(nowDate),
+              monthKey: getMonthKey(nowDate),
+              hourOfDay: safeHourOfDay,
+              displayTime: formatDisplayTime(nowDate),
+              cashierName: safeCashier,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            });
+            batch.update(doc(db, 'diningTables', table.id), {
+              status: 'occupied',
+              activeOrderId: targetOrderId,
+              updatedAt: serverTimestamp(),
+            });
+          } else {
+            batch.update(doc(db, 'orders', targetOrderId), {
+              items: normalizedItems,
+              subtotal: nextTotals.subtotal,
+              costTotal: nextTotals.costTotal,
+              discountType: safeDiscountType,
+              discountValue: safeDiscountValue,
+              discountAmount: nextTotals.discountAmount,
+              vatRate: safeVatRate,
+              vatAmount: nextTotals.vatAmount,
+              total: nextTotals.total,
+              customerId: safeCustomerId,
+              customerName: safeCustomerName,
+              note: safeOrderNote,
+              tableId: table.id,
+              tableName: safeTableName,
+              orderType: 'dine_in',
+              updatedAt: serverTimestamp(),
+            });
+            if (table.status !== 'occupied' || table.activeOrderId !== targetOrderId) {
+              batch.update(doc(db, 'diningTables', table.id), {
+                status: 'occupied',
+                activeOrderId: targetOrderId,
+                updatedAt: serverTimestamp(),
+              });
+            }
+          }
+          await batch.commit();
+        })
+        .catch((error) => {
+          if (isCreating && pendingOpenOrderRef.current?.orderId === targetOrderId) {
+            pendingOpenOrderRef.current = null;
+          }
+          const msg = reportFirestoreError(error, OperationType.WRITE, targetPath);
+          onNotify(msg, 'error');
+        })
+        .finally(() => {
+          inFlightSavesRef.current = Math.max(0, inFlightSavesRef.current - 1);
+          if (inFlightSavesRef.current === 0) {
+            setAutoSaving(false);
+            setIsDirty(false);
+          }
+        });
+    },
+    [
+      activeOpenOrder,
+      cashierName,
+      customerName,
+      discountType,
+      discountValue,
+      onNotify,
+      orderNote,
+      orders,
+      ownerId,
+      selectedCustomerId,
+      selectedTable,
+      vatRate,
+    ],
+  );
+
+  const removeCartItem = useCallback(
+    (idx: number) => {
+      const nextItems = cartItemsRef.current.filter((_, i) => i !== idx);
+      cartItemsRef.current = nextItems;
+      setIsDirty(true);
+      setCartItems(nextItems);
+      setModalItemState((curr) => {
+        if (!curr || curr.mode !== 'edit') return curr;
+        if (curr.index === idx) return null;
+        return curr.index > idx ? { ...curr, index: curr.index - 1 } : curr;
+      });
+      persistOpenTableOrder(nextItems);
+    },
+    [persistOpenTableOrder],
+  );
+
+  const adjustCartItemQty = useCallback(
+    (idx: number, delta: number) => {
+      const nextItems = cartItemsRef.current.map((it, i) => {
         if (i !== idx) return it;
         const nextQty = Math.min(999, Math.max(1, it.qty + delta));
         const updated = { ...it, qty: nextQty };
         updated.discountAmount = getItemDiscountAmount(updated);
         return updated;
-      }),
-    );
-  }, []);
+      });
+      cartItemsRef.current = nextItems;
+      setIsDirty(true);
+      setCartItems(nextItems);
+      persistOpenTableOrder(nextItems);
+    },
+    [persistOpenTableOrder],
+  );
 
   const handleConfirmModalItem = useCallback(
     (updated: OrderItem) => {
       if (!modalItemState) return;
-      setIsDirty(true);
+      const prev = cartItemsRef.current;
+      let nextItems = prev;
 
       if (modalItemState.mode === 'edit') {
         const targetIdx = modalItemState.index;
-        setCartItems((prev) => prev.map((it, idx) => (idx === targetIdx ? updated : it)));
+        nextItems = prev.map((it, idx) => (idx === targetIdx ? updated : it));
       } else {
-        setCartItems((prev) => {
-          const getToppingSig = (it: OrderItem) =>
-            (it.toppings ?? [])
-              .map((t) => `${t.id}:${t.price}`)
-              .sort()
-              .join('|');
+        const getToppingSig = (it: OrderItem) =>
+          (it.toppings ?? [])
+            .map((t) => `${t.id}:${t.price}`)
+            .sort()
+            .join('|');
 
-          const isMergeable =
-            !updated.note.trim() && !(updated.discountValue && updated.discountValue > 0);
-          if (isMergeable) {
-            const updatedSig = getToppingSig(updated);
-            const matchIdx = prev.findIndex(
-              (i) =>
-                i.itemId === updated.itemId &&
-                !i.note.trim() &&
-                !(i.discountValue && i.discountValue > 0) &&
-                getToppingSig(i) === updatedSig,
+        const isMergeable =
+          !updated.note.trim() && !(updated.discountValue && updated.discountValue > 0);
+        let merged = false;
+        if (isMergeable) {
+          const updatedSig = getToppingSig(updated);
+          const matchIdx = prev.findIndex(
+            (i) =>
+              i.itemId === updated.itemId &&
+              !i.note.trim() &&
+              !(i.discountValue && i.discountValue > 0) &&
+              getToppingSig(i) === updatedSig,
+          );
+          if (matchIdx >= 0) {
+            nextItems = prev.map((item, idx) =>
+              idx === matchIdx
+                ? { ...item, qty: Math.min(999, item.qty + updated.qty) }
+                : item,
             );
-            if (matchIdx >= 0) {
-              return prev.map((item, idx) =>
-                idx === matchIdx
-                  ? { ...item, qty: Math.min(999, item.qty + updated.qty) }
-                  : item,
-              );
-            }
+            merged = true;
           }
+        }
+        if (!merged) {
           if (prev.length >= LIMITS.MAX_ORDER_ITEMS) {
             onNotify(`Mỗi hóa đơn tối đa ${LIMITS.MAX_ORDER_ITEMS} dòng món.`, 'error');
-            return prev;
+            setModalItemState(null);
+            return;
           }
-          return [...prev, updated];
-        });
+          nextItems = [...prev, updated];
+        }
       }
 
+      cartItemsRef.current = nextItems;
+      setIsDirty(true);
+      setCartItems(nextItems);
       setModalItemState(null);
+      persistOpenTableOrder(nextItems);
     },
-    [modalItemState, onNotify],
+    [modalItemState, onNotify, persistOpenTableOrder],
   );
 
   const handleDeleteModalItem = useCallback(() => {
@@ -604,134 +791,6 @@ export function PosTerminal({
   }, [buildOrderSnapshot, cartItems.length, onNotify, onPrintReceipt]);
 
   // ---------------- FIRESTORE OPERATIONS ----------------
-  const handleSaveOpenTab = useCallback(async () => {
-    if (isSubmitting) return;
-    if (!selectedTable) {
-      if (cartItems.length === 0) {
-        onNotify('Vui lòng chọn ít nhất 1 món.', 'error');
-        return;
-      }
-      setViewMode('payment');
-      return;
-    }
-    if (cartItems.length === 0) {
-      onNotify('Vui lòng chọn ít nhất 1 món trước khi lưu bàn.', 'error');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const nowDate = new Date();
-    const batch = writeBatch(db);
-    const normalizedItems = cartItems
-      .slice(0, LIMITS.MAX_ORDER_ITEMS)
-      .map(normalizeOrderItemForSave);
-    const safeDiscountType: DiscountType = discountType === 'fixed' ? 'fixed' : 'percent';
-    const safeDiscountValue = clampNumber(
-      discountValue,
-      0,
-      safeDiscountType === 'percent' ? 100 : 1_000_000_000,
-    );
-    const safeVatRate = clampNumber(vatRate, 0, 30);
-    const safeCustomerId = sanitizeText(selectedCustomerId, 128);
-    const safeCashier = sanitizeText(cashierName || 'Thu ngân', LIMITS.CUSTOMER_NAME_MAX) || 'Thu ngân';
-    const safeHourOfDay = clampNumber(nowDate.getHours(), 0, 23);
-
-    let targetPath = `orders + diningTables/${selectedTable.id}`;
-    try {
-      if (activeOpenOrder && activeOpenOrder.status === 'open') {
-        targetPath = `orders/${activeOpenOrder.id} + diningTables/${selectedTable.id}`;
-        batch.update(doc(db, 'orders', activeOpenOrder.id), {
-          items: normalizedItems,
-          subtotal: totals.subtotal,
-          costTotal: totals.costTotal,
-          discountType: safeDiscountType,
-          discountValue: safeDiscountValue,
-          discountAmount: totals.discountAmount,
-          vatRate: safeVatRate,
-          vatAmount: totals.vatAmount,
-          total: totals.total,
-          customerId: safeCustomerId,
-          customerName: sanitizeText(customerName, LIMITS.CUSTOMER_NAME_MAX),
-          note: sanitizeText(orderNote, LIMITS.ORDER_NOTE_MAX),
-          tableId: selectedTable.id,
-          tableName: sanitizeText(selectedTable.name, LIMITS.TABLE_NAME_MAX) || 'Bàn',
-          orderType: 'dine_in',
-          updatedAt: serverTimestamp(),
-        });
-        if (selectedTable.status !== 'occupied' || selectedTable.activeOrderId !== activeOpenOrder.id) {
-          batch.update(doc(db, 'diningTables', selectedTable.id), {
-            status: 'occupied',
-            activeOrderId: activeOpenOrder.id,
-            updatedAt: serverTimestamp(),
-          });
-        }
-      } else {
-        const newOrderId = generateDocId('ord');
-        targetPath = `orders/${newOrderId} + diningTables/${selectedTable.id}`;
-        batch.set(doc(db, 'orders', newOrderId), {
-          ownerId,
-          orderNumber: generateOrderNumber(nowDate, orders),
-          orderType: 'dine_in',
-          tableId: selectedTable.id,
-          tableName: sanitizeText(selectedTable.name, LIMITS.TABLE_NAME_MAX) || 'Bàn',
-          status: 'open',
-          items: normalizedItems,
-          subtotal: totals.subtotal,
-          costTotal: totals.costTotal,
-          discountType: safeDiscountType,
-          discountValue: safeDiscountValue,
-          discountAmount: totals.discountAmount,
-          vatRate: safeVatRate,
-          vatAmount: totals.vatAmount,
-          total: totals.total,
-          paymentMethod: 'unpaid',
-          cashReceived: 0,
-          changeAmount: 0,
-          customerId: safeCustomerId,
-          customerName: sanitizeText(customerName, LIMITS.CUSTOMER_NAME_MAX),
-          note: sanitizeText(orderNote, LIMITS.ORDER_NOTE_MAX),
-          cancelReason: '',
-          dateKey: getDateKey(nowDate),
-          monthKey: getMonthKey(nowDate),
-          hourOfDay: safeHourOfDay,
-          displayTime: formatDisplayTime(nowDate),
-          cashierName: safeCashier,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-        batch.update(doc(db, 'diningTables', selectedTable.id), {
-          status: 'occupied',
-          activeOrderId: newOrderId,
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      await batch.commit();
-      setIsDirty(false);
-    } catch (error) {
-      const msg = reportFirestoreError(error, OperationType.WRITE, targetPath);
-      onNotify(msg, 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    activeOpenOrder,
-    cartItems,
-    cashierName,
-    customerName,
-    discountType,
-    discountValue,
-    isSubmitting,
-    onNotify,
-    orderNote,
-    orders,
-    ownerId,
-    selectedCustomerId,
-    selectedTable,
-    totals,
-    vatRate,
-  ]);
-
   const handleCheckout = useCallback(async () => {
     if (isSubmitting) return;
     if (cartItems.length === 0) {
@@ -744,6 +803,8 @@ export function PosTerminal({
     }
 
     setIsSubmitting(true);
+    await autoSaveQueueRef.current;
+
     const nowDate = new Date();
     const dateKey = getDateKey(nowDate);
     const monthKey = getMonthKey(nowDate);
@@ -772,16 +833,26 @@ export function PosTerminal({
       .map(normalizeOrderItemForSave);
     const safeCustomerId = sanitizeText(selectedCustomerId, 128);
 
+    const pendingOrder =
+      selectedTable && pendingOpenOrderRef.current?.tableId === selectedTable.id
+        ? pendingOpenOrderRef.current
+        : null;
+    const effectiveOpenOrderId =
+      activeOpenOrder?.status === 'open' ? activeOpenOrder.id : pendingOrder?.orderId ?? null;
+    const effectiveOrderNumber =
+      activeOpenOrder?.orderNumber ?? pendingOrder?.orderNumber ?? generateOrderNumber(nowDate, orders);
+
     const batch = writeBatch(db);
     let completedOrder: Order;
     let targetPath = 'orders';
     let opType: OperationType = OperationType.WRITE;
 
     try {
-      if (activeOpenOrder && activeOpenOrder.status === 'open' && selectedTable) {
-        targetPath = `orders/${activeOpenOrder.id} + diningTables/${selectedTable.id}`;
+      if (effectiveOpenOrderId && selectedTable) {
+        targetPath = `orders/${effectiveOpenOrderId} + diningTables/${selectedTable.id}`;
         opType = OperationType.UPDATE;
-        batch.update(doc(db, 'orders', activeOpenOrder.id), {
+        const safeTableName = sanitizeText(selectedTable.name, LIMITS.TABLE_NAME_MAX) || 'Bàn';
+        batch.update(doc(db, 'orders', effectiveOpenOrderId), {
           items: normalizedItems,
           subtotal: totals.subtotal,
           costTotal: totals.costTotal,
@@ -812,7 +883,12 @@ export function PosTerminal({
         });
 
         completedOrder = {
-          ...activeOpenOrder,
+          id: effectiveOpenOrderId,
+          ownerId,
+          orderNumber: effectiveOrderNumber,
+          orderType: 'dine_in',
+          tableId: selectedTable.id,
+          tableName: safeTableName,
           items: normalizedItems,
           subtotal: totals.subtotal,
           costTotal: totals.costTotal,
@@ -829,6 +905,7 @@ export function PosTerminal({
           customerId: safeCustomerId,
           customerName: sanitizeText(customerName, LIMITS.CUSTOMER_NAME_MAX),
           note: sanitizeText(orderNote, LIMITS.ORDER_NOTE_MAX),
+          cancelReason: '',
           dateKey,
           monthKey,
           hourOfDay: safeHourOfDay,
@@ -895,7 +972,9 @@ export function PosTerminal({
 
       await batch.commit();
 
+      pendingOpenOrderRef.current = null;
       loadedContextRef.current = '';
+      cartItemsRef.current = [];
       setCartItems([]);
       setDiscountValue(0);
       setSelectedCustomerId('');
@@ -935,24 +1014,41 @@ export function PosTerminal({
 
   const handleVoidOpenBill = useCallback(
     async (reason: string) => {
-      if (isSubmitting || !activeOpenOrder || activeOpenOrder.status === 'cancelled') return;
+      if (isSubmitting) return;
       setIsSubmitting(true);
+      await autoSaveQueueRef.current;
+
+      const pendingOrder =
+        selectedTable && pendingOpenOrderRef.current?.tableId === selectedTable.id
+          ? pendingOpenOrderRef.current
+          : null;
+      const targetOrderId =
+        activeOpenOrder && activeOpenOrder.status !== 'cancelled'
+          ? activeOpenOrder.id
+          : pendingOrder?.orderId ?? null;
+
+      if (!targetOrderId) {
+        setIsSubmitting(false);
+        setShowCancelBillModal(false);
+        return;
+      }
+
       const batch = writeBatch(db);
       const cleanReason = sanitizeText(reason, LIMITS.CANCEL_REASON_MAX) || 'Hủy bill';
       const tablesToRelease = tables.filter(
         (tbl) =>
           (tbl.id === selectedTable?.id ||
-            tbl.id === activeOpenOrder.tableId ||
-            tbl.activeOrderId === activeOpenOrder.id) &&
+            tbl.id === activeOpenOrder?.tableId ||
+            tbl.activeOrderId === targetOrderId) &&
           (tbl.status !== 'available' || tbl.activeOrderId !== ''),
       );
       const targetPath =
         tablesToRelease.length > 0
-          ? `orders/${activeOpenOrder.id} + diningTables/${tablesToRelease.map((t) => t.id).join(',')}`
-          : `orders/${activeOpenOrder.id}`;
+          ? `orders/${targetOrderId} + diningTables/${tablesToRelease.map((t) => t.id).join(',')}`
+          : `orders/${targetOrderId}`;
 
       try {
-        batch.update(doc(db, 'orders', activeOpenOrder.id), {
+        batch.update(doc(db, 'orders', targetOrderId), {
           status: 'cancelled',
           cancelReason: cleanReason,
           updatedAt: serverTimestamp(),
@@ -965,7 +1061,9 @@ export function PosTerminal({
           });
         });
         await batch.commit();
+        pendingOpenOrderRef.current = null;
         loadedContextRef.current = '';
+        cartItemsRef.current = [];
         setCartItems([]);
         setDiscountValue(0);
         setSelectedCustomerId('');
@@ -1011,11 +1109,14 @@ export function PosTerminal({
   );
 
   const handleCancelOrderAction = useCallback(() => {
-    if (activeOpenOrder) {
+    const hasPending =
+      Boolean(selectedTable) && pendingOpenOrderRef.current?.tableId === selectedTable?.id;
+    if (activeOpenOrder || hasPending) {
       setShowCancelBillModal(true);
       return;
     }
     if (cartItems.length > 0) {
+      cartItemsRef.current = [];
       setCartItems([]);
       setDiscountValue(0);
       setSelectedCustomerId('');
@@ -1025,7 +1126,7 @@ export function PosTerminal({
       return;
     }
     onNotify('Chưa có món hoặc bill nào để hủy.', 'error');
-  }, [activeOpenOrder, cartItems.length, onNotify]);
+  }, [activeOpenOrder, cartItems.length, onNotify, selectedTable]);
 
   const handleOpenTransferMerge = useCallback(
     (mode: 'move' | 'merge') => {
@@ -1043,12 +1144,16 @@ export function PosTerminal({
     [activeOpenOrder, onNotify, selectedTable],
   );
 
-  const handleSelectTableCard = (table: DiningTable) => {
-    if (selectedTableId === table.id) {
-      setViewMode('menu');
-      return;
+  const handleReturnToFloor = useCallback(() => {
+    if (selectedTable && cartItemsRef.current.length > 0 && isDirty) {
+      persistOpenTableOrder(cartItemsRef.current);
     }
+    setViewMode('floor');
+  }, [isDirty, persistOpenTableOrder, selectedTable]);
+
+  const handleSelectTableCard = (table: DiningTable) => {
     onSelectTableId(table.id);
+    setViewMode('menu');
   };
 
   const handleSelectTakeaway = () => {
@@ -1058,8 +1163,6 @@ export function PosTerminal({
 
   const storeTitle = settings?.storeName || 'Somo Bistro';
   const totalDiscountCombined = totals.discountAmount + totals.itemDiscountTotal;
-  const primaryMenuIsSave =
-    viewMode === 'menu' && Boolean(selectedTable) && (!activeOpenOrder || isDirty);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-100 select-none">
@@ -1149,7 +1252,7 @@ export function PosTerminal({
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-500">
-                  Nhấn 1 lần để xem bill · Nhấn lần 2 hoặc <strong>Gọi món</strong> để chọn món
+                  Nhấn trực tiếp vào bàn để vào <strong>Gọi món</strong> ngay
                 </div>
               </div>
 
@@ -1212,10 +1315,6 @@ export function PosTerminal({
                         key={table.id}
                         type="button"
                         onClick={() => handleSelectTableCard(table)}
-                        onDoubleClick={() => {
-                          onSelectTableId(table.id);
-                          setViewMode('menu');
-                        }}
                         className={`min-h-[96px] rounded-md border-2 p-3 flex items-center gap-3 text-left transition-all ${cardClasses}`}
                       >
                         <div
@@ -1349,26 +1448,7 @@ export function PosTerminal({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setToggleStockMode((prev) => !prev)}
-                    className={`h-10 px-3 rounded-md text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap border ${
-                      toggleStockMode
-                        ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-300 shadow-xs'
-                        : 'bg-[#132f7a] hover:bg-[#1c40a3] text-white border-blue-700'
-                    }`}
-                    title="Tắt món tạm hết hoặc bật lại món trên POS"
-                  >
-                    <Power className="w-4 h-4 shrink-0" />
-                    <span>{toggleStockMode ? 'Xong tắt/bật' : 'Tắt / Bật món'}</span>
-                    {!toggleStockMode && outOfStockCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-extrabold tabular-nums">
-                        {outOfStockCount} tắt
-                      </span>
-                    )}
-                  </button>
-
-                  {cartItems.length > 0 && !toggleStockMode && (
+                  {cartItems.length > 0 && (
                     <button
                       type="button"
                       onClick={() => {
@@ -1384,49 +1464,20 @@ export function PosTerminal({
                 </div>
               </div>
 
-              {toggleStockMode && (
-                <div className="bg-amber-50 border-b border-amber-200 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
-                  <div className="flex items-center gap-2 text-xs font-medium text-amber-950">
-                    <Power className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>
-                      Chế độ <strong>Tắt / Bật món</strong>: Chạm trực tiếp vào món bên dưới để tắt
-                      (tạm hết) hoặc bật bán lại.
-                      {outOfStockCount > 0 && (
-                        <strong className="ml-1.5 text-amber-800">
-                          ({outOfStockCount} món đang tắt)
-                        </strong>
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {outOfStockCount > 0 && (
-                      <button
-                        type="button"
-                        disabled={togglingItemId === '__all__'}
-                        onClick={handleEnableAllMenuItems}
-                        className="px-3 py-1 rounded-md bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 disabled:opacity-50 text-xs font-bold whitespace-nowrap"
-                      >
-                        {togglingItemId === '__all__'
-                          ? 'Đang bật...'
-                          : `Bật tất cả (${outOfStockCount})`}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setToggleStockMode(false)}
-                      className="px-3 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold whitespace-nowrap"
-                    >
-                      Hoàn tất
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Far-Left Vertical Category Rail + Product Cards Grid */}
               <div className="flex-1 flex min-h-0 overflow-hidden">
-                {/* Far-Left Vertical Category Rail + Pinned Khu vực bàn Button */}
-                <div className="w-[120px] sm:w-[144px] bg-[#091d4f] border-r border-blue-950 p-2 flex flex-col justify-between gap-2 shrink-0">
-                  <div className="flex-1 overflow-y-auto pos-scroll flex flex-col gap-1.5">
+                {/* Far-Left Vertical Category Rail with Pinned Top Khu vực bàn Button */}
+                <div className="w-[120px] sm:w-[144px] bg-[#091d4f] border-r border-blue-950 p-2 flex flex-col gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleReturnToFloor}
+                    className="w-full py-3 px-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs border border-amber-500/70 shadow-xs flex items-center justify-center gap-1.5 leading-tight shrink-0 transition-colors"
+                  >
+                    <Home className="w-3.5 h-3.5 shrink-0" />
+                    <span>Khu vực bàn</span>
+                  </button>
+
+                  <div className="flex-1 overflow-y-auto pos-scroll flex flex-col gap-1.5 pt-1 border-t border-blue-900/70">
                     {(['Tất cả', ...MENU_CATEGORIES] as const).map((category) => {
                       const active = activeCategory === category;
                       const count = categoryCounts[category] || 0;
@@ -1455,18 +1506,9 @@ export function PosTerminal({
                       );
                     })}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('floor')}
-                    className="w-full py-3 px-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs border border-amber-500/70 shadow-xs flex items-center justify-center gap-1.5 leading-tight shrink-0 transition-colors"
-                  >
-                    <Home className="w-3.5 h-3.5 shrink-0" />
-                    <span>Khu vực bàn</span>
-                  </button>
                 </div>
 
-                {/* Product Cards Grid: Clicking any item opens KasItemModal directly (or toggles availability in toggleStockMode) */}
+                {/* Product Cards Grid: Clicking any item opens KasItemModal directly */}
                 <div className="flex-1 overflow-y-auto pos-scroll p-3 bg-slate-50/70">
                   {filteredMenuItems.length === 0 ? (
                     <div className="py-20 text-center space-y-2 text-slate-400">
@@ -1488,38 +1530,21 @@ export function PosTerminal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2.5">
                       {filteredMenuItems.map((item) => {
                         const qtyInCart = cartQtyByItemId.get(item.id) || 0;
-                        const isOff = !item.available;
-                        const isToggling = togglingItemId === item.id;
                         return (
                           <button
                             key={item.id}
                             type="button"
-                            disabled={isToggling}
-                            onClick={() =>
-                              toggleStockMode
-                                ? handleToggleMenuItemAvailable(item)
-                                : handleSelectMenuItem(item)
-                            }
-                            className={`border-2 rounded-lg p-2.5 flex items-stretch justify-between gap-2.5 text-left transition-all min-h-[100px] group disabled:opacity-60 ${
-                              toggleStockMode
-                                ? isOff
-                                  ? 'bg-slate-100 border-dashed border-amber-400 opacity-80 hover:border-cyan-600'
-                                  : 'bg-white border-cyan-500/80 hover:border-amber-500'
-                                : qtyInCart > 0
-                                  ? 'bg-cyan-50/30 border-cyan-600 shadow-xs'
-                                  : 'bg-white border-slate-200 hover:border-cyan-500 hover:shadow-xs'
+                            onClick={() => handleSelectMenuItem(item)}
+                            className={`border-2 rounded-lg p-2.5 flex items-stretch justify-between gap-2.5 text-left transition-all min-h-[100px] group ${
+                              qtyInCart > 0
+                                ? 'bg-cyan-50/30 border-cyan-600 shadow-xs'
+                                : 'bg-white border-slate-200 hover:border-cyan-500 hover:shadow-xs'
                             }`}
                           >
                             <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5 pr-1">
                               <div>
                                 <div className="flex items-start gap-1.5">
-                                  <div
-                                    className={`text-sm font-bold leading-snug line-clamp-2 ${
-                                      isOff
-                                        ? 'text-slate-500 line-through'
-                                        : 'text-slate-900 group-hover:text-[#0a2268]'
-                                    }`}
-                                  >
+                                  <div className="text-sm font-bold leading-snug line-clamp-2 text-slate-900 group-hover:text-[#0a2268]">
                                     {item.name}
                                   </div>
                                   {item.isCombo && (() => {
@@ -1561,42 +1586,15 @@ export function PosTerminal({
 
                               <div className="flex items-center justify-between gap-2 mt-2">
                                 <div className="flex items-center gap-2">
-                                  <span
-                                    className={`text-base font-extrabold tabular-nums ${
-                                      isOff ? 'text-slate-400' : 'text-slate-900'
-                                    }`}
-                                  >
+                                  <span className="text-base font-extrabold tabular-nums text-slate-900">
                                     {formatDotNumber(item.price)} ₫
                                   </span>
-                                  {!toggleStockMode && qtyInCart > 0 && (
+                                  {qtyInCart > 0 && (
                                     <span className="px-1.5 py-0.5 rounded bg-cyan-600 text-white text-[11px] font-bold tabular-nums">
                                       ×{qtyInCart}
                                     </span>
                                   )}
                                 </div>
-
-                                {toggleStockMode && (
-                                  <span className="inline-flex items-center gap-1.5 shrink-0">
-                                    <span
-                                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                                        item.available ? 'bg-cyan-600' : 'bg-slate-300'
-                                      }`}
-                                    >
-                                      <span
-                                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform ${
-                                          item.available ? 'translate-x-4.5' : 'translate-x-1'
-                                        }`}
-                                      />
-                                    </span>
-                                    <span
-                                      className={`text-[11px] font-bold ${
-                                        item.available ? 'text-cyan-700' : 'text-amber-700'
-                                      }`}
-                                    >
-                                      {item.available ? 'Bật' : 'Đã tắt'}
-                                    </span>
-                                  </span>
-                                )}
                               </div>
                             </div>
 
@@ -1605,13 +1603,8 @@ export function PosTerminal({
                                 src={item.imageUrl}
                                 alt={item.name}
                                 category={item.category}
-                                className={`w-24 h-20 ${isOff ? 'grayscale opacity-50' : ''}`}
+                                className="w-24 h-20"
                               />
-                              {isOff && (
-                                <span className="absolute inset-x-1 bottom-1 py-0.5 text-center rounded bg-amber-600/95 text-white text-[10px] font-extrabold uppercase tracking-wide">
-                                  Đã tắt
-                                </span>
-                              )}
                             </div>
                           </button>
                         );
@@ -1670,7 +1663,7 @@ export function PosTerminal({
                 setIsDirty(true);
                 setOrderNote(val);
               }}
-              onBackToFloor={() => setViewMode('floor')}
+              onBackToFloor={handleReturnToFloor}
               onBackToMenu={() => setViewMode('menu')}
               onPrintProvisional={handlePrintProvisional}
               onConfirmCheckout={handleCheckout}
@@ -1685,7 +1678,7 @@ export function PosTerminal({
           <div className="bg-[#091d4f] text-white grid grid-cols-4 border-b border-blue-900 shrink-0">
             <button
               type="button"
-              onClick={() => setViewMode('floor')}
+              onClick={handleReturnToFloor}
               className={`py-2.5 px-1.5 flex flex-col items-center justify-center border-r border-blue-900/80 transition-colors ${
                 viewMode === 'floor'
                   ? 'bg-cyan-700 text-white'
@@ -1730,13 +1723,17 @@ export function PosTerminal({
               <div className="text-xs font-bold text-white truncate">
                 {selectedTable ? `${selectedTable.zone} - ${selectedTable.name}` : 'Khách Mang về'}
               </div>
-              {activeOpenOrder ? (
+              {autoSaving ? (
+                <span className="text-[10px] font-bold text-cyan-300 whitespace-nowrap">
+                  Đang lưu...
+                </span>
+              ) : activeOpenOrder || (selectedTable && cartItems.length > 0) ? (
                 <span className="text-[10px] font-bold text-orange-300 whitespace-nowrap">
                   Đang treo bill
                 </span>
               ) : cartItems.length > 0 ? (
                 <span className="text-[10px] font-bold text-cyan-300 whitespace-nowrap">
-                  Chưa lưu bàn
+                  Đơn mang về
                 </span>
               ) : (
                 <span className="text-[10px] text-slate-400 whitespace-nowrap">Bàn trống</span>
@@ -1783,8 +1780,6 @@ export function PosTerminal({
                 const lineGross = getItemGrossTotal(item);
                 const lineDiscount = getItemDiscountAmount(item);
                 const lineNet = getItemNetTotal(item);
-                const isUnsavedStyle = !activeOpenOrder || isDirty;
-
                 return (
                   <div
                     key={`${item.itemId}-${idx}`}
@@ -1794,9 +1789,7 @@ export function PosTerminal({
                       <button
                         type="button"
                         onClick={() => setModalItemState({ mode: 'edit', index: idx, item })}
-                        className={`text-left text-sm font-bold leading-snug hover:underline ${
-                          isUnsavedStyle ? 'text-rose-700' : 'text-[#0a2268]'
-                        }`}
+                        className="text-left text-sm font-bold leading-snug hover:underline text-[#0a2268]"
                       >
                         {item.name}
                       </button>
@@ -1920,7 +1913,9 @@ export function PosTerminal({
                 onClick={handleCancelOrderAction}
                 className="h-11 rounded-md bg-red-600 hover:bg-red-700 disabled:bg-red-300/70 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-xs"
               >
-                {activeOpenOrder ? 'Hủy bill' : 'Hủy order'}
+                {activeOpenOrder || (selectedTable && cartItems.length > 0)
+                  ? 'Hủy bill'
+                  : 'Hủy order'}
               </button>
 
               {viewMode === 'payment' ? (
@@ -1931,16 +1926,6 @@ export function PosTerminal({
                 >
                   <Plus className="w-4 h-4" />
                   Thêm món
-                </button>
-              ) : primaryMenuIsSave ? (
-                <button
-                  type="button"
-                  disabled={isSubmitting || cartItems.length === 0}
-                  onClick={handleSaveOpenTab}
-                  className="h-11 rounded-md bg-[#0a2268] hover:bg-[#11318f] disabled:bg-slate-300 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSubmitting ? 'Đang lưu...' : 'Lưu bàn'}
                 </button>
               ) : (
                 <button
@@ -2042,11 +2027,11 @@ export function PosTerminal({
       )}
 
       {/* ================= CANCEL BILL MODAL ================= */}
-      {showCancelBillModal && activeOpenOrder && (
+      {showCancelBillModal && (activeOpenOrder || (selectedTable && cartItems.length > 0)) && (
         <KasCancelBillModal
-          tableName={selectedTable?.name || activeOpenOrder.tableName}
-          orderNumber={activeOpenOrder.orderNumber}
-          total={activeOpenOrder.total}
+          tableName={selectedTable?.name || activeOpenOrder?.tableName || 'Bàn'}
+          orderNumber={activeOpenOrder?.orderNumber || 'Đơn mới'}
+          total={activeOpenOrder?.total ?? totals.total}
           submitting={isSubmitting}
           onConfirm={handleVoidOpenBill}
           onClose={() => setShowCancelBillModal(false)}
@@ -2082,7 +2067,7 @@ export function PosTerminal({
                   type="button"
                   onClick={() => {
                     setShowFunctionsDrawer(false);
-                    setViewMode('floor');
+                    handleReturnToFloor();
                   }}
                   className="w-full flex items-center gap-3 px-3.5 py-3 rounded-lg bg-cyan-50 text-cyan-900 font-bold text-sm hover:bg-cyan-100 transition-colors"
                 >

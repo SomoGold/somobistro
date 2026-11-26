@@ -121,6 +121,103 @@ export function KasPaymentPanel({
     <div className="flex-1 flex flex-col bg-white overflow-hidden">
       {/* Scrollable Payment Calculator Body */}
       <div className="flex-1 overflow-y-auto pos-scroll p-4 sm:p-5 space-y-5">
+        {/* Top Customer Picker + Walk-in Input */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 pb-3 border-b border-slate-200">
+          <label className="text-sm font-bold text-[#0b2b6b] whitespace-nowrap shrink-0 sm:w-28 sm:text-right sm:pr-2">
+            Khách hàng
+          </label>
+          <div className="relative flex-1">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                value={customerName}
+                onFocus={() => setShowCustomerDropdown(true)}
+                onBlur={() => window.setTimeout(() => setShowCustomerDropdown(false), 180)}
+                onChange={(e) => {
+                  if (selectedCustomerId) onSelectCustomer(null);
+                  onChangeCustomerName(e.target.value.slice(0, LIMITS.CUSTOMER_NAME_MAX));
+                  setShowCustomerDropdown(true);
+                }}
+                placeholder="Chọn khách quen hoặc nhập tên..."
+                className={`w-full h-10 pl-3 pr-8 text-sm bg-white border rounded-md focus:outline-none focus:border-cyan-600 ${
+                  selectedCustomer
+                    ? 'border-cyan-600 font-semibold text-cyan-900 bg-cyan-50/40'
+                    : 'border-slate-300'
+                }`}
+              />
+              {selectedCustomer ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectCustomer(null);
+                    onChangeCustomerName('');
+                  }}
+                  className="absolute right-2 text-cyan-700 hover:text-red-600 p-0.5"
+                  title="Bỏ chọn khách hàng"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : (
+                customers.length > 0 && (
+                  <UserCheck className="w-4 h-4 text-slate-400 absolute right-2.5 pointer-events-none" />
+                )
+              )}
+            </div>
+
+            {showCustomerDropdown && (matchingCustomers.length > 0 || customerName.trim()) && (
+              <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-slate-300 rounded-lg shadow-xl max-h-56 overflow-y-auto pos-scroll divide-y divide-slate-100">
+                <div className="px-3 py-1.5 bg-slate-50 text-[11px] font-bold text-slate-500 flex items-center justify-between">
+                  <span>Khách hàng đã lưu</span>
+                  {customerName.trim() &&
+                    !customers.some(
+                      (c) => c.name.toLowerCase() === customerName.trim().toLowerCase(),
+                    ) && (
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          onQuickAddCustomer(customerName.trim());
+                          setShowCustomerDropdown(false);
+                        }}
+                        className="text-xs font-bold text-cyan-700 hover:underline inline-flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        + Thêm &quot;{customerName.trim()}&quot;
+                      </button>
+                    )}
+                </div>
+                {matchingCustomers.map((cust) => (
+                  <button
+                    key={cust.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onSelectCustomer(cust);
+                      setShowCustomerDropdown(false);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-cyan-50 flex items-center justify-between gap-2 text-xs"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 truncate">{cust.name}</div>
+                      {cust.phone && (
+                        <div className="text-[11px] text-slate-500 tabular-nums">{cust.phone}</div>
+                      )}
+                    </div>
+                    {cust.defaultDiscountValue > 0 && (
+                      <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tabular-nums shrink-0">
+                        <Percent className="w-2.5 h-2.5" />
+                        {cust.defaultDiscountType === 'percent'
+                          ? `${cust.defaultDiscountValue}%`
+                          : formatVND(cust.defaultDiscountValue)}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Top 2-Column Financial Matrix */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-2.5">
           {/* Left Financial Column: Tiền hàng, Chiết khấu, Giảm món */}
@@ -459,97 +556,10 @@ export function KasPaymentPanel({
           })}
         </div>
 
-        {/* Bottom Cashier / Customer Picker / Order Note Strip */}
+        {/* Bottom Cashier / Order Note Strip */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 pt-2 border-t border-slate-200">
-          <div className="md:col-span-3 h-10 px-3 rounded-md bg-slate-100 border border-slate-200 flex items-center text-xs font-bold text-slate-700 truncate">
+          <div className="md:col-span-4 h-10 px-3 rounded-md bg-slate-100 border border-slate-200 flex items-center text-xs font-bold text-slate-700 truncate">
             Thu ngân: {cashierName}
-          </div>
-
-          {/* Searchable Customer Picker + Walk-in input */}
-          <div className="md:col-span-4 relative">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={customerName}
-                onFocus={() => setShowCustomerDropdown(true)}
-                onBlur={() => window.setTimeout(() => setShowCustomerDropdown(false), 180)}
-                onChange={(e) => {
-                  if (selectedCustomerId) onSelectCustomer(null);
-                  onChangeCustomerName(e.target.value.slice(0, LIMITS.CUSTOMER_NAME_MAX));
-                  setShowCustomerDropdown(true);
-                }}
-                placeholder="Chọn khách quen hoặc nhập tên..."
-                className={`w-full h-10 pl-3 pr-8 text-sm bg-white border rounded-md focus:outline-none focus:border-cyan-600 ${
-                  selectedCustomer ? 'border-cyan-600 font-semibold text-cyan-900 bg-cyan-50/40' : 'border-slate-300'
-                }`}
-              />
-              {selectedCustomer ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectCustomer(null);
-                    onChangeCustomerName('');
-                  }}
-                  className="absolute right-2 text-cyan-700 hover:text-red-600 p-0.5"
-                  title="Bỏ chọn khách hàng"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              ) : (
-                customers.length > 0 && (
-                  <UserCheck className="w-4 h-4 text-slate-400 absolute right-2.5 pointer-events-none" />
-                )
-              )}
-            </div>
-
-            {showCustomerDropdown && (matchingCustomers.length > 0 || customerName.trim()) && (
-              <div className="absolute left-0 right-0 bottom-full mb-1 z-30 bg-white border border-slate-300 rounded-lg shadow-xl max-h-56 overflow-y-auto pos-scroll divide-y divide-slate-100">
-                <div className="px-3 py-1.5 bg-slate-50 text-[11px] font-bold text-slate-500 flex items-center justify-between">
-                  <span>Khách hàng đã lưu</span>
-                  {customerName.trim() && !customers.some((c) => c.name.toLowerCase() === customerName.trim().toLowerCase()) && (
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        onQuickAddCustomer(customerName.trim());
-                        setShowCustomerDropdown(false);
-                      }}
-                      className="text-xs font-bold text-cyan-700 hover:underline inline-flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      + Thêm &quot;{customerName.trim()}&quot;
-                    </button>
-                  )}
-                </div>
-                {matchingCustomers.map((cust) => (
-                  <button
-                    key={cust.id}
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onSelectCustomer(cust);
-                      setShowCustomerDropdown(false);
-                    }}
-                    className="w-full px-3 py-2 text-left hover:bg-cyan-50 flex items-center justify-between gap-2 text-xs"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-bold text-slate-900 truncate">{cust.name}</div>
-                      {cust.phone && (
-                        <div className="text-[11px] text-slate-500 tabular-nums">{cust.phone}</div>
-                      )}
-                    </div>
-                    {cust.defaultDiscountValue > 0 && (
-                      <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tabular-nums shrink-0">
-                        <Percent className="w-2.5 h-2.5" />
-                        {cust.defaultDiscountType === 'percent'
-                          ? `${cust.defaultDiscountValue}%`
-                          : formatVND(cust.defaultDiscountValue)}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <input
@@ -557,7 +567,7 @@ export function KasPaymentPanel({
             value={orderNote}
             onChange={(e) => onChangeOrderNote(e.target.value.slice(0, LIMITS.ORDER_NOTE_MAX))}
             placeholder="Nhập ghi chú hóa đơn..."
-            className="md:col-span-5 h-10 px-3 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:border-cyan-600"
+            className="md:col-span-8 h-10 px-3 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:border-cyan-600"
           />
         </div>
       </div>
